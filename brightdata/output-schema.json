@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "fields": {
+    "subject": {"type": "text", "active": true, "required": true, "pii": false, "description": "Human-readable public offer identity."},
+    "targetUrl": {"type": "url", "active": true, "required": true, "pii": false},
+    "observedAt": {"type": "date", "active": true, "required": true, "format": {"preset": "iso"}, "pii": false},
+    "locale": {"type": "text", "active": true, "required": true, "pii": false},
+    "currency": {"type": "text", "active": true, "required": true, "pii": false},
+    "collectorVersion": {"type": "text", "active": true, "required": true, "pii": false},
+    "worker": {"type": "text", "active": true, "required": true, "pii": false},
+    "offer": {
+      "type": "object", "active": true, "required": true,
+      "fields": {
+        "advertisedPrice": {"type": "number", "active": true, "required": true},
+        "claims": {"type": "array", "active": true, "required": true, "normalize": {"empty": "keep"}, "default_value": "empty_array", "items": {"type": "text"}}
+      }
+    },
+    "checkout": {
+      "type": "object", "active": true, "required": true,
+      "fields": {
+        "basePrice": {"type": "number", "active": true, "required": true},
+        "feeItems": {
+          "type": "array", "active": true, "required": true, "normalize": {"empty": "keep"}, "default_value": "empty_array",
+          "items": {"type": "object", "fields": {
+            "label": {"type": "text", "active": true, "required": true},
+            "amount": {"type": "number", "active": true, "required": true},
+            "required": {"type": "boolean", "active": true, "required": true}
+          }}
+        },
+        "mandatoryFees": {"type": "number", "active": true, "required": true},
+        "taxes": {"type": "number", "active": true, "required": true},
+        "optionalAddons": {"type": "number", "active": true, "required": true},
+        "discounts": {"type": "number", "active": true, "required": true},
+        "finalTotal": {"type": "number", "active": true, "required": true, "description": "Total amount due at the final public pre-payment checkout stage."}
+      }
+    },
+    "terms": {
+      "type": "object", "active": true, "required": true,
+      "fields": {
+        "cancellation": {"type": "text", "active": true, "required": true},
+        "refundability": {"type": "text", "active": true, "required": true},
+        "paymentTiming": {"type": "text", "active": true, "required": true},
+        "inclusions": {"type": "array", "active": true, "required": true, "normalize": {"empty": "keep"}, "default_value": "empty_array", "items": {"type": "text"}}
+      }
+    },
+    "journey": {
+      "type": "array", "active": true, "required": true, "normalize": {"empty": "keep"}, "default_value": "empty_array",
+      "items": {"type": "object", "fields": {
+        "label": {"type": "text", "active": true, "required": true},
+        "url": {"type": "url", "active": true, "required": true},
+        "displayedPrice": {"type": "number", "active": true, "required": true},
+        "evidenceId": {"type": "text", "active": true, "required": true}
+      }}
+    },
+    "evidence": {
+      "type": "array", "active": true, "required": true, "normalize": {"empty": "keep"}, "default_value": "empty_array",
+      "items": {"type": "object", "fields": {
+        "id": {"type": "text", "active": true, "required": true},
+        "field": {"type": "text", "active": true, "required": true},
+        "sourceUrl": {"type": "url", "active": true, "required": true},
+        "capturedText": {"type": "text", "active": true, "required": true},
+        "screenshotRef": {"type": "text", "active": true, "required": true},
+        "domPath": {"type": "text", "active": true, "required": true},
+        "journeyStep": {"type": "number", "active": true, "required": true},
+        "observedAt": {"type": "date", "active": true, "required": true, "format": {"preset": "iso"}},
+        "collectorVersion": {"type": "text", "active": true, "required": true}
+      }}
+    }
+  }
+}

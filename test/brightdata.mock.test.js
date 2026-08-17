@@ -24,23 +24,50 @@ test('Bright Data adapter triggers, polls and returns first dataset record', asy
   assert.equal(calls[0].options.headers.Authorization, 'Bearer token');
 });
 
-test('Bright Data adapter polls self-heal until a completed response', async (t) => {
+test('Bright Data adapter stops at the approval gate, approves, autosaves and polls to done', async (t) => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
-  let polls = 0;
+  const calls = [];
+  let progressPolls = 0;
   globalThis.fetch = async (url, options = {}) => {
     const u = String(url);
+    calls.push({u, options});
     if (u.endsWith('/refactor_template') && options.method === 'POST') return response({ status:'started' });
+    if (u.endsWith('/resume_automation_job') && options.method === 'POST') return response({ ok:true });
     if (u.endsWith('/refactor_template/progress')) {
-      polls++;
-      return response(polls === 1 ? { status:'running' } : { status:'completed', version:'v2' });
+      progressPolls++;
+      if (progressPolls === 1) return response({ status:'running' });
+      if (progressPolls === 2) return response({ status:'pending_answer', preview_result:{checkout:{finalTotal:10147}}, diff:{template_b:{steps:[1,2]}} });
+      return response({ status:'done', version:'v2' });
     }
     throw new Error(`Unexpected URL ${url}`);
   };
   const client = new BrightDataCollector({ token:'token', collectorId:'c_demo', pollMs:1, timeoutMs:100 });
   const result = await client.heal({ prompt:'Fix final total by semantic meaning', customInput:[{url:'https://example.com'}] });
-  assert.equal(result.status, 'completed');
-  assert.equal(polls, 2);
+  assert.equal(result.status, 'done');
+  assert.equal(result.approval, 'approved');
+  assert.equal(result.autoSaved, true);
+  assert.equal(progressPolls, 3);
+  const resume = calls.find((x) => x.u.endsWith('/resume_automation_job'));
+  assert.ok(resume);
+  assert.deepEqual(JSON.parse(resume.options.body), {message:true, auto_save:true});
+});
+
+test('Bright Data adapter can expose the heal preview without auto-approving it', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  globalThis.fetch = async (url, options = {}) => {
+    const u = String(url);
+    if (u.endsWith('/refactor_template') && options.method === 'POST') return response({ status:'started' });
+    if (u.endsWith('/refactor_template/progress')) return response({ status:'pending_answer', preview_result:{checkout:{finalTotal:10147}}, diff:{template_b:{steps:[1]}} });
+    if (u.endsWith('/resume_automation_job')) throw new Error('manual-preview mode must not approve');
+    throw new Error(`Unexpected URL ${url}`);
+  };
+  const client = new BrightDataCollector({ token:'token', collectorId:'c_demo', pollMs:1, timeoutMs:100, autoApproveHeal:false });
+  const result = await client.heal({ prompt:'Fix final total by semantic meaning' });
+  assert.equal(result.status, 'awaiting_approval');
+  assert.equal(result.approval, 'required');
+  assert.equal(result.previewResult.checkout.finalTotal, 10147);
 });
 
 

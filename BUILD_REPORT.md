@@ -1,31 +1,48 @@
 # WebReceipt build verification report
 
-Generated during the Aug 17, 2026 hackathon build.
+Updated Aug 18, 2026 after hardening the submission against the official Into the Scrape-Verse rules/resources and Bright Data Scraper Studio/CLI behavior.
+
+## Custom Scraper Studio package
+
+The repository now contains a complete custom Browser Worker package under `brightdata/`:
+
+- `interaction.js` — real offer → click → checkout browser journey;
+- `parser.js` — canonical structured WebReceipt observation + evidence;
+- `output-schema.json` — nested Scraper Studio output schema reference;
+- `preview-input.json` — preview/run input;
+- `SELF_HEAL_PROMPT.md` — meaning-based semantic repair prompt;
+- `CLI_RUNBOOK.md` — coding-agent/CLI create, run, heal, approve, verify sequence.
+
+The interaction uses Browser Worker-only primitives including `click`, `wait_visible`, `wait_network_idle`, `wait_page_idle`, and `tag_screenshot`. The controlled fixture therefore cannot be collected as the complete journey by simply reading its initial static markup.
 
 ## Executed locally
 
-- `npm test`: **23/23 passing**.
+- `npm run validate:scraper`: **PASS**.
+- `npm test`: **28/28 passing**.
 - Chaos Checkout: **7/7 mutation scenarios recovered**.
 - Monetary fuzzing: **500 healthy contracts accepted + 500 ₹1-corrupted totals rejected**.
 - Persistence concurrency: **24 simultaneous observations**, valid atomic JSON, retention cap preserved.
 - HTTP end-to-end: reset → semantic break → heal → export → stress.
 - Controlled fixture: V1/V2 verified to keep `.total-price` alive while changing it from final total to subtotal.
-- Repeatability: the same semantic break can be injected and recovered multiple times.
-- Bright Data adapter: trigger/poll behavior, self-heal polling, transient retry, empty dataset handling and missing-credential failure all executed using deterministic mocked HTTP responses matching the documented API contract.
-- JavaScript syntax check: all application/test files pass `node --check`.
-- Scraper Studio snippets: `interaction.js` and `parser.js` parse successfully as JavaScript function bodies.
-- JSON examples/package metadata parse successfully.
-- Git whitespace audit: `git diff --check` clean.
+- Browser journey smoke test using headless Chromium + Playwright `set_content`: offer visible → checkout initially hidden → click reveals checkout in both V1 and V2; V2 retains `.total-price = ₹8,499` while `[data-testid="order-total"] = ₹10,147`.
+- Bright Data adapter: trigger/poll behavior, `pending_answer` approval gate, `resume_automation_job`, `auto_save`, manual-preview mode, transient retry, empty dataset handling, and missing-credential failure all executed with deterministic mocked HTTP responses matching the official CLI/API behavior.
+- JavaScript syntax check: application/test/scripts plus Scraper Studio function bodies pass syntax validation.
+- JSON schema/input/package metadata parse successfully.
+- `git diff --check`: clean.
 
-## Not falsely claimed
+## Important live boundary
 
-A **real Bright Data cloud run was not executed in this environment** because no user API token or published Collector ID was provided. To finish that verification:
+A **real Bright Data cloud collector was not created or run from this environment** because `BRIGHT_DATA_API_TOKEN` and `BRIGHT_DATA_COLLECTOR_ID` are not configured here. No fake sponsor run is claimed.
+
+To finish the sponsor-backed verification:
 
 1. deploy WebReceipt publicly;
-2. create/publish the custom Browser Worker from `brightdata/`;
-3. set `BRIGHT_DATA_API_TOKEN` and `BRIGHT_DATA_COLLECTOR_ID`;
-4. select **Bright Data live**;
-5. Generate receipt against `/fixture/hotel` (V1);
-6. press **Break website** (V2), then verify the actual Self-Healing run restores 6/6 contract checks.
+2. create/open a custom Scraper Studio **Browser Worker**;
+3. paste `brightdata/interaction.js` and `brightdata/parser.js`;
+4. add required `url` input and verify the output schema;
+5. preview against the deployed `/fixture/hotel`;
+6. Save to Production and copy the Collector ID;
+7. configure `BRIGHT_DATA_API_TOKEN` + `BRIGHT_DATA_COLLECTOR_ID`;
+8. run V1, break to V2, trigger Self-Healing, approve/save the repair, and confirm the same collector returns a semantically valid Deal Contract again.
 
-See `docs/BRIGHT_DATA_SETUP.md` for the exact runbook.
+See `docs/BRIGHT_DATA_SETUP.md` and `brightdata/CLI_RUNBOOK.md`.

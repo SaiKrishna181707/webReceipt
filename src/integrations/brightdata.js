@@ -1,15 +1,28 @@
 const API = 'https://api.brightdata.com';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
+const TERMINAL_FAILURES = new Set(['failed', 'error', 'cancelled']);
+const COMPLETE_STATUSES = new Set(['done', 'completed', 'success', 'ready']);
+const APPROVAL_STATUS = 'pending_answer';
 
 export class BrightDataCollector {
-  constructor({ token = process.env.BRIGHT_DATA_API_TOKEN, collectorId = process.env.BRIGHT_DATA_COLLECTOR_ID, pollMs = 5000, timeoutMs = 240000, retries = 3 } = {}) {
+  constructor({
+    token = process.env.BRIGHT_DATA_API_TOKEN,
+    collectorId = process.env.BRIGHT_DATA_COLLECTOR_ID,
+    pollMs = 5000,
+    timeoutMs = 240000,
+    retries = 3,
+    autoApproveHeal = true,
+    autoSaveHeal = true,
+  } = {}) {
     this.kind = 'brightdata';
     this.token = token;
     this.collectorId = collectorId;
     this.pollMs = pollMs;
     this.timeoutMs = timeoutMs;
     this.retries = retries;
+    this.autoApproveHeal = autoApproveHeal;
+    this.autoSaveHeal = autoSaveHeal;
   }
 
   assertConfigured() {
@@ -62,25 +75,71 @@ export class BrightDataCollector {
     throw new Error(`Bright Data collection timed out after ${this.timeoutMs}ms.`);
   }
 
-  async heal({ prompt, customInput = [] }) {
+  async pollHealProgress({ deadline, phase = 'self-heal' }) {
+    while (Date.now() < deadline) {
+      const progress = await this.request(`${API}/dca/collectors/${encodeURIComponent(this.collectorId)}/refactor_template/progress`, {
+        headers: { Authorization: `Bearer ${this.token}` }
+      });
+      if ([401, 403, 404, 422].includes(progress.status)) throw new Error(`Bright Data ${phase} polling failed: ${progress.status} ${await progress.text()}`);
+      if (!progress.ok) { await sleep(this.pollMs); continue; }
+
+      const body = await progress.json();
+      const status = String(body.status ?? body.state ?? '').toLowerCase();
+      if (TERMINAL_FAILURES.has(status)) throw new Error(`Bright Data ${phase} failed: ${JSON.stringify(body)}`);
+      if (status === APPROVAL_STATUS) return { state: 'awaiting_approval', body };
+      if (COMPLETE_STATUSES.has(status)) return { state: 'done', body };
+      await sleep(this.pollMs);
+    }
+    throw new Error(`Bright Data ${phase} timed out after ${this.timeoutMs}ms.`);
+  }
+
+  async approveHeal({ autoSave = this.autoSaveHeal } = {}) {
     this.assertConfigured();
+    const body = autoSave ? { message: true, auto_save: true } : { message: true };
+    const response = await this.request(`${API}/dca/collectors/${encodeURIComponent(this.collectorId)}/resume_automation_job`, {
+      method: 'POST', headers: this.headers(), body: JSON.stringify(body)
+    });
+    if (!response.ok) throw new Error(`Bright Data self-heal approval failed: ${response.status} ${await response.text()}`);
+    await response.text().catch(() => '');
+    return body;
+  }
+
+  async heal({ prompt, customInput = [], autoApprove = this.autoApproveHeal, autoSave = this.autoSaveHeal }) {
+    this.assertConfigured();
+    const semanticPrompt = String(prompt ?? '').trim();
+    if (!semanticPrompt) throw new Error('Bright Data self-heal requires a non-empty semantic repair prompt.');
+
     const response = await this.request(`${API}/dca/collectors/${encodeURIComponent(this.collectorId)}/refactor_template`, {
-      method: 'POST', headers: this.headers(), body: JSON.stringify({ prompt: prompt.slice(0, 1000), custom_input: customInput })
+      method: 'POST', headers: this.headers(), body: JSON.stringify({ prompt: semanticPrompt.slice(0, 1000), custom_input: customInput })
     });
     if (!response.ok) throw new Error(`Bright Data self-heal trigger failed: ${response.status} ${await response.text()}`);
     await response.json().catch(() => ({}));
 
     const deadline = Date.now() + this.timeoutMs;
-    while (Date.now() < deadline) {
-      const progress = await this.request(`${API}/dca/collectors/${encodeURIComponent(this.collectorId)}/refactor_template/progress`, { headers: { Authorization: `Bearer ${this.token}` } });
-      if ([401, 403, 404, 422].includes(progress.status)) throw new Error(`Bright Data heal polling failed: ${progress.status} ${await progress.text()}`);
-      if (!progress.ok) { await sleep(this.pollMs); continue; }
-      const body = await progress.json();
-      const status = String(body.status ?? body.state ?? '').toLowerCase();
-      if (['done', 'completed', 'success', 'ready'].includes(status) || body.template || body.code) return body;
-      if (['failed', 'error'].includes(status)) throw new Error(`Bright Data self-heal failed: ${JSON.stringify(body)}`);
-      await sleep(this.pollMs);
+    const proposal = await this.pollHealProgress({ deadline, phase: 'self-heal proposal' });
+    if (proposal.state === 'done') return { ...proposal.body, approval: 'not_required' };
+
+    if (!autoApprove) {
+      return {
+        ...proposal.body,
+        status: 'awaiting_approval',
+        approval: 'required',
+        previewResult: proposal.body.preview_result ?? null,
+        diff: proposal.body.diff ?? null,
+      };
     }
-    throw new Error(`Bright Data self-heal timed out after ${this.timeoutMs}ms.`);
+
+    // This mirrors the official Bright Data CLI approval gate:
+    // POST resume_automation_job with {message:true, auto_save:true}.
+    await this.approveHeal({ autoSave });
+    const completion = await this.pollHealProgress({ deadline, phase: 'self-heal approval' });
+    if (completion.state === 'awaiting_approval') throw new Error('Bright Data self-heal returned to the approval gate after approval.');
+    return {
+      ...completion.body,
+      approval: 'approved',
+      autoSaved: Boolean(autoSave),
+      previewResult: proposal.body.preview_result ?? null,
+      diff: proposal.body.diff ?? null,
+    };
   }
 }

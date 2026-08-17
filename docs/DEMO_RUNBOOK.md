@@ -1,39 +1,81 @@
-# Two-minute demo runbook
+# Two-minute WebReceipt demo runbook
 
-## Before recording
+## Pre-flight
 
-- `npm test` is green.
-- `npm run stress` returns 7/7 recovered.
-- If using Bright Data live, V1 preview is healthy and credentials are loaded.
-- Browser zoom 100%; use a 1440p viewport if possible.
-- Reset the app before the take.
+```bash
+npm run validate:scraper
+npm test
+npm run stress
+```
 
-## Sequence
+For the sponsor-backed recording, deploy publicly, save the checked-in Browser Worker to Scraper Studio Production, configure the real Collector ID/API token, and use **Bright Data live** mode.
 
-**0:00–0:15 — Problem**
+## 0:00–0:15 — problem
 
-“Receipts remember what you paid. They don't remember what the internet promised: the price that attracted you, the mandatory fees, or the cancellation terms—and those webpages can change tomorrow.”
+“Receipts remember what you paid. They don't remember what the internet promised.”
 
-**0:15–0:35 — Receipt**
+Show the public hotel offer: ₹8,499, free cancellation, breakfast included.
 
-Generate the Ocean House receipt. Point to advertised price, final observed total, Journey Replay and the 6/6 integrity state.
+## 0:15–0:35 — custom Scraper Studio journey
 
-**0:35–0:50 — Evidence**
+Show the custom Browser Worker briefly: it captures the offer, clicks **Continue to checkout**, captures the public checkout, and returns the canonical observation.
 
-Click Checkout. Show source, captured text, timestamp, DOM locator and SHA-256 evidence hash.
+Generate a receipt. Show Journey Replay and the Deal Contract:
 
-**0:50–1:05 — Silent break**
+- advertised: ₹8,499
+- final: ₹10,147
+- cancellation: free until Aug 21
+- evidence attached
+- 6/6 semantic checks pass
 
-Click **Break website**. Explain: “The selector does not fail. It still returns a number—just the wrong number.”
+## 0:35–0:50 — provenance
 
-**1:05–1:30 — Self-heal**
+Click final total. Show captured text, public source URL, timestamp, checkout screenshot reference, DOM evidence, and SHA-256 evidence hash.
 
-Show the integrity contradiction, heal event, rerun and recovered 6/6 checks. Emphasize that Bright Data is the repair engine and WebReceipt is the semantic acceptance gate.
+## 0:50–1:05 — silent corruption
 
-**1:30–1:50 — Memory**
+Press **Break website**. The same URL changes structure.
 
-Click **Simulate day +3**. Show price, fee, cancellation and inclusion changes in Promise Diff.
+The old selector still returns a number:
 
-**1:50–2:00 — Close**
+```text
+finalTotal = ₹8,499
+```
 
-“The web can change after you buy. Your receipt shouldn't. WebReceipt gives you a receipt for what the internet promised.”
+Then reveal:
+
+```text
+CONTRACT INTEGRITY FAILURE
+Expected ₹10,147
+Extracted ₹8,499
+```
+
+## 1:05–1:35 — Bright Data self-heal
+
+Show the semantic heal prompt. Do not tell the healer a replacement selector.
+
+Show Bright Data's approval preview/diff, approve/save it, and rerun the same Collector ID.
+
+Result:
+
+```text
+finalTotal = ₹10,147
+6 / 6 contract checks passed
+```
+
+The important line: “The scraper did not fail. It lied plausibly. WebReceipt caught the semantic corruption, and Scraper Studio repaired the collector.”
+
+## 1:35–1:52 — Promise Diff
+
+Show a later observation:
+
+```diff
+- Free cancellation until Aug 21
++ Non-refundable
+```
+
+Click through to before/after evidence.
+
+## 1:52–2:00 — close
+
+“WebReceipt gives you a receipt for what the internet promised you. The web can change after you buy. Your receipt shouldn't.”

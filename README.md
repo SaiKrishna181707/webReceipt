@@ -92,7 +92,7 @@ Replay       Diff
   - critical evidence completeness;
   - comparable journey endpoints.
 - Bright Data Collection API adapter.
-- Bright Data AI Flow Self-Healing adapter.
+- Bright Data AI Flow Self-Healing adapter, including the official `pending_answer` approval gate and `resume_automation_job` auto-save flow.
 - Deterministic simulator with the same collector interface for credential-free development.
 - Chaos Checkout stress suite with seven redesign/mutation scenarios.
 - JSON evidence export.
@@ -127,24 +127,26 @@ npm start
 # open http://localhost:3000
 ```
 
-Test everything:
+Validate the custom Scraper Studio package and test everything:
 
 ```bash
+npm run validate:scraper
 npm test
+npm run stress
 ```
 
 The app starts in deterministic simulator mode, so the entire demo—including semantic failure and recovery—works without credentials.
 
 ### Controlled live fixture
 
-The server also exposes `/fixture/hotel`. V1 and V2 share the **same URL** but intentionally change DOM semantics. `POST /api/fixture/break` switches to V2; `POST /api/fixture/reset` switches back to V1. Once WebReceipt is publicly deployed, the checked-in Scraper Studio parser can crawl that endpoint and produce a real Bright Data self-healing demo.
+The server also exposes `/fixture/hotel`. It is a **public anonymous two-step browser journey**: the offer is visible first, while the checkout summary is hidden until **Continue to checkout** is clicked. V1 and V2 share the same URL but intentionally change DOM semantics. `POST /api/fixture/break` switches to V2; `POST /api/fixture/reset` switches back to V1. Once WebReceipt is publicly deployed, the checked-in custom Scraper Studio Browser Worker can crawl that endpoint and produce a real Bright Data self-healing demo.
 
 ## Connect the real Bright Data collector
 
 1. Create a **custom** Scraper Studio scraper for a public lodging target.
-2. Use a Browser Worker for JS/click/wait/screenshot flows.
-3. Save the collector to production.
-4. Map its output to the observation shape consumed by `compileDealContract()`.
+2. Use the checked-in `brightdata/interaction.js` + `brightdata/parser.js` as the canonical Browser Worker code. The worker navigates, captures offer evidence, clicks into public checkout, captures checkout evidence, parses, and collects.
+3. Preview V1 and confirm the canonical output, then Save to Production.
+4. Copy the production Collector ID.
 5. Copy `.env.example` to `.env` or export:
 
 ```bash
@@ -161,8 +163,9 @@ The real adapter implements:
 - polling `GET /dca/dataset?id=...`
 - `POST /dca/collectors/{collector_id}/refactor_template`
 - polling `GET /dca/collectors/{collector_id}/refactor_template/progress`
+- `POST /dca/collectors/{collector_id}/resume_automation_job` at the `pending_answer` approval gate, with `auto_save` in live automatic recovery mode
 
-`brightdata/interaction.js` is a checked-in Browser Worker starter using the official `navigate`, `wait_network_idle`, `click` and `tag_screenshot` primitives. Adapt it in Scraper Studio to the exact public target selected for the final demo.
+`brightdata/` is a complete checked-in Scraper Studio package: Browser Worker interaction, parser, preview input, output-schema reference, semantic self-heal prompt, and CLI runbook. Run `npm run validate:scraper` before recording. For the deterministic sponsor demo, use the controlled public fixture; for a third-party target, adapt selectors/journey while preserving the same Deal Contract output semantics.
 
 ## Deployment
 
