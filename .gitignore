@@ -1,0 +1,5 @@
+.env
+node_modules/
+data/state.json
+data/stress-state.json
+.DS_Store

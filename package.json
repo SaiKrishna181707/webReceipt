@@ -1,0 +1,17 @@
+{
+  "name": "webreceipt",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WebReceipt — proof of promise for the mutable web",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/server.js",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test",
+    "stress": "node src/stress-cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

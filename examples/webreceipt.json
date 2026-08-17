@@ -1,0 +1,262 @@
+{
+  "contract": {
+    "schemaVersion": "1.0.0",
+    "dealId": "deal_ocean_house",
+    "subject": "Ocean House · 1 night · Deluxe Room",
+    "targetUrl": "https://demo.webreceipt.dev/hotel/ocean-house",
+    "observedAt": "2026-08-17T14:30:00.000Z",
+    "locale": "en-IN",
+    "collector": {
+      "id": "c_webreceipt_demo",
+      "version": "v1",
+      "worker": "browser"
+    },
+    "offer": {
+      "advertisedPrice": {
+        "amount": 8499,
+        "currency": "INR"
+      },
+      "claims": [
+        "Free cancellation",
+        "Breakfast included"
+      ]
+    },
+    "checkout": {
+      "basePrice": {
+        "amount": 8499,
+        "currency": "INR"
+      },
+      "feeItems": [
+        {
+          "label": "Property fee",
+          "amount": 499,
+          "currency": "INR",
+          "required": true
+        },
+        {
+          "label": "Service fee",
+          "amount": 349,
+          "currency": "INR",
+          "required": true
+        }
+      ],
+      "mandatoryFees": {
+        "amount": 848,
+        "currency": "INR"
+      },
+      "taxes": {
+        "amount": 800,
+        "currency": "INR"
+      },
+      "optionalAddons": {
+        "amount": 0,
+        "currency": "INR"
+      },
+      "discounts": {
+        "amount": 0,
+        "currency": "INR"
+      },
+      "finalTotal": {
+        "amount": 10147,
+        "currency": "INR"
+      }
+    },
+    "terms": {
+      "cancellation": "Free cancellation until 21 Aug",
+      "refundability": "Refundable",
+      "paymentTiming": "Pay now",
+      "inclusions": [
+        "Breakfast"
+      ]
+    },
+    "journey": [
+      {
+        "index": 1,
+        "label": "Search",
+        "url": "https://demo.webreceipt.dev/hotel/ocean-house/search",
+        "displayedPrice": {
+          "amount": 8499,
+          "currency": "INR"
+        },
+        "evidenceId": "ev_1"
+      },
+      {
+        "index": 2,
+        "label": "Property",
+        "url": "https://demo.webreceipt.dev/hotel/ocean-house",
+        "displayedPrice": {
+          "amount": 8499,
+          "currency": "INR"
+        },
+        "evidenceId": "ev_1"
+      },
+      {
+        "index": 3,
+        "label": "Room",
+        "url": "https://demo.webreceipt.dev/hotel/ocean-house/room",
+        "displayedPrice": {
+          "amount": 8499,
+          "currency": "INR"
+        },
+        "evidenceId": "ev_2"
+      },
+      {
+        "index": 4,
+        "label": "Checkout",
+        "url": "https://demo.webreceipt.dev/hotel/ocean-house/checkout",
+        "displayedPrice": {
+          "amount": 10147,
+          "currency": "INR"
+        },
+        "evidenceId": "ev_4"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev_1",
+        "field": "offer.advertisedPrice",
+        "sourceUrl": "https://demo.webreceipt.dev/hotel/ocean-house/search",
+        "capturedText": "Search result: Ocean House — ₹8,499",
+        "screenshotRef": "screenshots/step-1.png",
+        "domPath": ".offer-price",
+        "journeyStep": 1,
+        "collectorVersion": "v1",
+        "observedAt": "2026-08-17T14:30:00.000Z",
+        "hash": "ecd77321b46000c0c6af5e1c8e2184b1f1f5d26a9d7ca75eef675edfcaffc15c"
+      },
+      {
+        "id": "ev_2",
+        "field": "checkout.basePrice",
+        "sourceUrl": "https://demo.webreceipt.dev/hotel/ocean-house/checkout",
+        "capturedText": "Room price ₹8,499",
+        "screenshotRef": "screenshots/step-3.png",
+        "domPath": "[data-testid=\"base-price\"]",
+        "journeyStep": 3,
+        "collectorVersion": "v1",
+        "observedAt": "2026-08-17T14:30:00.000Z",
+        "hash": "6589539aaa30083a0b5759948b7bb74c4eece832d78f0ea97398f5eb4b730f15"
+      },
+      {
+        "id": "ev_3",
+        "field": "checkout.mandatoryFees",
+        "sourceUrl": "https://demo.webreceipt.dev/hotel/ocean-house/checkout",
+        "capturedText": "Property fee ₹499 · Service fee ₹349",
+        "screenshotRef": "screenshots/step-3.png",
+        "domPath": "[data-testid=\"fees\"]",
+        "journeyStep": 3,
+        "collectorVersion": "v1",
+        "observedAt": "2026-08-17T14:30:00.000Z",
+        "hash": "c98946b5b73fda9a5924b36ce5ae88a5daebad366e7941763826f688e4f4f3fb"
+      },
+      {
+        "id": "ev_4",
+        "field": "checkout.finalTotal",
+        "sourceUrl": "https://demo.webreceipt.dev/hotel/ocean-house/checkout",
+        "capturedText": "Total due today ₹10,147",
+        "screenshotRef": "screenshots/step-4.png",
+        "domPath": "[data-testid=\"order-total\"]",
+        "journeyStep": 4,
+        "collectorVersion": "v1",
+        "observedAt": "2026-08-17T14:30:00.000Z",
+        "hash": "2b1fc949af6160f99d812824d8d8cf27da63543a0004010a84f9027f1e5deb4b"
+      },
+      {
+        "id": "ev_5",
+        "field": "terms.cancellation",
+        "sourceUrl": "https://demo.webreceipt.dev/hotel/ocean-house/terms",
+        "capturedText": "Free cancellation until 21 Aug",
+        "screenshotRef": "screenshots/step-4.png",
+        "domPath": "#cancellation",
+        "journeyStep": 4,
+        "collectorVersion": "v1",
+        "observedAt": "2026-08-17T14:30:00.000Z",
+        "hash": "8aa85d67cf3a06d659adcdc732d4c986bb6a43a04e541530cecb6328e4b9c8a3"
+      }
+    ],
+    "contractHash": "0ce8fef5bd881929323cca2247bf3e6907a70e3db66490dfd92e0752ca46a5d0"
+  },
+  "integrity": {
+    "status": "valid",
+    "checks": [
+      {
+        "id": "total_arithmetic",
+        "label": "Checkout arithmetic",
+        "pass": true,
+        "details": {
+          "expected": 10147,
+          "extracted": 10147,
+          "formula": "base + mandatoryFees + taxes + optionalAddons - discounts = finalTotal"
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "fee_breakdown",
+        "label": "Mandatory fee breakdown",
+        "pass": true,
+        "details": {
+          "expected": 848,
+          "extracted": 848
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "currency_consistency",
+        "label": "Currency consistency",
+        "pass": true,
+        "details": {
+          "currency": "INR"
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "journey_monotonicity",
+        "label": "Final price is plausible after discounts",
+        "pass": true,
+        "details": {
+          "base": 8499,
+          "discounts": 0,
+          "minimumExpected": 8499,
+          "final": 10147
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "critical_evidence",
+        "label": "Critical fields have provenance",
+        "pass": true,
+        "details": {
+          "missingEvidence": []
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "journey_complete",
+        "label": "Journey has comparable start and end observations",
+        "pass": true,
+        "details": {
+          "steps": 4
+        },
+        "severity": "high"
+      }
+    ],
+    "failures": [],
+    "passed": 6,
+    "total": 6
+  },
+  "anomalies": [
+    {
+      "id": "observed_price_increase",
+      "label": "Observed price increase",
+      "severity": "high",
+      "value": "19.4%",
+      "details": "Final observed total is 1648 INR above the advertised price."
+    },
+    {
+      "id": "mandatory_charges",
+      "label": "Mandatory charges observed",
+      "severity": "info",
+      "value": "848 INR",
+      "details": "Required non-tax charges were present in the observed checkout breakdown."
+    }
+  ]
+}

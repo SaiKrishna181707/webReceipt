@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WebReceipt — Proof of Promise</title>
+  <meta name="description" content="A self-healing evidence layer for the mutable commercial web." />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">WR</span><span>WebReceipt</span></div>
+    <div class="top-actions"><span id="health" class="chip">checking…</span><a class="ghost" href="/api/export/latest">Export receipt</a></div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">PROOF OF PROMISE · SELF-HEALING WEB EVIDENCE</p>
+        <h1>The web can change.<br><span>Your receipt shouldn’t.</span></h1>
+        <p class="lede">WebReceipt turns a public purchase journey into a timestamped Deal Contract, verifies that the extracted economics make sense, and repairs the scraper when a redesign corrupts the evidence.</p>
+      </div>
+      <div class="hero-card">
+        <div class="mini-label">THE IDEA</div>
+        <blockquote>“Receipts remember what you paid. WebReceipt remembers what the internet promised.”</blockquote>
+        <div class="powered">Powered by <strong>Bright Data Scraper Studio</strong></div>
+      </div>
+    </section>
+
+    <section class="control card">
+      <div class="field grow"><label>Public offer / checkout URL</label><input id="targetUrl" placeholder="https://your-deployment.example/fixture/hotel" /></div>
+      <div class="field"><label>Collector</label><select id="mode"><option value="simulator">Demo collector</option><option value="brightdata">Bright Data live</option></select></div>
+      <button id="observeBtn" class="primary">Generate receipt</button>
+      <button id="breakBtn" class="danger">Break website</button>
+    </section>
+
+    <section id="statusBanner" class="status-banner hidden"></section>
+
+    <section class="grid metrics" id="metrics">
+      <article class="metric card"><span>Advertised</span><strong id="metricAdvertised">—</strong><small>first observed price</small></article>
+      <article class="metric card"><span>Final observed</span><strong id="metricFinal">—</strong><small>checkout total</small></article>
+      <article class="metric card"><span>Journey delta</span><strong id="metricDelta">—</strong><small>start → final</small></article>
+      <article class="metric card"><span>Integrity</span><strong id="metricIntegrity">—</strong><small id="metricIntegritySub">contract checks</small></article>
+    </section>
+
+    <section class="two-col">
+      <article class="card panel">
+        <div class="panel-head"><div><p class="eyebrow">JOURNEY REPLAY</p><h2>What the buyer saw</h2></div><span class="chip">click any stage</span></div>
+        <div id="journey" class="journey empty-state">Generate a receipt to replay the journey.</div>
+      </article>
+      <article class="card panel">
+        <div class="panel-head"><div><p class="eyebrow">DEAL CONTRACT</p><h2>Canonical economics</h2></div><span id="contractHash" class="hash">—</span></div>
+        <div id="contract" class="contract empty-state">No contract compiled yet.</div>
+      </article>
+    </section>
+
+    <section class="three-col">
+      <article class="card panel">
+        <div class="panel-head"><div><p class="eyebrow">CONTRACT INTEGRITY</p><h2>Did extraction stay truthful?</h2></div></div>
+        <div id="checks" class="checks empty-state">No checks yet.</div>
+      </article>
+      <article class="card panel">
+        <div class="panel-head"><div><p class="eyebrow">DEAL ANOMALIES</p><h2>Observable friction</h2></div></div>
+        <div id="anomalies" class="anomalies empty-state">No observations yet.</div>
+      </article>
+      <article class="card panel">
+        <div class="panel-head"><div><p class="eyebrow">EVIDENCE CHAIN</p><h2>Every claim has provenance</h2></div></div>
+        <div id="evidence" class="evidence empty-state">Select a journey stage or field.</div>
+      </article>
+    </section>
+
+    <section class="two-col demo-zone">
+      <article class="card panel chaos-panel">
+        <div class="panel-head"><div><p class="eyebrow">CHAOS CHECKOUT</p><h2>Stress-test the scraper</h2></div><button id="stressBtn" class="secondary">Run 7 mutations</button></div>
+        <p class="muted">Selector churn is easy. We also test wrong-but-valid totals, newly inserted mandatory fees, missing provenance, DOM relocation, split price nodes and format changes.</p>
+        <div id="stress" class="stress-grid empty-state">No chaos run yet.</div>
+      </article>
+      <article class="card panel diff-panel">
+        <div class="panel-head"><div><p class="eyebrow">PROMISE DIFF</p><h2>What changed later?</h2></div><button id="diffBtn" class="secondary">Simulate day +3</button></div>
+        <div id="diff" class="diff-list empty-state">Create a receipt, then compare the next observation.</div>
+      </article>
+    </section>
+
+    <section class="card panel log-panel">
+      <div class="panel-head"><div><p class="eyebrow">SELF-HEAL TIMELINE</p><h2>Observe → detect → heal → verify</h2></div><button id="resetBtn" class="ghost">Reset demo</button></div>
+      <div id="events" class="event-log empty-state">No events yet.</div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
