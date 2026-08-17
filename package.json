@@ -5,11 +5,13 @@
   "type": "module",
   "description": "WebReceipt — proof of promise for the mutable web",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch src/server.js",
-    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --watch src/bootstrap.js",
+    "start": "node src/bootstrap.js",
     "test": "node --test",
     "stress": "node src/stress-cli.js",
-    "validate:scraper": "node scripts/validate-scraper-studio.mjs"
+    "validate:scraper": "node scripts/validate-scraper-studio.mjs",
+    "verify": "npm run validate:scraper && npm test && npm run stress",
+    "verify:receipt": "node scripts/verify-receipt.mjs"
   },
   "engines": {
     "node": ">=20"

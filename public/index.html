@@ -29,13 +29,15 @@
     </section>
 
     <section class="control card">
-      <div class="field grow"><label>Public offer / checkout URL</label><input id="targetUrl" placeholder="https://your-deployment.example/fixture/hotel" /></div>
-      <div class="field"><label>Collector</label><select id="mode"><option value="simulator">Demo collector</option><option value="brightdata">Bright Data live</option></select></div>
+      <div class="field grow"><label for="targetUrl">Public offer / checkout URL</label><input id="targetUrl" placeholder="https://your-deployment.example/fixture/hotel" /></div>
+      <div class="field"><label for="mode">Collector</label><select id="mode"><option value="simulator">Demo collector</option><option value="brightdata">Bright Data live</option></select></div>
+      <div id="operatorField" class="field operator-field hidden"><label for="operatorKey">Operator key</label><input id="operatorKey" type="password" autocomplete="off" placeholder="deployment operator token" /></div>
       <button id="observeBtn" class="primary">Generate receipt</button>
       <button id="breakBtn" class="danger">Break website</button>
     </section>
+    <p class="scope-note">PUBLIC ANONYMOUS DATA ONLY · NO LOGIN · NO PURCHASE · OBSERVED FACTS, NOT LEGAL CONCLUSIONS</p>
 
-    <section id="statusBanner" class="status-banner hidden"></section>
+    <section id="statusBanner" class="status-banner hidden" role="status" aria-live="polite"></section>
 
     <section class="grid metrics" id="metrics">
       <article class="metric card"><span>Advertised</span><strong id="metricAdvertised">—</strong><small>first observed price</small></article>
@@ -83,12 +85,12 @@
     </section>
 
     <section class="card panel log-panel">
-      <div class="panel-head"><div><p class="eyebrow">SELF-HEAL TIMELINE</p><h2>Observe → detect → heal → verify</h2></div><button id="resetBtn" class="ghost">Reset demo</button></div>
+      <div class="panel-head"><div><p class="eyebrow">SELF-HEAL TIMELINE</p><h2>Observe → detect → preview verify → approve → rerun</h2></div><div class="panel-actions"><span id="repairGateChip" class="chip">verification gate armed</span><button id="resetBtn" class="ghost">Reset demo</button></div></div>
       <div id="events" class="event-log empty-state">No events yet.</div>
     </section>
   </main>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   <script type="module" src="/app.js"></script>
 </body>
 </html>

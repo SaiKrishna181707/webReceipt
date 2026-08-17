@@ -27,6 +27,7 @@ Set the ID once:
 ```bash
 export WEBRECEIPT_COLLECTOR=c_your_collector_id
 export WEBRECEIPT_URL=https://YOUR_PUBLIC_WEBRECEIPT_DEPLOYMENT/fixture/hotel
+export WEBRECEIPT_OPERATOR_TOKEN=replace-with-the-same-secret-configured-on-the-deployment
 ```
 
 ## 3. Run V1
@@ -52,6 +53,7 @@ From WebReceipt's UI press **Break website**, or:
 ```bash
 curl -X POST https://YOUR_PUBLIC_WEBRECEIPT_DEPLOYMENT/api/fixture/break \
   -H 'content-type: application/json' \
+  -H "x-webreceipt-operator: $WEBRECEIPT_OPERATOR_TOKEN" \
   -d '{}'
 ```
 
@@ -85,7 +87,7 @@ bdata scraper approve "$WEBRECEIPT_COLLECTOR" \
   --pretty
 ```
 
-WebReceipt's live API adapter implements this same approval operation through `resume_automation_job` with `message: true` and `auto_save: true`.
+WebReceipt's live API adapter uses this same approval operation, but only **after** it has compiled Bright Data's `preview_result` into the Deal Contract and verified the preview. Invalid previews are rejected with `message: false`.
 
 ## 8. Verify recovery
 
@@ -106,5 +108,6 @@ WebReceipt then recomputes all Deal Contract invariants and only marks the obser
 ```bash
 curl -X POST https://YOUR_PUBLIC_WEBRECEIPT_DEPLOYMENT/api/fixture/reset \
   -H 'content-type: application/json' \
+  -H "x-webreceipt-operator: $WEBRECEIPT_OPERATOR_TOKEN" \
   -d '{}'
 ```

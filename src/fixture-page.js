@@ -1,7 +1,7 @@
 export function renderHotelFixture(version = 'v1') {
   const broken = version === 'v2';
   const finalMarkup = broken
-    ? `<div class="legacy"><span>Subtotal</span><strong class="total-price">₹8,499</strong></div><div class="actual-total"><span>Total due today</span><strong data-testid="order-total">₹10,147</strong></div>`
+    ? `<div class="legacy"><span>Subtotal</span><strong class="total-price">₹8,499</strong></div><div class="actual-total redesigned-total" data-testid="order-total"><span>Total due today</span><strong><span class="currency-symbol">₹</span><span class="major">10,147</span></strong></div>`
     : `<div class="actual-total"><span>Total due today</span><strong class="total-price" data-testid="order-total">₹10,147</strong></div>`;
 
   return `<!doctype html>
@@ -15,7 +15,7 @@ export function renderHotelFixture(version = 'v1') {
   <div class="wrap">
     <div class="grid">
       <section class="hero" data-testid="offer-panel">
-        <div class="tag">Ocean House · Deluxe Room</div>
+        <div class="tag" data-testid="offer-name">Ocean House · Deluxe Room</div>
         <h1>A quiet night by the sea.</h1>
         <div class="price" data-testid="advertised-price">₹8,499</div>
         <span class="claim">Free cancellation</span><span class="claim">Breakfast included</span>

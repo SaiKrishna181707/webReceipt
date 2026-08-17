@@ -4,86 +4,97 @@ WebReceipt's judged scraper is a **custom Bright Data Scraper Studio Browser Wor
 
 ## 1. Deploy WebReceipt publicly
 
-The controlled anonymous journey lives at:
+The deterministic public journey is:
 
 ```text
 https://YOUR_DEPLOYMENT/fixture/hotel
 ```
 
-Bright Data must be able to reach this URL. Localhost is intentionally only allowed in simulator/test mode.
+Bright Data must be able to reach it. Local/private-network URLs are deliberately rejected in live mode.
 
-## 2. Create the custom Browser Worker in Scraper Studio
+## 2. Create the custom Browser Worker
 
-Open Scraper Studio and create a custom scraper.
+In Scraper Studio → Code:
 
-In the Code tab:
+1. use a **Browser Worker**;
+2. add required input `url` (`brightdata/input-schema.json` is the reference);
+3. paste `brightdata/interaction.js` into Interaction;
+4. paste `brightdata/parser.js` into Parser;
+5. preview with the deployed fixture URL;
+6. use `brightdata/output-schema.json` as the required-field reference;
+7. **Save to Production** and copy the Collector ID.
 
-1. choose/use a **Browser Worker**;
-2. add a required input parameter named `url`;
-3. paste `brightdata/interaction.js` into Interaction code;
-4. paste `brightdata/parser.js` into Parser code;
-5. preview with the public fixture URL from `brightdata/preview-input.json`.
-
-The interaction performs a real browser journey:
+The worker executes:
 
 ```text
-navigate offer
-→ wait for advertised promise
-→ capture offer screenshot
+navigate public offer
+→ validate it did not redirect into login/private state or a literal local/private-network host
+→ screenshot offer
 → click Continue to checkout
-→ wait for checkout
-→ capture checkout screenshot
+→ wait for checkout + network/page idle
+→ screenshot checkout
 → parse
 → collect canonical observation
 ```
 
-V1 must return `checkout.finalTotal: 10147`.
+It never logs in or pays.
 
-Scraper Studio derives the output schema from `collect()`. `brightdata/output-schema.json` documents the required nested fields and provenance fields that should be marked required before **Save to Production**.
-
-Save the scraper to Production and copy the Collector ID (`c_...`).
-
-## 3. Configure WebReceipt
+## 3. Configure the application
 
 ```bash
 cp .env.example .env
 ```
 
-Set:
+Set at minimum:
 
 ```text
 BRIGHT_DATA_API_TOKEN=...
 BRIGHT_DATA_COLLECTOR_ID=c_...
+WEBRECEIPT_OPERATOR_TOKEN=<strong-random-secret>
 ```
 
-Run:
+Then:
 
 ```bash
 npm start
 ```
 
-Select **Bright Data live** in the UI.
+Select **Bright Data live** and enter the operator key in the UI. The Bright Data API token remains server-side.
 
-## 4. Live semantic-failure demo
+## 4. Verified self-heal flow
 
-1. Reset fixture to V1.
-2. Run the custom production collector; WebReceipt confirms 6/6 integrity checks.
-3. Break the fixture to V2 without changing its URL.
-4. The old `.total-price` selector still succeeds but now extracts `₹8,499` subtotal as `finalTotal`.
-5. WebReceipt detects that `8499 + 848 + 800 != 8499`.
-6. WebReceipt triggers `POST /dca/collectors/{id}/refactor_template` with a semantic repair prompt.
-7. Bright Data reaches `pending_answer`, its approval gate.
-8. In live auto-heal mode WebReceipt mirrors the official CLI approval operation: `POST /dca/collectors/{id}/resume_automation_job` with `{ "message": true, "auto_save": true }`.
-9. WebReceipt polls the refactor progress to completion, reruns the same collector ID, recompiles the Deal Contract, and accepts the recovered data only after semantic checks pass.
+1. Reset to V1.
+2. Run the production collector: healthy Deal Contract should pass **11/11** checks.
+3. Break the fixture to V2 at the same URL.
+4. Legacy `.total-price` still returns `₹8,499`, now a subtotal; the real total is restructured elsewhere.
+5. WebReceipt detects semantic arithmetic failure.
+6. It triggers `refactor_template` with a meaning-based repair prompt.
+7. Bright Data reaches the `pending_answer` approval gate and returns a `preview_result`.
+8. **WebReceipt does not approve yet.** It compiles the preview into the same Deal Contract and runs all integrity checks.
+9. Invalid/malformed preview → `resume_automation_job` with `{ "message": false }` and the old collector stays unapproved.
+10. Valid preview → `resume_automation_job` with `{ "message": true, "auto_save": true }`.
+11. WebReceipt polls completion, reruns the same Collector ID, and requires a second valid integrity result before declaring recovery.
 
-For a judge-facing terminal demo where you want to inspect the patch before approval, use `brightdata/CLI_RUNBOOK.md` and keep `bdata scraper heal` at its default approval gate before running `bdata scraper approve --auto-save`.
+That is the core innovation: the healer is verified by the data contract before deployment.
 
-## 5. Validate before recording
+## 5. Public deployment guard
 
-```bash
-npm run validate:scraper
-npm test
-npm run stress
+When Bright Data credentials exist, live/mutating endpoints are locked by default. Configure `WEBRECEIPT_OPERATOR_TOKEN` for the final public deployment.
+
+Only set this if you deliberately accept anonymous Bright Data spend/mutation risk:
+
+```text
+WEBRECEIPT_ALLOW_UNPROTECTED_LIVE=true
 ```
 
-The live Bright Data operation still requires your Bright Data account, production Collector ID, and API token. Never commit the token.
+## 6. Final verification
+
+```bash
+npm run verify
+```
+
+For a judge-facing terminal sequence, see `brightdata/CLI_RUNBOOK.md`.
+
+## Live boundary
+
+The repository can fully exercise simulator, semantic verification, approval/rejection orchestration, and mocked API behavior without secrets. A genuine Bright Data cloud run still requires your own production Collector ID and API token and must be recorded before submission.

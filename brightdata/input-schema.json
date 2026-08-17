@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "fields": {
+    "url": {
+      "type": "url",
+      "active": true,
+      "required": true,
+      "description": "Public anonymous offer/checkout journey URL. No login, account, paywall, personal-data or payment pages."
+    }
+  }
+}

@@ -1,5 +1,7 @@
 .git
+.github
 .env
-node_modules
-data/*.json
+node_modules/
+data/
 *.zip
+*.log

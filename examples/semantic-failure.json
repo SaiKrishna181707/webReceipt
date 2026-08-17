@@ -1,6 +1,6 @@
 {
   "contract": {
-    "schemaVersion": "1.0.0",
+    "schemaVersion": "1.1.0",
     "dealId": "deal_ocean_house",
     "subject": "Ocean House · 1 night · Deluxe Room",
     "targetUrl": "https://demo.webreceipt.dev/hotel/ocean-house",
@@ -173,7 +173,7 @@
         "hash": "8aa85d67cf3a06d659adcdc732d4c986bb6a43a04e541530cecb6328e4b9c8a3"
       }
     ],
-    "contractHash": "6d8eb6780681f73b499685be69fadef0f7417721075be39d80b1da1e7323d0ba"
+    "contractHash": "5ae08331940e9fb11c3911fdca32a55ab0c421146e1d39b2f869d0788a8ae91e"
   },
   "integrity": {
     "status": "invalid",
@@ -185,7 +185,7 @@
         "details": {
           "expected": 10147,
           "extracted": 8499,
-          "formula": "base + mandatoryFees + taxes + optionalAddons - discounts = finalTotal"
+          "formula": "max(0, base + mandatoryFees + taxes + optionalAddons - discounts) = finalTotal"
         },
         "severity": "critical"
       },
@@ -198,6 +198,16 @@
           "extracted": 848
         },
         "severity": "critical"
+      },
+      {
+        "id": "discount_bounds",
+        "label": "Discount does not exceed gross charges",
+        "pass": true,
+        "details": {
+          "gross": 10147,
+          "discounts": 0
+        },
+        "severity": "high"
       },
       {
         "id": "currency_consistency",
@@ -230,6 +240,43 @@
         "severity": "critical"
       },
       {
+        "id": "evidence_hashes",
+        "label": "Evidence hashes are intact",
+        "pass": true,
+        "details": {
+          "badEvidenceHashes": []
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "contract_hash",
+        "label": "Deal Contract hash is intact",
+        "pass": true,
+        "details": {
+          "expected": "5ae08331940e9fb11c3911fdca32a55ab0c421146e1d39b2f869d0788a8ae91e",
+          "extracted": "5ae08331940e9fb11c3911fdca32a55ab0c421146e1d39b2f869d0788a8ae91e"
+        },
+        "severity": "critical"
+      },
+      {
+        "id": "evidence_links",
+        "label": "Journey evidence references resolve",
+        "pass": true,
+        "details": {
+          "missingJourneyEvidence": []
+        },
+        "severity": "high"
+      },
+      {
+        "id": "source_urls",
+        "label": "Evidence sources are public-web URLs",
+        "pass": true,
+        "details": {
+          "invalidSourceIds": []
+        },
+        "severity": "high"
+      },
+      {
         "id": "journey_complete",
         "label": "Journey has comparable start and end observations",
         "pass": true,
@@ -247,21 +294,28 @@
         "details": {
           "expected": 10147,
           "extracted": 8499,
-          "formula": "base + mandatoryFees + taxes + optionalAddons - discounts = finalTotal"
+          "formula": "max(0, base + mandatoryFees + taxes + optionalAddons - discounts) = finalTotal"
         },
         "severity": "critical"
       }
     ],
-    "passed": 5,
-    "total": 6
+    "passed": 10,
+    "total": 11
   },
   "anomalies": [
     {
       "id": "mandatory_charges",
-      "label": "Mandatory charges observed",
+      "label": "Mandatory non-tax charges observed",
       "severity": "info",
       "value": "848 INR",
       "details": "Required non-tax charges were present in the observed checkout breakdown."
+    },
+    {
+      "id": "taxes_observed",
+      "label": "Taxes observed",
+      "severity": "info",
+      "value": "800 INR",
+      "details": "Taxes are reported separately so they are not conflated with platform or property fees."
     }
   ]
 }

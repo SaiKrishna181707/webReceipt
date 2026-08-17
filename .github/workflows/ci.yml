@@ -1,0 +1,23 @@
+name: WebReceipt verification
+
+on:
+  push:
+    branches: [main, mf]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Verify custom Scraper Studio package, app, and chaos suite
+        run: npm run verify

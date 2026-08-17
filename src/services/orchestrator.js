@@ -1,78 +1,285 @@
+import { randomUUID } from 'node:crypto';
 import { compileDealContract } from '../domain/contract.js';
 import { evaluateIntegrity } from '../domain/integrity.js';
 import { detectAnomalies } from '../domain/anomalies.js';
 import { diffContracts } from '../domain/diff.js';
 import { assertPublicTarget } from '../domain/target-policy.js';
+import { firstPreviewRecord } from '../integrations/brightdata.js';
 import { changedPromiseObservation, MUTATIONS } from '../fixtures/observations.js';
 
+function compileFromRaw(raw, { targetUrl, collector } = {}) {
+  if (!raw || typeof raw !== 'object') throw new Error('Collector returned no structured observation.');
+  return compileDealContract({
+    ...raw,
+    ...(targetUrl ? { targetUrl } : {}),
+    collectorId: raw.collectorId ?? collector?.collectorId ?? raw.collectorId,
+  });
+}
+
+
+function assertSimulatorTarget(targetUrl) {
+  const url = new URL(targetUrl);
+  const controlledHost = url.hostname === 'demo.webreceipt.dev';
+  const controlledFixture = url.pathname === '/fixture/hotel' && ['localhost', '127.0.0.1', '::1'].includes(url.hostname.replace(/^\[|\]$/g, ''));
+  if (!controlledHost && !controlledFixture) {
+    throw new Error('Simulator mode only produces data for the controlled WebReceipt fixture. Select Bright Data live before observing a real third-party URL.');
+  }
+}
+
+function assertSimulatorMutation(mutation) {
+  if (mutation === 'healthy') return mutation;
+  if (!MUTATIONS.includes(mutation)) throw new Error(`Unknown simulator mutation: ${mutation}`);
+  return mutation;
+}
+
+function normalizeStressMutations(value) {
+  const mutations = value ?? MUTATIONS;
+  if (!Array.isArray(mutations) || mutations.length === 0 || mutations.length > 20) {
+    throw new Error('Chaos Checkout mutations must be a non-empty array of at most 20 supported mutation names.');
+  }
+  for (const mutation of mutations) assertSimulatorMutation(mutation);
+  return mutations;
+}
+
+async function safeReject(collector, mutation) {
+  if (typeof collector.rejectHeal !== 'function') return null;
+  try { return await collector.rejectHeal({ mutation }); }
+  catch (error) { return { rejectionError: error.message }; }
+}
+
 export class WebReceiptService {
-  constructor({ collector, store }) { this.collector = collector; this.store = store; }
-
-  async observe({ targetUrl = 'https://demo.webreceipt.dev/hotel/ocean-house', mutation = 'healthy', autoHeal = true } = {}) {
-    assertPublicTarget(targetUrl, { allowLocal: this.collector.kind === 'simulator' });
-    await this.store.event('run', 'Observation started', { targetUrl, mutation });
-    if (mutation !== 'healthy' && typeof this.collector.inject === 'function') this.collector.inject(mutation);
-    const raw = await this.collector.collect({ url: targetUrl, mutation });
-    let contract = compileDealContract({ ...raw, targetUrl, collectorId: raw.collectorId ?? this.collector.collectorId });
-    let integrity = evaluateIntegrity(contract);
-    let healed = false;
-    let heal = null;
-
-    if (integrity.status === 'invalid' && autoHeal) {
-      const prompt = makeHealPrompt(contract, integrity);
-      await this.store.event('integrity', 'Semantic contract failure detected', { mutation, failures: integrity.failures.map((f) => f.id) });
-      await this.store.event('heal', 'Triggering scraper self-heal', { prompt });
-      heal = await this.collector.heal({ mutation, prompt, customInput: [{ url: targetUrl }] });
-      const retried = await this.collector.collect({ url: targetUrl, mutation });
-      contract = compileDealContract({ ...retried, targetUrl, collectorId: retried.collectorId ?? this.collector.collectorId });
-      integrity = evaluateIntegrity(contract);
-      healed = integrity.status === 'valid';
-      await this.store.event(healed ? 'success' : 'error', healed ? 'Healed collector passed all contract checks' : 'Healed collector still violates contract', { mutation, integrity: integrity.status });
-    }
-
-    const anomalies = detectAnomalies(contract);
-    await this.store.addContract(contract, integrity, anomalies);
-    return { contract, integrity, anomalies, healed, heal };
+  constructor({ collector, store }) {
+    this.collector = collector;
+    this.store = store;
   }
 
-  async promiseDiff() {
-    const latest = this.store.state.contracts[0]?.contract;
-    if (!latest) await this.observe();
+  async repair({ contract, integrity, mutation = 'healthy', targetUrl }) {
+    const prompt = makeHealPrompt(contract, integrity);
+    await this.store.event('integrity', 'Semantic contract failure detected', {
+      mutation,
+      failures: integrity.failures.map((failure) => failure.id),
+    });
+    await this.store.event('heal', 'Requested a Scraper Studio self-heal proposal', { prompt });
+
+    const proposal = await this.collector.heal({ mutation, prompt });
+
+    const repair = {
+      requested: true,
+      proposalStatus: proposal?.status ?? 'unknown',
+      approval: proposal?.approval ?? 'unknown',
+      previewIntegrity: null,
+      previewContractHash: null,
+      approved: false,
+      rejected: false,
+      postApprovalVerified: false,
+      proposal,
+    };
+
+    // The current Scraper Studio self-heal flow normally pauses at an approval
+    // gate with preview_result. WebReceipt treats that preview as untrusted until
+    // it compiles into the same canonical Deal Contract and passes every critical
+    // semantic invariant.
+    if (proposal?.approval === 'required' || proposal?.status === 'awaiting_approval') {
+      const previewRaw = firstPreviewRecord(proposal.previewResult ?? proposal.preview_result);
+      if (!previewRaw) {
+        const rejection = await safeReject(this.collector, mutation);
+        repair.rejected = true;
+        repair.rejection = rejection;
+        repair.previewIntegrity = { status: 'invalid', failures: [{ id: 'missing_heal_preview' }] };
+        await this.store.event('error', 'Rejected self-heal: proposal had no structured preview result', { mutation });
+        return repair;
+      }
+
+      let previewContract;
+      try {
+        previewContract = compileFromRaw(previewRaw, { targetUrl, collector: this.collector });
+        repair.previewIntegrity = evaluateIntegrity(previewContract);
+        repair.previewContractHash = previewContract.contractHash;
+      } catch (error) {
+        const rejection = await safeReject(this.collector, mutation);
+        repair.rejected = true;
+        repair.rejection = rejection;
+        repair.previewIntegrity = {
+          status: 'invalid',
+          failures: [{ id: 'preview_compile_error', details: { message: error.message } }],
+        };
+        await this.store.event('error', 'Rejected self-heal: preview could not compile into the Deal Contract', {
+          mutation,
+          error: error.message,
+        });
+        return repair;
+      }
+
+      const previewValid = repair.previewIntegrity.status === 'valid';
+      await this.store.event(previewValid ? 'verify' : 'error', previewValid
+        ? `Repair preview passed ${repair.previewIntegrity.passed}/${repair.previewIntegrity.total} contract checks`
+        : 'Repair preview failed semantic contract verification', {
+        mutation,
+        status: repair.previewIntegrity.status,
+        failures: repair.previewIntegrity.failures.map((failure) => failure.id),
+      });
+
+      if (!previewValid) {
+        const rejection = await safeReject(this.collector, mutation);
+        repair.rejected = true;
+        repair.rejection = rejection;
+        await this.store.event('reject', 'Rejected self-heal before deployment', {
+          mutation,
+          failures: repair.previewIntegrity.failures.map((failure) => failure.id),
+        });
+        return repair;
+      }
+
+      if (typeof this.collector.approveHeal !== 'function') {
+        throw new Error('Collector reached a repair approval gate but does not implement approveHeal().');
+      }
+      repair.completion = await this.collector.approveHeal({ autoSave: true, mutation });
+      repair.approved = true;
+      repair.approval = 'approved';
+      await this.store.event('approve', 'Verified repair approved and saved', {
+        mutation,
+        previewContractHash: repair.previewContractHash,
+      });
+    } else {
+      // Some Bright Data configurations may complete without a manual gate.
+      // We cannot pre-approve what is already terminal, so we still require the
+      // post-change rerun below before calling the repair successful.
+      repair.approved = proposal?.approval === 'not_required';
+      await this.store.event('verify', 'Self-heal returned without an approval gate; requiring post-heal verification', {
+        mutation,
+        proposalStatus: repair.proposalStatus,
+      });
+    }
+
+    const retried = await this.collector.collect({ url: targetUrl, mutation });
+    repair.postContract = compileFromRaw(retried, { targetUrl, collector: this.collector });
+    repair.postIntegrity = evaluateIntegrity(repair.postContract);
+    repair.postApprovalVerified = repair.postIntegrity.status === 'valid';
+    await this.store.event(repair.postApprovalVerified ? 'success' : 'error', repair.postApprovalVerified
+      ? 'Deployed repair passed a fresh collector run'
+      : 'Deployed repair still violates the Deal Contract', {
+      mutation,
+      status: repair.postIntegrity.status,
+      failures: repair.postIntegrity.failures.map((failure) => failure.id),
+    });
+    return repair;
+  }
+
+  async observe({ targetUrl = 'https://demo.webreceipt.dev/hotel/ocean-house', mutation = 'healthy', autoHeal = true } = {}) {
+    const normalizedTarget = assertPublicTarget(targetUrl, { allowLocal: this.collector.kind === 'simulator' });
+    if (this.collector.kind === 'simulator') {
+      assertSimulatorTarget(normalizedTarget);
+      assertSimulatorMutation(mutation);
+    }
+    await this.store.event('run', 'Observation started', { targetUrl: normalizedTarget, mutation, collector: this.collector.kind });
+    if (mutation !== 'healthy' && typeof this.collector.inject === 'function') this.collector.inject(mutation);
+
+    const raw = await this.collector.collect({ url: normalizedTarget, mutation });
+    let contract = compileFromRaw(raw, { targetUrl: normalizedTarget, collector: this.collector });
+    let integrity = evaluateIntegrity(contract);
+    let repair = null;
+
+    if (integrity.status === 'invalid' && autoHeal) {
+      repair = await this.repair({ contract, integrity, mutation, targetUrl: normalizedTarget });
+      if (repair.postContract) {
+        contract = repair.postContract;
+        integrity = repair.postIntegrity;
+      }
+    }
+
+    const healed = Boolean(repair?.postApprovalVerified);
+    const anomalies = detectAnomalies(contract);
+    await this.store.addContract(contract, integrity, anomalies);
+    return {
+      contract,
+      integrity,
+      anomalies,
+      healed,
+      repair,
+      // Backward-compatible alias for the demo UI/tests created before the
+      // verification gate was added.
+      heal: repair?.proposal ?? null,
+    };
+  }
+
+  async simulatePromiseDiff() {
+    if (this.collector.kind !== 'simulator') throw new Error('Synthetic day +3 Promise Diff is available only in simulator mode. Use stored-history diff for live observations.');
+    if (!this.store.state.contracts[0]?.contract) await this.observe();
     const before = this.store.state.contracts[0].contract;
     const after = compileDealContract(changedPromiseObservation());
     const integrity = evaluateIntegrity(after);
     const changes = diffContracts(before, after);
     await this.store.addContract(after, integrity, detectAnomalies(after));
-    await this.store.event('diff', `${changes.length} promise changes detected`, { changes });
-    return { before, after, changes, integrity };
+    await this.store.event('diff', `${changes.length} simulated promise changes detected`, { changes, mode: 'simulator' });
+    return { before, after, changes, integrity, source: 'simulated-day-plus-3' };
   }
 
-  async stress({ mutations = MUTATIONS } = {}) {
+  async historyDiff({ targetUrl } = {}) {
+    const normalizedTarget = targetUrl ? assertPublicTarget(targetUrl, { allowLocal: this.collector.kind === 'simulator' }) : null;
+    const contracts = this.store.state.contracts
+      .map((entry) => entry.contract)
+      .filter((contract) => !normalizedTarget || contract.targetUrl === normalizedTarget);
+    if (contracts.length < 2) throw new Error('Need at least two stored observations for the same target before calculating a live Promise Diff.');
+    const [after, before] = contracts;
+    const changes = diffContracts(before, after);
+    await this.store.event('diff', `${changes.length} stored promise changes detected`, {
+      targetUrl: after.targetUrl,
+      before: before.observedAt,
+      after: after.observedAt,
+    });
+    return { before, after, changes, integrity: evaluateIntegrity(after), source: 'stored-history' };
+  }
+
+  async stress({ mutations } = {}) {
+    if (this.collector.kind !== 'simulator') throw new Error('Chaos Checkout is intentionally simulator-only; live Bright Data runs use the controlled Break website flow.');
+    mutations = normalizeStressMutations(mutations);
     const results = [];
     const started = Date.now();
     for (const mutation of mutations) {
       if (typeof this.collector.inject === 'function') this.collector.inject(mutation);
       const first = await this.collector.collect({ mutation });
-      const initialContract = compileDealContract(first);
+      const initialContract = compileFromRaw(first, { collector: this.collector });
       const initialIntegrity = evaluateIntegrity(initialContract);
       let finalIntegrity = initialIntegrity;
       let healed = false;
+      let previewVerified = false;
+      let rejected = false;
+
       if (initialIntegrity.status === 'invalid') {
-        const prompt = makeHealPrompt(initialContract, initialIntegrity);
-        await this.collector.heal({ mutation, prompt, customInput: [{ url: initialContract.targetUrl }] });
-        const retried = await this.collector.collect({ mutation });
-        finalIntegrity = evaluateIntegrity(compileDealContract(retried));
-        healed = finalIntegrity.status === 'valid';
+        const repair = await this.repair({
+          contract: initialContract,
+          integrity: initialIntegrity,
+          mutation,
+          targetUrl: initialContract.targetUrl,
+        });
+        finalIntegrity = repair.postIntegrity ?? initialIntegrity;
+        healed = Boolean(repair.postApprovalVerified);
+        previewVerified = repair.previewIntegrity?.status === 'valid';
+        rejected = Boolean(repair.rejected);
       }
-      results.push({ mutation, initiallyValid: initialIntegrity.status === 'valid', detectedFailure: initialIntegrity.status === 'invalid', healed, finalStatus: finalIntegrity.status, failedChecks: initialIntegrity.failures.map((f) => f.id) });
+
+      results.push({
+        mutation,
+        initiallyValid: initialIntegrity.status === 'valid',
+        detectedFailure: initialIntegrity.status === 'invalid',
+        previewVerified,
+        rejected,
+        healed,
+        finalStatus: finalIntegrity.status,
+        failedChecks: initialIntegrity.failures.map((failure) => failure.id),
+      });
     }
+
     const run = {
-      id: crypto.randomUUID(), at: new Date().toISOString(), durationMs: Date.now() - started,
+      id: randomUUID(),
+      at: new Date().toISOString(),
+      durationMs: Date.now() - started,
       total: results.length,
-      initiallyHealthy: results.filter((x) => x.initiallyValid).length,
-      detected: results.filter((x) => x.detectedFailure).length,
-      recovered: results.filter((x) => x.initiallyValid || x.healed).length,
-      results
+      initiallyHealthy: results.filter((result) => result.initiallyValid).length,
+      detected: results.filter((result) => result.detectedFailure).length,
+      previewVerified: results.filter((result) => result.previewVerified).length,
+      recovered: results.filter((result) => result.initiallyValid || result.healed).length,
+      results,
     };
     await this.store.addStressRun(run);
     await this.store.event('stress', `Chaos suite: ${run.recovered}/${run.total} resilient`, { run });
@@ -81,6 +288,8 @@ export class WebReceiptService {
 }
 
 function makeHealPrompt(contract, integrity) {
-  const failures = integrity.failures.map((f) => `${f.id}: ${JSON.stringify(f.details)}`).join('; ');
-  return `WebReceipt semantic integrity failure. Preserve the output schema and collector identity. Re-extract values from the current public page based on field meaning, not legacy selectors. Failures: ${failures}. Critical rule: final_total must represent the amount due and equal base_price + mandatory_fees + taxes + selected_optional_addons - discounts. Attach source evidence for critical fields. Target: ${contract.targetUrl}`;
+  const failures = integrity.failures
+    .map((failure) => `${failure.id}: ${JSON.stringify(failure.details)}`)
+    .join('; ');
+  return `WebReceipt semantic integrity failure. Preserve the output schema and collector identity. Re-extract values from the current public page based on field meaning, not legacy selectors. Failures: ${failures}. Critical rule: checkout.finalTotal must represent the amount due and equal checkout.basePrice + checkout.mandatoryFees + checkout.taxes + checkout.optionalAddons - checkout.discounts. Attach source evidence for critical fields. Target: ${contract.targetUrl}`;
 }

@@ -1,81 +1,59 @@
 # WebReceipt custom Bright Data Scraper Studio scraper
 
-This directory is the **custom Scraper Studio implementation** used by WebReceipt. It is not a Scrapers Library wrapper.
+This directory is the auditable **custom Scraper Studio Browser Worker** used by WebReceipt. It is not a Scrapers Library wrapper.
 
-The hackathon requires a custom scraper created and run in Bright Data Scraper Studio, and only public web data is allowed. WebReceipt therefore uses a **Browser Worker** against an anonymous pre-payment journey and never logs in, purchases, or collects personal data.
+## Package
 
-## Files
+- `input-schema.json` — required public `url` input reference.
+- `interaction.js` — public offer → screenshot → click checkout → screenshot → parse → collect.
+- `parser.js` — canonical observation + provenance parser.
+- `output-schema.json` — required nested output-schema reference.
+- `preview-input.json` — example preview input.
+- `SELF_HEAL_PROMPT.md` — semantic repair prompt.
+- `CLI_RUNBOOK.md` — coding-agent/CLI run → break → heal → approve → verify flow.
 
-- `interaction.js` — Browser Worker journey: navigate → capture offer → click checkout → capture final public checkout → parse → collect.
-- `parser.js` — canonical WebReceipt observation parser and evidence builder.
-- `output-schema.json` — Scraper Studio output schema for the structured observation.
-- `preview-input.json` — preview/run input shape.
-- `SELF_HEAL_PROMPT.md` — semantic repair prompt used in the demo.
-- `CLI_RUNBOOK.md` — exact coding-agent / CLI workflow for create, run, heal, approve, and verify.
+## Why Browser Worker is central
 
-## Why this must be a Browser Worker
+The controlled `/fixture/hotel` exposes only the offer initially. Checkout is hidden until a real click. The worker uses navigation, waits, click, page/network-idle waits and two screenshot tags before parsing.
 
-The collector uses browser-only Scraper Studio primitives:
+It also fails closed for credential-bearing URLs, literal local/private-network hosts, encoded login/private paths, and redirects that land on those blocked states.
 
-- `navigate`
-- `wait_visible`
-- `click`
-- `wait_network_idle`
-- `wait_page_idle`
-- `tag_screenshot`
-- `parse`
-- `collect`
+## Silent-corruption fixture
 
-The controlled demo page initially exposes only the offer. The checkout panel is revealed only after clicking **Continue to checkout**, making the browser journey a real part of data acquisition rather than a decorative choice.
-
-## Deliberate semantic failure
-
-For the self-healing demonstration, the initial production parser contains:
+Initial parser intentionally contains:
 
 ```js
 const finalTotal = money('.total-price');
 ```
 
-Fixture V1:
+V1:
 
 ```text
-.total-price = ₹10,147  // actual total due
+.total-price = ₹10,147  // actual amount due
 ```
 
-Fixture V2, same URL after redesign:
+V2:
 
 ```text
-.total-price = ₹8,499                         // now subtotal
-[data-testid="order-total"] = ₹10,147        // actual total due
+.total-price = ₹8,499  // subtotal, selector still works
+[data-testid="order-total"] = restructured/split true total ₹10,147
 ```
 
-The old selector still succeeds. Scraper Studio returns valid-looking structured data, but WebReceipt's Deal Contract Integrity engine detects that:
-
-```text
-8499 + 848 + 800 != 8499
-```
-
-That semantic contradiction triggers Scraper Studio Self-Healing. The repair prompt describes the **meaning** of `finalTotal`, not a replacement selector. After Bright Data reaches its approval gate, WebReceipt's live adapter uses the same approval endpoint as the official CLI, auto-saves the approved repair, reruns the collector, and accepts the observation only if the Deal Contract passes again.
+WebReceipt detects the inconsistent Deal Contract and requests a semantic self-heal. Crucially, the app treats Bright Data's `preview_result` as **untrusted**: it compiles the preview, runs all Deal Contract checks, rejects bad previews, and only approves/autosaves a repair after the preview is valid. It then reruns the collector and verifies again.
 
 ## Scraper Studio setup
 
 1. Deploy WebReceipt publicly.
-2. Create a custom Scraper Studio collector using a **Browser Worker**.
-3. In the Code tab, create a required input parameter named `url`.
-4. Paste `interaction.js` into Interaction code.
-5. Paste `parser.js` into Parser code.
-6. Preview with `preview-input.json` after replacing the placeholder host.
-7. Confirm V1 returns `checkout.finalTotal = 10147` and screenshots are captured.
-8. Let Scraper Studio infer the output structure, then use `output-schema.json` as the required-field reference in the schema editor.
-9. **Save to Production** and copy the Collector ID (`c_...`).
-10. Configure WebReceipt with `BRIGHT_DATA_API_TOKEN` and `BRIGHT_DATA_COLLECTOR_ID`.
+2. Create a custom **Browser Worker**.
+3. Define required `url` input using `input-schema.json` as reference.
+4. Paste `interaction.js` and `parser.js`.
+5. Preview V1 with your deployed fixture URL.
+6. Verify output fields against `output-schema.json`.
+7. **Save to Production** and copy the `c_...` Collector ID.
+8. Configure WebReceipt server-side secrets + operator token.
 
-Validate the checked-in package locally:
+Run locally before recording:
 
 ```bash
-npm run validate:scraper
-npm test
-npm run stress
+npm run verify
 ```
-
-See `CLI_RUNBOOK.md` for the live create/run/heal sequence.
