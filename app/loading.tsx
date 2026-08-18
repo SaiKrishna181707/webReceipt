@@ -1,1 +1,26 @@
-export default function Loading(){return <div><div className="page-head"><div><div className="kicker">LOADING / MISSION CONTROL</div><div style={{height:34,width:280,background:'#151518',borderRadius:7,marginTop:9}}/><div style={{height:12,width:500,background:'#121214',borderRadius:6,marginTop:12}}/></div></div><div className="grid stats">{[1,2,3,4].map(x=><div className="card" key={x} style={{height:120,background:'#101012'}}/> )}</div><div className="card" style={{height:280,marginTop:12,background:'#101012'}}/></div>}
+export default function Loading() {
+  return (
+    <div className="loading-shell" aria-label="Loading ScrapeHeal">
+      <div className="page-head">
+        <div>
+          <div className="kicker">LOADING / MISSION CONTROL</div>
+          <div className="skeleton skeleton-title" />
+          <div className="skeleton skeleton-copy" />
+        </div>
+      </div>
+      <div className="grid stats">
+        {[1, 2, 3, 4].map((x) => (
+          <div className="card skeleton-card" key={x}>
+            <div className="skeleton skeleton-label" />
+            <div className="skeleton skeleton-number" />
+            <div className="skeleton skeleton-small" />
+          </div>
+        ))}
+      </div>
+      <div className="grid charts loading-charts">
+        <div className="card skeleton-panel" />
+        <div className="card skeleton-panel" />
+      </div>
+    </div>
+  )
+}
