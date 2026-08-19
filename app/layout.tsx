@@ -4,8 +4,9 @@ import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
 
 export const metadata: Metadata = {
-  title: 'WebReceipt — Web Evidence Terminal',
-  description: 'Transform web journeys into timestamped, evidence-backed Deal Contracts with semantic integrity validation.',
+  title: 'WebReceipt — Proof of Promise',
+  description:
+    'A self-healing evidence engine for the mutable web. Turn public purchase journeys into timestamped, tamper-evident Deal Contracts, catch semantic extraction drift, and diff commercial promises over time.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

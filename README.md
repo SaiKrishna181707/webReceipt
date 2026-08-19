@@ -142,12 +142,13 @@ BRIGHT_DATA_COLLECTOR_ID=c_prod_123
 
 ## 🎥 The 2-Minute Demo Flow
 
-You can run the interactive mutation lab on the `/demo` route.
-1. **Journey Replay (0:00-0:30)**: Click "Run Journey" to orchestrate the Browser Worker and compile the Deal Contract.
-2. **Evidence Provenance (0:30-0:50)**: Click a stage card to view the exact screenshot, DOM snippet, and SHA-256 cryptographic hash.
-3. **Break It (0:50-1:10)**: Click "Simulate Redesign" to trigger a CSS/DOM mutation. Watch the Contract Integrity Engine catch the *wrong-but-valid* extraction error.
-4. **Bright Data Heal (1:10-1:30)**: Click "Heal with Bright Data" to trigger the Self-Healing API, preview the fix, and automatically deploy the repair.
-5. **Promise Diff (1:30-2:00)**: Click "3 Days Later" to time-travel and view a GitHub-style diff of the commercial promises changing (e.g. Free Cancellation -> Non-refundable).
+Open the **Console** at `/console` and walk the guided steps. A broader resilience sweep lives at `/mutation-lab`, and the sealed contract history at `/receipts`.
+
+1. **Observe Journey (0:00-0:30)**: Run *Observe journey* to traverse the public flow and compile the Deal Contract (₹8,499 → ₹10,147) with tamper-evident evidence for every claim.
+2. **Evidence Provenance (0:30-0:50)**: Click a journey stage or contract field to open the evidence drawer — captured text, source URL, DOM path, timestamp and SHA-256 hash.
+3. **Break It (0:50-1:10)**: Run *Simulate redesign* to inject a *wrong-but-valid* total. The Contract Integrity Engine flips to invalid on `total_arithmetic`.
+4. **Bright Data Heal (1:10-1:30)**: Run *Heal with Bright Data*. The proposed repair preview is verified against contract invariants before it is approved and deployed.
+5. **Promise Diff (1:30-2:00)**: Run *Promise Diff* to view a GitHub-style diff of the commercial promises changing (e.g. Free cancellation → Non-refundable).
 
 ---
 

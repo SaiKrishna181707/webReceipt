@@ -2,12 +2,13 @@
   "name": "webreceipt",
   "version": "2.0.0",
   "private": true,
-  "description": "ScrapeHeal — self-healing web scraper control plane",
+  "description": "WebReceipt — Proof of Promise: a self-healing consumer evidence engine for the mutable web.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify": "node scripts/validate-scraper-studio.mjs && node --test --test-concurrency=1 test/*.test.js && node src/stress-cli.js"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.16",
