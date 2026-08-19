@@ -1,3 +1,148 @@
 'use client'
-import {useState} from 'react';import {useRouter} from 'next/navigation';import {toast} from 'sonner';import {ArrowRight,CheckCircle2,Globe2,Loader2,Sparkles} from 'lucide-react'
-export default function NewScraper(){const router=useRouter();const[name,setName]=useState('');const[url,setUrl]=useState('');const[desc,setDesc]=useState('');const[busy,setBusy]=useState(false);const submit=async()=>{if(!name||!url||!desc){toast.error('Complete all fields');return}try{new URL(url)}catch{toast.error('Enter a valid URL');return}setBusy(true);await new Promise(r=>setTimeout(r,2200));toast.success('Scraper created');router.push('/scrapers/products')};return <div><div className="page-head"><div><div className="kicker">03 / PROVISION</div><h1 className="page-title">Create collector</h1><p className="page-desc">Describe what you need. WebReceipt turns the target and intent into a structured collector.</p></div></div><div className="grid create-layout"><div className="card form-card"><div className="field"><label className="label">COLLECTOR NAME</label><input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="Product Price Watcher"/><span className="help">A short name your team will recognize.</span></div><div className="field"><label className="label">TARGET URL</label><div style={{position:'relative'}}><Globe2 size={15} style={{position:'absolute',left:10,top:8,color:'#707785'}}/><input className="input" style={{width:'100%',paddingLeft:34}} value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://example.com/products"/></div></div><div className="field"><label className="label">EXTRACTION THESIS</label><textarea className="textarea" value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Extract product name, current price, rating and availability from every product card."/><span className="help">Use plain language. Be explicit about the fields you care about.</span></div><button className="btn btn-primary" onClick={submit} disabled={busy}>{busy?<><Loader2 size={14}/>Creating collector...</>:<><Sparkles size={14}/>Create collector <ArrowRight size={14}/></>}</button></div><aside className="card preview"><div className="kicker">EXPECTED RESULT</div><h3 style={{fontSize:15,margin:'8px 0'}}>Collector preview</h3><p className="page-desc">Your collector exposes structured rows with stable field names.</p><div className="preview-box"><div className="mono-small">COLLECTOR ID</div><strong className="mono-small" style={{display:'block',color:'#42a5f5',marginTop:7}}>c_xxxxxxxx</strong><div className="preview-line"/><div className="preview-line" style={{width:'72%'}}/><div className="preview-line" style={{width:'54%'}}/><div style={{display:'flex',gap:7,alignItems:'center',marginTop:14,color:'#777781',fontSize:9}}><CheckCircle2 size={13} color="#26a69a"/>Structured JSON output</div></div></aside></div></div>}
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Plus, ArrowRight, CheckCircle2, Globe, Sparkles, Loader2, Code, Shield, Layers } from 'lucide-react'
+import { toast } from 'sonner'
+
+export default function NewScraperPage() {
+  const router = useRouter()
+  const [name, setName] = useState('')
+  const [url, setUrl] = useState('')
+  const [desc, setDesc] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name || !url || !desc) {
+      toast.error('Please complete all form fields')
+      return
+    }
+
+    try {
+      new URL(url)
+    } catch {
+      toast.error('Please enter a valid HTTP/HTTPS URL')
+      return
+    }
+
+    setBusy(true)
+    toast('Compiling Bright Data Scraper Studio schema & interaction script...')
+    await new Promise((r) => setTimeout(r, 2000))
+    toast.success('Collector provisioned! Registered ID c_prod_new892')
+    router.push('/scrapers/products')
+  }
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="border-b border-white/10 pb-6">
+        <div className="flex items-center gap-2 text-purple-400 text-xs font-mono tracking-wider uppercase mb-1">
+          <Plus size={14} /> 03 / PROVISIONING WIZARD
+        </div>
+        <h1 className="text-3xl font-extrabold text-white">Create Browser Worker Collector</h1>
+        <p className="text-gray-400 text-sm mt-1">
+          Specify target URL & extraction thesis. WebReceipt compiles candidate JSON schemas and Scraper Studio scripts.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-12 gap-8">
+        {/* Form Column */}
+        <form onSubmit={handleSubmit} className="lg:col-span-7 bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-mono text-gray-400 uppercase tracking-wider block">Collector Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Hotel Fare & Tax Watcher"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-purple-500/50 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-mono text-gray-400 uppercase tracking-wider block">Target Public URL</label>
+            <div className="relative">
+              <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com/checkout-journey"
+                className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm font-mono text-white placeholder-gray-500 outline-none focus:border-purple-500/50 transition-colors"
+              />
+            </div>
+            <span className="text-[11px] text-gray-500 block">Public anonymous journey URLs only (no logins or payment inputs).</span>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-mono text-gray-400 uppercase tracking-wider block">Extraction Thesis</label>
+            <textarea
+              rows={4}
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder="Extract item title, advertised price, mandatory resort fees, taxes, and final order total."
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white placeholder-gray-500 outline-none focus:border-purple-500/50 transition-colors"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {busy ? (
+              <>
+                <Loader2 className="animate-spin" size={16} /> Provisioning Scraper Studio Worker...
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} /> Compile & Provision Collector <ArrowRight size={16} />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Live Schema Preview Column */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
+            <div>
+              <span className="text-[11px] font-mono text-cyan-400 uppercase font-bold">EXPECTED COMPILER OUTPUT</span>
+              <h3 className="text-lg font-bold text-white mt-0.5">Canonical Output Schema</h3>
+            </div>
+
+            <pre className="bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-mono text-cyan-200 overflow-x-auto">
+              <code>{JSON.stringify(
+                {
+                  $schema: 'http://json-schema.org/draft-07/schema#',
+                  type: 'object',
+                  properties: {
+                    basePrice: { type: 'number' },
+                    mandatoryFees: { type: 'number' },
+                    taxes: { type: 'number' },
+                    finalTotal: { type: 'number' },
+                    currency: { type: 'string', default: 'INR' }
+                  },
+                  required: ['basePrice', 'finalTotal', 'currency']
+                },
+                null,
+                2
+              )}</code>
+            </pre>
+
+            <div className="space-y-2 pt-2 border-t border-white/10 text-xs text-gray-400">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span>Deterministic arithmetic validation enabled</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span>SHA-256 evidence chain verification step</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

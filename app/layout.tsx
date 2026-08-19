@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
+import { Navigation } from '@/components/navigation'
 
 export const metadata: Metadata = {
   title: 'WebReceipt — Web Evidence Terminal',
@@ -9,9 +10,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body>
-        {children}
+        <Navigation />
+        <main className="md:ml-64 pt-16 md:pt-0 pb-20 md:pb-0 min-h-screen">
+          {children}
+        </main>
         <Toaster theme="dark" position="bottom-right" />
       </body>
     </html>

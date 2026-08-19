@@ -1,8 +1,239 @@
 'use client'
-import {useState} from 'react';import {useParams} from 'next/navigation';import {Copy,Play,HeartPulse,ExternalLink,CheckCircle2} from 'lucide-react';import {toast} from 'sonner';import {scrapers,output} from '@/lib/mock-data'
-export default function Detail(){const{id}=useParams<{id:string}>();const s=scrapers.find(x=>x.id===id)||scrapers[0];const[tab,setTab]=useState('Overview');const[status,setStatus]=useState(s.status);const run=()=>{setStatus('Healing');toast('Run started · collecting mock rows');setTimeout(()=>{setStatus('Healthy');toast.success('Run completed · 3 rows collected')},1200)};const heal=()=>{setStatus('Healing');toast('Healing collector · validating repair');setTimeout(()=>{setStatus('Healthy');toast.success('Healing verified · collector recovered')},1800)};return <div><div className="card detail-hero"><div><div className="kicker">COLLECTOR / {s.id.toUpperCase()}</div><h1 className="page-title">{s.name}</h1><div className="detail-meta"><em className={`status ${status.toLowerCase()}`}>{status}</em><span className="mono-small">{s.url}</span></div><div className="mono-small" style={{marginTop:9}}>{s.collector} · <button style={{background:'none',border:0,color:'#22d3ee',cursor:'pointer'}} onClick={()=>{navigator.clipboard?.writeText(s.collector);toast.success('Collector ID copied')}}><Copy size={11}/></button></div></div><div className="detail-actions"><button className="btn" onClick={run}><Play size={13}/>Run</button><button className="btn btn-primary" onClick={heal}><HeartPulse size={13}/>Heal</button><button className="btn"><ExternalLink size={13}/>API Trigger</button></div></div><div className="tabs">{['Overview','Runs','Healing','API'].map(x=><button key={x} onClick={()=>setTab(x)} className={`tab ${tab===x?'active':''}`}>{x}</button>)}</div>{tab==='Overview'&&<Overview s={s}/>} {tab==='Runs'&&<Runs/>}{tab==='Healing'&&<Healing/>}{tab==='API'&&<API collector={s.collector}/>}</div>}
-function Overview({s}:{s:typeof scrapers[number]}){return <div className="section"><div className="grid metric-strip"><Metric l="Total runs" v="184"/><Metric l="Success rate" v="98.4%"/><Metric l="Rows collected" v={s.rows.toLocaleString()}/><Metric l="Last healed" v={s.lastHeal}/></div><div className="grid detail-grid" style={{marginTop:12}}><div className="card form-card"><div className="kicker">DESCRIPTION</div><p className="page-desc" style={{marginTop:9}}>{s.description}</p><div className="section-head" style={{marginTop:28}}><span className="section-title">Structured output</span><span className="mono-small">3 rows</span></div><pre className="code-block">{JSON.stringify(output.slice(0,2),null,2)}</pre></div><div className="card form-card"><div className="kicker">COLLECTOR HEALTH</div><div style={{fontSize:30,fontWeight:600,marginTop:12}}>98.4%</div><div className="sub">Successful runs in the last 30 days</div><div className="preview-line" style={{marginTop:25,background:'linear-gradient(90deg,#22c55e 0 98%,#29292f 98%)'}}/><div className="sub" style={{marginTop:10}}>184 runs · 3 healing events · 0 data loss</div></div></div></div>}
-function Metric({l,v}:{l:string;v:string}){return <div className="card metric-box"><span className="label">{l}</span><strong>{v}</strong></div>}
-function Runs(){return <div className="section"><div className="card table-card"><table className="table"><thead><tr><th>Timestamp</th><th>Trigger</th><th>Status</th><th>Rows</th><th>Duration</th></tr></thead><tbody>{['2 min ago','18 min ago','42 min ago','1 hr ago','Yesterday'].map((t,i)=><tr key={t}><td>{t}</td><td className="mono-small">{i===1?'HEALED':i===3?'SCHEDULED':'MANUAL'}</td><td><em className="status healthy">Healthy</em></td><td>{[1842,1840,1822,1764,1710][i]}</td><td className="mono-small">{[3.2,4.1,3.8,3.4,4.0][i]}s</td></tr>)}</tbody></table></div><div className="card form-card" style={{marginTop:12}}><div className="section-title">Latest output JSON</div><pre className="code-block" style={{marginTop:12}}>{JSON.stringify(output,null,2)}</pre></div></div>}
-function Healing(){return <div className="section grid detail-grid"><div className="card form-card"><div className="section-title">Healing timeline</div><div className="timeline">{[['Today 14:08','Selector drift detected','div.product-card → article[data-card]','492 rows recovered'],['Yesterday 22:41','Price node moved','.price → [data-price]','1,842 rows verified'],['Aug 12','DOM structure changed','.listing → section.listing-card','918 rows recovered']].map(e=><div className="event" key={e[0]}><span className="event-dot"/><strong>{e[1]}</strong><p>{e[0]} · {e[3]}</p><span className="mono-small">{e[2]}</span></div>)}</div></div><div className="card form-card recovery"><CheckCircle2 size={20} color="#22c55e"/><h3 style={{fontSize:16}}>Recovery verified</h3><p className="page-desc">The collector returned to its previous output contract after repair. Collector identity remained stable.</p></div></div>}
-function API({collector}:{collector:string}){return <div className="section grid detail-grid"><div className="card form-card"><div className="kicker">TRIGGER EXAMPLE</div><h3 style={{fontSize:16,margin:'8px 0 14px'}}>Run this collector</h3><pre className="code-block">{`curl -X POST https://api.brightdata.com/dca/trigger \\\n  -H "Authorization: Bearer <token>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"collector_id":"${collector}"}'`}</pre><button className="btn" style={{marginTop:10}} onClick={()=>toast.success('Command copied')}>Copy command <Copy size={12}/></button></div><div className="card form-card"><div className="kicker">API CONTRACT</div><div className="step"><span className="step-no">01</span><div className="step-text">POST trigger<span>Starts a collector run.</span></div></div><div className="step"><span className="step-no">02</span><div className="step-text">Receive structured rows<span>JSON output with stable fields.</span></div></div><div className="step"><span className="step-no">03</span><div className="step-text">Observe health<span>Runs and healing events remain visible.</span></div></div></div></div>}
+
+import { useState } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import {
+  Copy,
+  Play,
+  HeartPulse,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  ArrowLeft,
+  Terminal,
+  Activity,
+  Shield,
+  FileJson
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { scrapers, output } from '@/lib/mock-data'
+
+export default function ScraperDetailPage() {
+  const params = useParams<{ id: string }>()
+  const s = scrapers.find((x) => x.id === params?.id) || scrapers[0]
+  const [tab, setTab] = useState<'Overview' | 'Runs' | 'Healing' | 'API'>('Overview')
+  const [status, setStatus] = useState(s.status)
+
+  const handleRun = () => {
+    setStatus('Healing')
+    toast('Triggering collector run...')
+    setTimeout(() => {
+      setStatus('Healthy')
+      toast.success('Run completed successfully! 3 rows verified & compiled.')
+    }, 1400)
+  }
+
+  const handleHeal = () => {
+    setStatus('Healing')
+    toast('Bright Data self-healing process initiated...')
+    setTimeout(() => {
+      setStatus('Healthy')
+      toast.success('Repair preview passed 11/11 checks! Collector recovered.')
+    }, 1800)
+  }
+
+  const copyCollectorId = () => {
+    navigator.clipboard?.writeText(s.collector)
+    toast.success('Collector ID copied to clipboard')
+  }
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      {/* Back Link */}
+      <Link href="/scrapers" className="inline-flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-white transition-colors">
+        <ArrowLeft size={14} /> Back to Collectors Registry
+      </Link>
+
+      {/* Hero Banner */}
+      <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs text-purple-400 font-bold uppercase">COLLECTOR / {s.id.toUpperCase()}</span>
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                status === 'Healthy'
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                  : status === 'Broken'
+                  ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+                  : status === 'Healing'
+                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  : 'bg-gray-500/15 text-gray-400 border border-gray-500/30'
+              }`}
+            >
+              {status.toUpperCase()}
+            </span>
+          </div>
+
+          <h1 className="text-3xl font-extrabold text-white">{s.name}</h1>
+
+          <div className="flex items-center gap-3 text-xs font-mono text-gray-400">
+            <span>{s.url}</span>
+            <span>•</span>
+            <button onClick={copyCollectorId} className="hover:text-purple-300 flex items-center gap-1">
+              <code>{s.collector}</code> <Copy size={12} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRun}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-xl text-sm font-semibold hover:bg-white/10 transition-colors"
+          >
+            <Play size={14} /> Run Collector
+          </button>
+          <button
+            onClick={handleHeal}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
+          >
+            <HeartPulse size={14} /> Trigger Self-Heal
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex border-b border-white/10 gap-2">
+        {(['Overview', 'Runs', 'Healing', 'API'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+              tab === t
+                ? 'border-purple-500 text-purple-300 bg-purple-500/10'
+                : 'border-transparent text-gray-400 hover:text-white'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Contents */}
+      {tab === 'Overview' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-[#131927] border border-white/10 rounded-2xl p-5 space-y-1">
+              <span className="text-xs font-mono text-gray-400 uppercase">Total Runs</span>
+              <div className="text-2xl font-black font-mono text-white">184</div>
+            </div>
+            <div className="bg-[#131927] border border-white/10 rounded-2xl p-5 space-y-1">
+              <span className="text-xs font-mono text-gray-400 uppercase">Success Rate</span>
+              <div className="text-2xl font-black font-mono text-emerald-400">98.4%</div>
+            </div>
+            <div className="bg-[#131927] border border-white/10 rounded-2xl p-5 space-y-1">
+              <span className="text-xs font-mono text-gray-400 uppercase">Rows Recovered</span>
+              <div className="text-2xl font-black font-mono text-purple-300">{s.rows.toLocaleString()}</div>
+            </div>
+            <div className="bg-[#131927] border border-white/10 rounded-2xl p-5 space-y-1">
+              <span className="text-xs font-mono text-gray-400 uppercase">Last Healed</span>
+              <div className="text-2xl font-black font-mono text-white">{s.lastHeal}</div>
+            </div>
+          </div>
+
+          <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
+            <h3 className="text-xs font-mono text-gray-400 uppercase tracking-wider">Description</h3>
+            <p className="text-gray-300 text-sm">{s.description}</p>
+
+            <h3 className="text-xs font-mono text-gray-400 uppercase tracking-wider pt-4 border-t border-white/10">
+              Sample Verified JSON Output
+            </h3>
+            <pre className="bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-mono text-cyan-200 overflow-x-auto">
+              <code>{JSON.stringify(output.slice(0, 2), null, 2)}</code>
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {tab === 'Runs' && (
+        <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-6">
+          <h3 className="text-base font-bold text-white">Execution History</h3>
+          <div className="overflow-x-auto border border-white/10 rounded-xl">
+            <table className="w-full text-left text-sm text-gray-300">
+              <thead className="bg-white/5 text-xs font-mono text-gray-400 border-b border-white/10">
+                <tr>
+                  <th className="p-4">Timestamp</th>
+                  <th className="p-4">Trigger</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Rows</th>
+                  <th className="p-4 text-right">Duration</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {['2 min ago', '18 min ago', '42 min ago', '1 hr ago', 'Yesterday'].map((t, i) => (
+                  <tr key={t} className="hover:bg-white/[0.03]">
+                    <td className="p-4 text-xs font-mono text-white">{t}</td>
+                    <td className="p-4 text-xs font-mono text-purple-300">{i === 1 ? 'HEALED' : i === 3 ? 'SCHEDULED' : 'MANUAL'}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">
+                        HEALTHY
+                      </span>
+                    </td>
+                    <td className="p-4 text-xs font-mono">{[1842, 1840, 1822, 1764, 1710][i]}</td>
+                    <td className="p-4 text-right text-xs font-mono text-gray-400">{[3.2, 4.1, 3.8, 3.4, 4.0][i]}s</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'Healing' && (
+        <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-6">
+          <h3 className="text-base font-bold text-white">Self-Healing Log & Timeline</h3>
+          <div className="space-y-4">
+            {[
+              ['Today 14:08', 'Selector drift detected', 'div.product-card → article[data-card]', '492 rows recovered'],
+              ['Yesterday 22:41', 'Price node moved', '.price → [data-price]', '1,842 rows verified'],
+              ['Aug 12', 'DOM structure changed', '.listing → section.listing-card', '918 rows recovered']
+            ].map((e, idx) => (
+              <div key={idx} className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-1 text-xs">
+                <div className="flex items-center justify-between text-gray-400">
+                  <span className="font-bold text-white">{e[1]}</span>
+                  <span>{e[0]}</span>
+                </div>
+                <p className="text-emerald-400 font-bold">{e[3]}</p>
+                <code className="text-purple-300 font-mono block">{e[2]}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'API' && (
+        <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
+          <h3 className="text-base font-bold text-white">API Trigger Snippet</h3>
+          <pre className="bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-mono text-cyan-200 overflow-x-auto">
+            <code>{`curl -X POST https://api.brightdata.com/dca/trigger \\
+  -H "Authorization: Bearer <token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"collector_id":"${s.collector}"}'`}</code>
+          </pre>
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(
+                `curl -X POST https://api.brightdata.com/dca/trigger -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"collector_id":"${s.collector}"}'`
+              )
+              toast.success('cURL command copied!')
+            }}
+            className="px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-semibold hover:bg-white/10 transition-colors flex items-center gap-2"
+          >
+            <Copy size={12} /> Copy Snippet
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
