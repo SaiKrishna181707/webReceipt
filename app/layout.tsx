@@ -11,12 +11,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body>
+      <body className="bg-[#050811] text-[#f0f6fc] min-h-screen relative selection:bg-purple-500/30 selection:text-purple-200">
+        {/* Ambient Top Glow Backdrop */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[420px] bg-gradient-to-b from-violet-600/12 via-cyan-500/6 to-transparent blur-3xl pointer-events-none -z-10" />
         <Navigation />
-        <main className="md:ml-64 pt-16 md:pt-16 pb-20 md:pb-0 min-h-screen">
+        <main className="pt-20 pb-20 min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
           {children}
         </main>
-        <Toaster theme="dark" position="bottom-right" />
+        <Toaster theme="dark" position="bottom-right" richColors />
       </body>
     </html>
   )

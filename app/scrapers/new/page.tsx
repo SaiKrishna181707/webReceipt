@@ -34,13 +34,13 @@ export default function NewScraperPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
-      <div className="border-b border-white/10 pb-6">
-        <div className="flex items-center gap-2 text-purple-400 text-xs font-mono tracking-wider uppercase mb-1">
-          <Plus size={14} /> 03 / PROVISIONING WIZARD
+      <div className="border-b border-white/[0.08] pb-6">
+        <div className="flex items-center gap-2 text-violet-400 text-xs font-mono tracking-wider uppercase mb-1">
+          <Plus size={14} /> PROVISIONING WIZARD
         </div>
-        <h1 className="text-3xl font-extrabold text-white">Create Browser Worker Collector</h1>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">Create Browser Worker Collector</h1>
         <p className="text-gray-400 text-sm mt-1">
           Specify target URL & extraction thesis. WebReceipt compiles candidate JSON schemas and Scraper Studio scripts.
         </p>
@@ -48,7 +48,7 @@ export default function NewScraperPage() {
 
       <div className="grid lg:grid-cols-12 gap-8">
         {/* Form Column */}
-        <form onSubmit={handleSubmit} className="lg:col-span-7 bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="lg:col-span-7 glass-card border border-white/[0.08] rounded-2xl p-6 space-y-6">
           <div className="space-y-2">
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider block">Collector Name</label>
             <input

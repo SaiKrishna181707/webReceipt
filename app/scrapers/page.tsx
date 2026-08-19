@@ -26,23 +26,23 @@ export default function ScrapersPage() {
   const brokenCount = scrapers.filter((s) => s.status === 'Broken').length
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
-          <div className="flex items-center gap-2 text-purple-400 text-xs font-mono tracking-wider uppercase mb-1">
-            <Boxes size={14} /> 02 / SCRAPER CONTROL PLANE
+          <div className="flex items-center gap-2 text-violet-400 text-xs font-mono tracking-wider uppercase mb-1">
+            <Boxes size={14} /> SCRAPER CONTROL PLANE
           </div>
-          <h1 className="text-3xl font-extrabold text-white">Collectors Registry</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Collectors Registry</h1>
           <p className="text-gray-400 text-sm mt-1">
             Every Bright Data Scraper Studio Browser Worker is monitored with real-time health checks & self-healing verification.
           </p>
         </div>
         <Link
           href="/scrapers/new"
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity self-start md:self-auto"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl font-bold text-xs text-white hover:opacity-90 shadow-lg shadow-violet-600/20 transition-all self-start md:self-auto"
         >
-          <Plus size={16} /> Provision New Collector
+          <Plus size={15} /> Provision New Collector
         </Link>
       </div>
 

@@ -27,14 +27,14 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
-          <div className="flex items-center gap-2 text-purple-400 text-xs font-mono tracking-wider uppercase mb-1">
-            <Wand2 size={14} /> 04 / SELF-HEALING STUDIO
+          <div className="flex items-center gap-2 text-violet-400 text-xs font-mono tracking-wider uppercase mb-1">
+            <Wand2 size={14} /> SELF-HEALING STUDIO
           </div>
-          <h1 className="text-3xl font-extrabold text-white">Break it. Heal it. Keep the Collector.</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Break it. Heal it. Keep the Collector.</h1>
           <p className="text-gray-400 text-sm mt-1">
             A real-time interactive laboratory demonstrating DOM mutation detection, repair preview verification, and automatic deployment recovery.
           </p>
@@ -43,19 +43,19 @@ export default function DemoPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRun}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl text-sm font-semibold hover:bg-white/10 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-semibold hover:bg-white/10 transition-colors"
           >
             <Play size={14} /> Normal Run
           </button>
           <button
             onClick={handleBreak}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500/15 border border-red-500/30 text-red-400 rounded-xl text-sm font-bold hover:bg-red-500/25 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-rose-500/15 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold hover:bg-rose-500/25 transition-colors"
           >
             <Bug size={14} /> Inject Drift
           </button>
           <button
             onClick={handleHeal}
-            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-xs font-bold hover:opacity-90 shadow-lg shadow-violet-600/20 transition-all"
           >
             <HeartPulse size={14} /> Trigger Self-Heal
           </button>

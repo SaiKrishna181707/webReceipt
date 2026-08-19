@@ -42,17 +42,17 @@ export default function ScraperDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Back Link */}
       <Link href="/scrapers" className="inline-flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-white transition-colors">
         <ArrowLeft size={14} /> Back to Collectors Registry
       </Link>
 
       {/* Hero Banner */}
-      <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="glass-card border border-white/[0.08] rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xs text-purple-400 font-bold uppercase">COLLECTOR / {s.id.toUpperCase()}</span>
+            <span className="font-mono text-xs text-violet-400 font-bold uppercase">COLLECTOR / {s.id.toUpperCase()}</span>
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                 status === 'Healthy'

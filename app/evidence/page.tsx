@@ -64,14 +64,14 @@ export default function EvidencePage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
           <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono tracking-wider uppercase mb-1">
-            <FileText size={14} /> EXHIBIT F · EVIDENCE CHAIN OF CUSTODY
+            <FileText size={14} /> EVIDENCE CHAIN OF CUSTODY
           </div>
-          <h1 className="text-3xl font-extrabold text-white">Tamper-Evident Evidence Inspector</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Tamper-Evident Evidence Vault</h1>
           <p className="text-gray-400 text-sm mt-1">
             Inspect cryptographic DOM snapshots, screenshots, and selector provenance captured by Scraper Studio.
           </p>
@@ -79,7 +79,7 @@ export default function EvidencePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => verifyHash(activeStage.domHash)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-xl text-sm font-semibold hover:bg-emerald-500/25 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-500/25 transition-colors"
           >
             <CheckCircle2 size={14} /> Reverify Evidence Hashes
           </button>

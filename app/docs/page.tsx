@@ -22,13 +22,13 @@ export default function DocsPage() {
   const verifySnippet = `npm run verify:receipt -- examples/webreceipt.json`
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
-      <div className="border-b border-white/10 pb-6">
-        <div className="flex items-center gap-2 text-purple-400 text-xs font-mono tracking-wider uppercase mb-1">
-          <BookOpen size={14} /> 05 / DEVELOPER SURFACE
+      <div className="border-b border-white/[0.08] pb-6">
+        <div className="flex items-center gap-2 text-violet-400 text-xs font-mono tracking-wider uppercase mb-1">
+          <BookOpen size={14} /> DEVELOPER SURFACE
         </div>
-        <h1 className="text-3xl font-extrabold text-white">API Reference & Receipt Verification</h1>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">API Reference & Receipt Verification</h1>
         <p className="text-gray-400 text-sm mt-1">
           Integrate WebReceipt into your data pipelines, trigger Browser Workers via API, and verify receipt artifacts independently.
         </p>
@@ -38,13 +38,13 @@ export default function DocsPage() {
         {/* Left Column: Endpoints & Quickstart */}
         <div className="lg:col-span-7 space-y-6">
           {/* Quickstart 1: Trigger Collector */}
-          <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
+          <div className="glass-card border border-white/[0.08] rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-mono text-purple-400 uppercase font-bold">API ENDPOINT</span>
+                <span className="text-xs font-mono text-violet-400 uppercase font-bold">API ENDPOINT</span>
                 <h3 className="text-lg font-bold text-white mt-0.5">Trigger Scraper Studio Worker</h3>
               </div>
-              <span className="px-2.5 py-1 bg-purple-500/20 text-purple-300 rounded font-mono text-xs font-bold">POST</span>
+              <span className="px-2.5 py-1 bg-violet-500/20 text-violet-300 rounded font-mono text-xs font-bold">POST</span>
             </div>
 
             <pre className="bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-mono text-cyan-200 overflow-x-auto">

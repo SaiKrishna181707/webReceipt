@@ -3,22 +3,40 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Boxes, Wand2, Shield, FileText, BookOpen, HelpCircle, Plus, Search, Bell, Moon, Sun, X } from 'lucide-react'
+import {
+  Terminal,
+  Boxes,
+  Wand2,
+  Shield,
+  FileText,
+  BookOpen,
+  HelpCircle,
+  Plus,
+  Search,
+  Moon,
+  Sun,
+  X,
+  Menu,
+  Activity,
+  Sparkles
+} from 'lucide-react'
 
 const navItems = [
-  { icon: Home, label: 'Terminal', href: '/' },
-  { icon: Boxes, label: 'Collectors', href: '/scrapers' },
+  { icon: Terminal, label: 'Terminal', href: '/' },
   { icon: Wand2, label: 'Self-Healing', href: '/demo' },
   { icon: Shield, label: 'Contracts', href: '/contracts' },
-  { icon: FileText, label: 'Evidence Chain', href: '/evidence' },
+  { icon: FileText, label: 'Evidence Vault', href: '/evidence' },
+  { icon: Boxes, label: 'Collectors', href: '/scrapers' },
   { icon: BookOpen, label: 'API Docs', href: '/docs' },
-  { icon: HelpCircle, label: 'Help Center', href: '/help' },
+  { icon: HelpCircle, label: 'Help', href: '/help' },
 ]
 
 export function Navigation() {
   const pathname = usePathname()
   const [isDark, setIsDark] = useState(true)
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const saved = localStorage.getItem('webreceipt-theme')
@@ -50,191 +68,182 @@ export function Navigation() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-[#0a0e17] border-r border-white/10 flex-col z-40">
-        {/* Logo */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center font-bold text-white animate-pulse">
-              WR
+      {/* Sleek Top Navigation Bar */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-[#050811]/85 backdrop-blur-xl border-b border-white/[0.08] z-50 transition-all duration-300">
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-violet-600/25 group-hover:scale-105 transition-transform">
+              <span className="font-mono text-sm tracking-wider">WR</span>
             </div>
-            <div>
-              <h1 className="font-bold text-white">WebReceipt</h1>
-              <p className="text-xs text-gray-400">Evidence Terminal</p>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-base tracking-tight text-white group-hover:text-violet-300 transition-colors">
+                  WebReceipt
+                </span>
+                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono font-bold bg-violet-500/15 text-violet-300 border border-violet-500/30 rounded-full">
+                  CONTROL PLANE
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-400 font-mono hidden sm:block">Self-Healing Web Evidence</span>
             </div>
-          </div>
-        </div>
+          </Link>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-            
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-white border border-purple-500/30'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <Icon size={20} className={isActive ? 'text-purple-400' : ''} />
-                <span className="font-medium">{item.label}</span>
-                {isActive && <div className="ml-auto w-2 h-2 bg-purple-500 rounded-full animate-pulse" />}
-              </Link>
-            )
-          })}
-        </nav>
+          {/* Desktop Center Navigation Pills */}
+          <nav className="hidden lg:flex items-center gap-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl p-1 backdrop-blur-md">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
 
-        {/* User Section */}
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center font-bold text-white">
-              SK
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-violet-600/25 to-indigo-600/25 text-white border border-violet-500/40 shadow-sm shadow-violet-500/20'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={14} className={isActive ? 'text-violet-400' : 'text-gray-500'} />
+                  <span>{item.label}</span>
+                  {isActive && <div className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse" />}
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* Right Action Area */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Gateway Status Pill */}
+            <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>LIVE GATEWAY</span>
             </div>
-            <div className="flex-1">
-              <p className="font-medium text-white text-sm">Sai Krishna</p>
-              <p className="text-xs text-gray-400">Pro Plan</p>
-            </div>
+
+            {/* Search Trigger */}
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-purple-400" />}
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile Bottom Tab Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0e17]/95 backdrop-blur-lg border-t border-white/10 z-50 safe-area-bottom">
-        <div className="flex items-center justify-around py-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-            
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? 'text-purple-400'
-                    : 'text-gray-400'
-                }`}
-              >
-                <Icon size={24} />
-                <span className="text-xs font-medium">{item.label}</span>
-                {isActive && <div className="w-1 h-1 bg-purple-500 rounded-full" />}
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
-
-      {/* Mobile Top Bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-[#0a0e17]/95 backdrop-blur-lg border-b border-white/10 z-40">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center font-bold text-white text-sm">
-              WR
-            </div>
-            <span className="font-bold text-white">WebReceipt</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMobileSearchOpen(true)}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              onClick={() => setSearchOpen(true)}
+              className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all"
               aria-label="Search"
             >
-              <Search size={20} className="text-gray-400" />
+              <Search size={16} />
             </button>
+
+            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-              aria-label="Toggle theme"
+              className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all"
+              aria-label="Toggle Theme"
             >
-              {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-purple-400" />}
+              {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-violet-400" />}
             </button>
-            <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-              <Bell size={20} className="text-gray-400" />
+
+            {/* New Collector Action Button */}
+            <Link
+              href="/scrapers/new"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-violet-600/20 transition-all hover:scale-[1.02]"
+            >
+              <Plus size={14} />
+              <span>New Collector</span>
+            </Link>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:text-white transition-colors"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-[#050811]/95 backdrop-blur-2xl border-b border-white/[0.1] px-4 py-4 space-y-2 animate-fade-in-up">
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-violet-600/25 text-white border border-violet-500/40 font-bold'
+                        : 'text-gray-400 bg-white/[0.02] hover:bg-white/5 hover:text-white border border-transparent'
+                    }`}
+                  >
+                    <Icon size={16} className={isActive ? 'text-violet-400' : 'text-gray-400'} />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+            <Link
+              href="/scrapers/new"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-xs font-bold shadow-md"
+            >
+              <Plus size={14} />
+              <span>Create New Collector</span>
+            </Link>
+          </div>
+        )}
       </header>
 
-      {/* Mobile Search Modal */}
-      {mobileSearchOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center pt-20 px-4">
-          <div className="w-full max-w-lg bg-[#0a0e17] rounded-2xl border border-white/10 overflow-hidden animate-fade-in">
+      {/* Global Quick Search Modal */}
+      {searchOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-start justify-center pt-24 px-4">
+          <div className="w-full max-w-xl bg-[#090d1a] rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="flex items-center gap-3 p-4 border-b border-white/10">
-              <Search size={20} className="text-gray-400" />
+              <Search size={18} className="text-gray-400" />
               <input
                 type="text"
-                placeholder="Search contracts, evidence..."
-                className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none text-lg"
+                placeholder="Search contracts, evidence hashes, collectors..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm font-medium"
                 autoFocus
               />
               <button
-                onClick={() => setMobileSearchOpen(false)}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                onClick={() => setSearchOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
               >
-                <X size={20} className="text-gray-400" />
+                <X size={16} />
               </button>
             </div>
-            <div className="p-4">
-              <p className="text-sm text-gray-400 mb-3">Recent searches</p>
-              <div className="space-y-2">
-                {['Ocean House contract', 'Price monitoring', 'Evidence #123'].map((search, i) => (
-                  <button
-                    key={i}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-gray-300"
-                  >
-                    {search}
-                  </button>
-                ))}
+            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+              <p className="text-[11px] font-mono text-gray-500 uppercase tracking-wider">Quick Navigation</p>
+              <div className="space-y-1">
+                {[
+                  { name: 'Hotel Checkout Observation (Demo)', href: '/' },
+                  { name: 'Self-Healing Sandbox & Refactor Diff', href: '/demo' },
+                  { name: 'Deal Contracts History & Integrity', href: '/contracts' },
+                  { name: 'Forensic Evidence Vault & Screenshots', href: '/evidence' },
+                  { name: 'Registered Web Collectors Registry', href: '/scrapers' },
+                ]
+                  .filter((x) => x.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSearchOpen(false)}
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <span>{item.name}</span>
+                      <Sparkles size={12} className="text-violet-400" />
+                    </Link>
+                  ))}
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Desktop Top Bar */}
-      <header className="hidden md:flex fixed top-0 left-64 right-0 h-16 bg-[#0a0e17]/95 backdrop-blur-lg border-b border-white/10 z-40 items-center justify-between px-6">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search contracts, evidence, analytics..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-white placeholder-gray-400 outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
-            />
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-lg hover:bg-white/10 transition-colors relative">
-            <Bell size={20} className="text-gray-400" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          </button>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            aria-label="Toggle theme"
-          >
-            {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-purple-400" />}
-          </button>
-          <Link href="/scrapers/new" className="bg-gradient-to-r from-purple-500 to-blue-500 px-4 py-2 rounded-xl font-medium text-white hover:opacity-90 transition-opacity flex items-center gap-2">
-            <Plus size={18} />
-            New Collector
-          </Link>
-        </div>
-      </header>
     </>
   )
 }

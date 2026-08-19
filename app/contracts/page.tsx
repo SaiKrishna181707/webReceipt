@@ -107,28 +107,28 @@ export default function ContractsPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
-          <div className="flex items-center gap-2 text-purple-400 text-xs font-mono tracking-wider uppercase mb-1">
-            <Shield size={14} /> EXHIBIT C · CANONICAL DEAL CONTRACTS
+          <div className="flex items-center gap-2 text-violet-400 text-xs font-mono tracking-wider uppercase mb-1">
+            <Shield size={14} /> CANONICAL DEAL CONTRACTS
           </div>
-          <h1 className="text-3xl font-extrabold text-white">Deal Contracts Repository</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Deal Contracts Repository</h1>
           <p className="text-gray-400 text-sm mt-1">
-            Normalized commercial promises compiled from web evidence journeys with cryptographic proof.
+            Normalized commercial promises compiled from web evidence journeys with cryptographic SHA-256 proof.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => toast.success('Reverified all 3 contracts against evidence hashes')}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-white/10 transition-colors"
           >
             <RefreshCw size={14} /> Reverify All Hashes
           </button>
           <Link
             href="/"
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl text-xs font-bold text-white hover:opacity-90 transition-opacity shadow-lg shadow-violet-600/20"
           >
             <ArrowUpRight size={14} /> Observe New Journey
           </Link>
