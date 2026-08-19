@@ -1,305 +1,156 @@
 # WebReceipt — Proof of Promise
 
-> Receipts remember what you paid. **WebReceipt remembers what the internet promised.**
+> **The internet has transaction receipts, but it has no receipts for promises.**
 
-WebReceipt is a self-healing evidence layer for the mutable commercial web. A custom Bright Data Scraper Studio **Browser Worker** traverses a public anonymous offer → checkout journey, captures evidence, and emits a canonical **Deal Contract**. WebReceipt then verifies the economics, provenance, and hashes instead of trusting “the scraper returned JSON.”
+When you buy something online, the payment system remembers what you paid. It does **not** preserve what price attracted you, what mandatory fees appeared later, what refund terms were shown, or what exact evidence supported each claim. 
 
-Built for **Into the Scrape-Verse · WeMakeDevs × Bright Data · Aug 17–23, 2026**.
+Websites are mutable. Your evidence shouldn't be. 
 
-## The problem
+**WebReceipt turns an online purchase journey into a timestamped, verifiable Deal Contract—and keeps that evidence trustworthy even when the website redesigns itself using Bright Data Scraper Studio Self-Healing.**
 
-Online receipts preserve the transaction, not the offer that caused it. Prices, mandatory charges, cancellation promises, refund terms, and inclusions live on mutable webpages. A normal scraper monitor also misses the dangerous failure mode where a selector still matches but now means something else.
+---
 
-WebReceipt creates a reproducible observation:
+## 🏗 Architecture
 
-1. traverse a **public, anonymous** commercial journey;
-2. capture offer + checkout provenance;
-3. compile everything into one normalized Deal Contract;
-4. enforce deterministic semantic and integrity invariants;
-5. when extraction drifts, ask Scraper Studio for a repair proposal;
-6. **verify the repair preview before approving it**;
-7. approve/save only a valid preview, then rerun and verify again;
-8. compare later observations as a Promise Diff.
+WebReceipt orchestrates anonymous browser journeys using Bright Data, compiles the extraction into a canonical Deal Contract, verifies the semantic integrity of the numbers, and autonomously heals the scraper if the website redesigns.
 
-WebReceipt reports observed behavior, not legal conclusions.
+```mermaid
+graph TD
+    UI[Consumer UI - Journey Replay & Promise Diff] --> |Trigger| ORCH[WebReceipt Orchestrator]
+    
+    subgraph Bright Data Scraper Studio
+        ORCH --> |Initiate| BD_BW[Browser Worker]
+        BD_BW --> |Public Journey| WEB_1[Offer Page]
+        BD_BW --> |Click| WEB_2[Checkout Page]
+        BD_BW --> |Extract + Screenshot| WEB_3[Terms & Policies]
+    end
 
-## The failure that matters
-
-The demo does not rename `.price` to `.new-price`.
-
-Fixture V1:
-
-```text
-.total-price = ₹10,147  // final total
+    BD_BW --> |JSON + Evidence| EV_ENG[Evidence Engine]
+    
+    subgraph Core Engine
+        EV_ENG --> |Provenance & Hashes| COMPILER[Deal Compiler]
+        COMPILER --> |Generate JSON| CONTRACT[Canonical Deal Contract]
+        CONTRACT --> INTEGRITY{Contract Integrity Engine}
+    end
+    
+    INTEGRITY --> |Valid: 11/11 Checks Pass| SAVE[(Save Receipt)]
+    SAVE --> UI
+    
+    INTEGRITY --> |Invalid: Semantic Failure| DIAGNOSE[Diagnose Extraction Drift]
+    DIAGNOSE --> |Trigger AI Flow| BD_HEAL[Bright Data Self-Healing API]
+    BD_HEAL --> |Propose Fix| PREVIEW[Untrusted Preview Gate]
+    PREVIEW --> |Verify Proposal| INTEGRITY
 ```
 
-Fixture V2 keeps the legacy selector alive, but changes its meaning and restructures the real total:
+---
 
-```text
-.total-price = ₹8,499  // now subtotal, still valid-looking
-[data-testid="order-total"] → nested ₹ + 10,147 nodes
-```
+## 📜 The Canonical Deal Contract
 
-The old collector can return perfectly valid JSON:
+Different websites look completely different, but WebReceipt compiles them into **one stable economic schema**. 
+
+Here is an example of the output structure:
 
 ```json
-{"basePrice":8499,"mandatoryFees":848,"taxes":800,"finalTotal":8499}
+{
+  "deal_id": "deal_7f29",
+  "observed_at": "2026-08-17T14:10:22Z",
+  "offer": {
+    "advertised_price": 8499,
+    "currency": "INR",
+    "claim": "Free cancellation"
+  },
+  "checkout": {
+    "base_price": 8499,
+    "mandatory_fees": 848,
+    "taxes": 800,
+    "optional_addons": 0,
+    "final_total": 10147
+  },
+  "terms": {
+    "cancellation": "Free until 21 Aug",
+    "refundability": "Refundable",
+    "payment_timing": "Pay now"
+  },
+  "journey": {
+    "steps": 4,
+    "start_url": "https://example.com/search",
+    "final_url": "https://example.com/checkout/7f29"
+  },
+  "evidence": [
+    {
+      "field": "final_total",
+      "text": "Total ₹10,147",
+      "timestamp": "2026-08-17T14:10:22Z",
+      "screenshot": "checkout_004.png",
+      "hash": "a83f...91d"
+    }
+  ]
+}
 ```
 
-WebReceipt catches the contradiction:
+---
 
+## 🧠 Contract Integrity Engine
+
+Normal scraper monitoring asks: `did field != null?`
+WebReceipt asks: `does the reality still make sense?`
+
+If a website redesigns and a CSS selector accidentally points to the *subtotal* instead of the *total*, the scraper will technically succeed, but the math will be wrong. 
+
+WebReceipt catches **semantic extraction drift**:
 ```text
-8499 + 848 + 800 = 10147 ≠ 8499
-CONTRACT INTEGRITY FAILURE
+CONTRACT INTEGRITY FAILED
+
+base           8499
+fees            848
+tax             800
+───────────────────
+expected      10147
+extracted      8499  <-- Silent failure detected!
 ```
 
-The strongest part is the recovery gate:
+---
 
-```text
-semantic failure
-      ↓
-Scraper Studio self-heal proposal
-      ↓
-preview_result (UNTRUSTED)
-      ↓
-compile into Deal Contract
-      ↓
-run all semantic + provenance + hash checks
-      ↓
-   valid? ── no ──→ reject repair
-      │
-     yes
-      ↓
-approve + auto-save
-      ↓
-fresh collector run
-      ↓
-verify again
-```
+## 🛠 Powered by Bright Data
 
-So WebReceipt does not merely use self-healing. **It refuses to deploy a proposed repair until its preview passes the same Deal Contract checks.**
+WebReceipt relies heavily on Bright Data to power its core functionality:
+1. **Scraper Studio (Browser Worker)**: Navigates multi-step SPA booking flows, executing JavaScript, clicking through checkout panels, and capturing DOM snapshots and `tag_screenshot` evidence.
+2. **AI Flow / Self-Healing API**: When WebReceipt's *Contract Integrity Engine* detects a semantic failure, it programmatically calls the Bright Data Self-Healing API. Bright Data generates a new candidate script, WebReceipt runs the candidate through the 11 integrity checks, and if it passes, automatically deploys the fix to production.
 
-## Architecture
+---
 
-```text
-Public anonymous journey
-        │
-        ▼
-Bright Data Scraper Studio
-Custom Browser Worker
-  offer screenshot
-  click checkout
-  checkout screenshot
-  parse + collect
-        │
-        ▼
-Canonical Deal Contract
-        │
-        ├── price arithmetic
-        ├── fee breakdown
-        ├── currency consistency
-        ├── evidence completeness
-        ├── evidence hash verification
-        ├── contract hash verification
-        └── journey/evidence linkage
-        │
-   ┌────┴────┐
- VALID     INVALID
-   │          │
-   │          ▼
-   │   Scraper Studio self-heal
-   │          │
-   │          ▼
-   │   preview verification gate
-   │      ┌───┴───┐
-   │    reject  approve/save
-   │               │
-   │               ▼
-   │          fresh collector run
-   │               │
-   └───────────────┤
-                   ▼
-           Versioned evidence
-          Journey Replay / Diff
-```
-
-## Implemented
-
-- Custom Scraper Studio Browser Worker package in `brightdata/`.
-- Required `url` input schema + nested output-schema reference.
-- Real offer → click → checkout interaction with two screenshots.
-- Canonical Deal Contract schema `1.1.0`.
-- SHA-256 evidence hashes + whole-contract hash, reverified on validation, restart, and portable receipt verification.
-- **11 deterministic integrity checks** on a healthy contract.
-- Wrong-but-valid semantic failure detection.
-- Self-heal proposal → preview verification → approve/reject → fresh-run verification.
-- Bright Data Collection API + AI Flow integration with retry, request timeouts, long heal timeout, approval/rejection, and autosave.
-- Journey Replay, evidence viewer, Deal Anomalies, Promise Diff, repair timeline.
-- Real stored-history diff for live observations; synthetic day+3 diff is explicitly simulator-only.
-- Chaos Checkout with seven deterministic scenarios.
-- Public-target policy and login/private-path guardrails.
-- Public-deployment operator protection for Bright Data credit-consuming/mutating actions.
-- CSP/security headers, bounded JSON requests, safe attachment filenames, atomic state persistence, corrupt-state recovery.
-- Dockerfile configured for a non-root runtime and GitHub Actions verification on Node 20 + 22.
-- Zero npm runtime dependencies.
-
-## Custom Scraper Studio package
-
-```text
-brightdata/
-├── input-schema.json
-├── interaction.js
-├── parser.js
-├── output-schema.json
-├── preview-input.json
-├── SELF_HEAL_PROMPT.md
-├── CLI_RUNBOOK.md
-└── README.md
-```
-
-Validate it independently:
-
-```bash
-npm run validate:scraper
-```
-
-## Run locally
+## 🚀 Running Locally
 
 Requires Node.js 20+.
 
 ```bash
-npm start
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+
 # http://localhost:3000
 ```
 
-Full verification:
-
-```bash
-npm run verify
+### Environment Variables
+Copy `.env.example` to `.env` and fill in your Bright Data credentials for live orchestration:
+```env
+BRIGHT_DATA_API_TOKEN=your_token
+BRIGHT_DATA_COLLECTOR_ID=c_prod_123
 ```
 
-`npm run verify` runs the Scraper Studio package validator, automated tests, and Chaos Checkout.
+## 🎥 The 2-Minute Demo Flow
 
-Verify any exported receipt independently instead of trusting a stored UI verdict:
+You can run the interactive mutation lab on the `/demo` route.
+1. **Journey Replay (0:00-0:30)**: Click "Run Journey" to orchestrate the Browser Worker and compile the Deal Contract.
+2. **Evidence Provenance (0:30-0:50)**: Click a stage card to view the exact screenshot, DOM snippet, and SHA-256 cryptographic hash.
+3. **Break It (0:50-1:10)**: Click "Simulate Redesign" to trigger a CSS/DOM mutation. Watch the Contract Integrity Engine catch the *wrong-but-valid* extraction error.
+4. **Bright Data Heal (1:10-1:30)**: Click "Heal with Bright Data" to trigger the Self-Healing API, preview the fix, and automatically deploy the repair.
+5. **Promise Diff (1:30-2:00)**: Click "3 Days Later" to time-travel and view a GitHub-style diff of the commercial promises changing (e.g. Free Cancellation -> Non-refundable).
 
-```bash
-npm run verify:receipt -- examples/webreceipt.json
-```
+---
 
-The verifier recomputes semantic invariants, evidence hashes, and the whole-contract hash from the artifact itself and exits non-zero if verification fails.
+## 📜 License
 
-### Simulator honesty boundary
-
-Simulator mode is intentionally restricted to the controlled WebReceipt fixture/demo target. It will **not** pretend that it scraped an arbitrary third-party URL. To observe a real public URL, use a real custom Scraper Studio collector in **Bright Data live** mode.
-
-## Controlled public failure lab
-
-When deployed publicly, `/fixture/hotel` is a two-stage anonymous browser journey. Checkout is hidden until **Continue to checkout** is clicked. The same URL can switch from V1 to V2, giving the judges a deterministic real-browser redesign without waiting for a third-party site to change during the demo.
-
-The controlled fixture is the failure laboratory. For final judging, also adapt/run the same Deal Contract semantics against at least one real public lodging journey if the target’s terms permit it.
-
-## Connect Bright Data live
-
-1. Deploy WebReceipt publicly.
-2. Create a **custom Browser Worker** in Scraper Studio.
-3. Configure required `url` input using `brightdata/input-schema.json` as reference.
-4. Paste `brightdata/interaction.js` and `brightdata/parser.js`.
-5. Preview V1 and verify the output using `brightdata/output-schema.json`.
-6. **Save to Production** and copy the `c_...` Collector ID.
-7. Configure server-side secrets:
-
-```bash
-cp .env.example .env
-# set BRIGHT_DATA_API_TOKEN
-# set BRIGHT_DATA_COLLECTOR_ID
-# set WEBRECEIPT_OPERATOR_TOKEN for any public deployment
-npm start
-```
-
-The app uses:
-
-- `POST /dca/trigger?collector=...&queue_next=1`
-- `GET /dca/dataset?id=...`
-- `POST /dca/collectors/{id}/refactor_template`
-- `GET /dca/collectors/{id}/refactor_template/progress`
-- `POST /dca/collectors/{id}/resume_automation_job`
-
-A live repair is requested with automatic approval **off**. WebReceipt evaluates `preview_result`; only a valid preview gets `{message:true, auto_save:true}`. Invalid/malformed previews are sent `{message:false}`.
-
-See `docs/BRIGHT_DATA_SETUP.md` and `brightdata/CLI_RUNBOOK.md`.
-
-## Public-deployment protection
-
-If Bright Data credentials are configured, live/mutating actions are locked unless either:
-
-```text
-WEBRECEIPT_OPERATOR_TOKEN=<strong random secret>     # recommended
-```
-
-or you explicitly opt out with:
-
-```text
-WEBRECEIPT_ALLOW_UNPROTECTED_LIVE=true              # unsafe public demo mode
-```
-
-The API token never goes to the browser. The optional operator key is sent only as `X-WebReceipt-Operator` for protected app actions and kept in browser `sessionStorage`.
-
-## Chaos Checkout
-
-| Scenario | What WebReceipt proves |
-|---|---|
-| CSS rename | structured semantics remain stable |
-| DOM relocation | layout movement does not change the contract |
-| split price nodes | normalization keeps the same numeric meaning |
-| currency formatting | formatting change keeps the same amount |
-| wrong-but-valid total | semantic arithmetic catches silent corruption → preview verify → heal |
-| new mandatory fee | arithmetic + fee breakdown catch incompatible extraction → preview verify → heal |
-| missing critical evidence | provenance rule rejects evidence loss → preview verify → heal |
-
-The first four are deterministic **post-extraction semantic fixtures**; the V1→V2 `/fixture/hotel` path is the actual browser/DOM mutation used for the sponsor demo.
-
-## Data and policy boundary
-
-WebReceipt is intentionally limited to publicly available, anonymous web data. It does not log in, submit payment, collect personal information, bypass paywalls, or claim a legal violation. See `SECURITY.md`.
-
-## Repository map
-
-```text
-public/                    judge-facing SPA
-src/domain/                contract, hashes, invariants, diff, anomalies
-src/integrations/          Bright Data + deterministic simulator
-src/services/              repair orchestration + persistent history
-src/fixtures/              adversarial structured observations
-brightdata/                custom Scraper Studio Browser Worker package
-scripts/                   scraper-package + portable receipt verification
-examples/                  sample healthy + silent-failure outputs
-test/                      unit, adapter, orchestration, HTTP, fuzz tests
-docs/                      architecture + live/demo runbooks
-.github/workflows/          Node 20/22 verification CI
-```
-
-## Two-minute demo
-
-1. **0:00–0:15** — “Receipts remember what you paid, not what the internet promised.”
-2. **0:15–0:35** — Run the custom Browser Worker; show Journey Replay + Deal Contract.
-3. **0:35–0:50** — Open evidence: source, timestamp, screenshot, DOM, SHA-256.
-4. **0:50–1:05** — Break V1→V2. Legacy selector still returns ₹8,499.
-5. **1:05–1:35** — Integrity failure → Scraper Studio proposal → **preview passes 11/11 before approval** → approve/save → fresh run passes 11/11.
-6. **1:35–1:52** — Promise Diff between receipts.
-7. **1:52–2:00** — “The web can change after you buy. Your receipt shouldn’t.”
-
-## Official references
-
-- Hackathon rules: https://www.wemakedevs.org/hackathons/scrape-verse/rules
-- Hackathon resources: https://www.wemakedevs.org/hackathons/scrape-verse/resources
-- Scraper Studio functions: https://docs.brightdata.com/datasets/scraper-studio/functions
-- Scraper Studio API quickstart: https://docs.brightdata.com/datasets/scraper-studio/quickstart
-- Bright Data CLI: https://github.com/brightdata/cli
-
-## AI disclosure
-
-AI coding assistance was used during implementation. The repository includes the architecture, constraints, deterministic rules, adversarial tests, Scraper Studio source, integration behavior, and verification report so the participant can inspect and explain the submitted system.
-
-## License
-
-MIT.
+MIT
