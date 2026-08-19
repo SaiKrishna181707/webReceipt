@@ -8,39 +8,31 @@ const config: Config = {
       colors: {
         background: "var(--bg)",
         foreground: "var(--text)",
-        card: {
-          DEFAULT: "var(--panel)",
-          foreground: "var(--text)",
-        },
-        primary: {
-          DEFAULT: "var(--blue)",
-          foreground: "#ffffff",
-        },
-        secondary: {
-          DEFAULT: "var(--panel2)",
-          foreground: "var(--text)",
-        },
-        muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--text)",
-        },
-        accent: {
-          DEFAULT: "var(--purple)",
-          foreground: "#ffffff",
-        },
-        destructive: {
-          DEFAULT: "var(--red)",
-          foreground: "#ffffff",
+        theme: {
+          1: "#ff4d4d",
+          2: {
+            light: "#a855f7",
+            DEFAULT: "#9333ea",
+            dark: "#7e22ce",
+          },
+          3: "#ec4899",
         },
         border: "var(--line)",
-        input: "var(--line2)",
-        ring: "var(--blue)",
       },
-      borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.375rem",
+      animation: {
+        marquee: "marquee var(--duration, 40s) linear infinite",
+        "fade-in-up": "fadeInUp 0.5s ease-out forwards",
       },
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(calc(-50% - var(--gap)/2))" },
+        },
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        }
+      }
     },
   },
   plugins: [],

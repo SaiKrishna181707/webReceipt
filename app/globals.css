@@ -5,23 +5,24 @@
 @tailwind utilities;
 
 :root {
-  --bg: #050811;
-  --bg-subtle: #080d1a;
-  --panel: #0d1424;
-  --panel-hover: #131c33;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
+  --bg: #000000;
+  --bg-subtle: #09090b;
+  --panel: #111113;
+  --panel-hover: #1f1f22;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
   --text: #f0f6fc;
-  --muted: #8b949e;
+  --muted: #a1a1aa;
   
-  --violet: #8b5cf6;
-  --violet-glow: rgba(139, 92, 246, 0.25);
+  --violet: #a855f7;
+  --violet-glow: rgba(168, 85, 247, 0.25);
   --cyan: #06b6d4;
   --cyan-glow: rgba(6, 182, 212, 0.25);
   --emerald: #10b981;
   --emerald-glow: rgba(16, 185, 129, 0.25);
   --rose: #f43f5e;
   --amber: #f59e0b;
+  --glow: #a855f7;
 }
 
 .light {
