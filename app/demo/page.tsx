@@ -1,182 +1,229 @@
 'use client'
 
-import { useState } from 'react'
-import { Wand2, Play, Bug, HeartPulse, RotateCcw, CheckCircle2, XCircle, AlertTriangle, ShieldCheck } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState, useEffect } from 'react'
+import {
+  Search, AlertTriangle, Bug, Code2, HeartPulse, CheckCircle2, ChevronRight, Check, History, Layers
+} from 'lucide-react'
+import { TerminalLog } from '@/components/mission-control/terminal-log'
+import { EvidenceVault } from '@/components/mission-control/evidence-vault'
+import { PromiseDiff } from '@/components/mission-control/promise-diff'
 
 export default function DemoPage() {
-  const [state, setState] = useState<'healthy' | 'broken' | 'healing'>('healthy')
+  const [step, setStep] = useState(0)
+  // 0: Initial
+  // 1: Journey Replay
+  // 2: Break Website (Semantic Failure)
+  // 3: Healing
+  // 4: Healed
+  // 5: Promise Diff
 
-  const handleRun = () => {
-    setState('healthy')
-    toast.success('Run successful · Collector returned 12 rows passing all contract checks')
+  const [url, setUrl] = useState('https://example-hotel-booking.com/checkout/7f29')
+  const [vaultOpen, setVaultOpen] = useState(false)
+  const [diffOpen, setDiffOpen] = useState(false)
+  const [selectedVaultStage, setSelectedVaultStage] = useState<number>(4)
+  const [logs, setLogs] = useState<any[]>([])
+
+  const addLog = (msg: string, level: 'info' | 'warn' | 'error' | 'success' = 'info') => {
+    setLogs(prev => [...prev, { timestamp: new Date().toISOString(), level, message: msg }])
   }
 
-  const handleBreak = () => {
-    setState('broken')
-    toast.error('Target site restructured! Selector matched subtotal node instead of order total.')
+  const runJourney = () => {
+    setStep(1)
+    addLog('Initializing Bright Data Browser Worker (Scraper Studio)...')
+    setTimeout(() => addLog('Journey step 1: Search - Completed'), 500)
+    setTimeout(() => addLog('Journey step 2: Property - Completed'), 1000)
+    setTimeout(() => addLog('Journey step 3: Room - Completed'), 1500)
+    setTimeout(() => addLog('Journey step 4: Checkout - Completed', 'success'), 2000)
+    setTimeout(() => addLog('Canonical Deal Contract generated and hashed.', 'success'), 2500)
   }
 
-  const handleHeal = () => {
-    setState('healing')
-    toast('Scraper Studio generating candidate repair proposal...')
+  const breakWebsite = () => {
+    setStep(2)
+    addLog('Mutation Lab: Simulating CSS rename and DOM relocation on target site.', 'warn')
     setTimeout(() => {
-      setState('healthy')
-      toast.success('Preview verified against 11 contract rules! Production collector c_prod_8f2a91 recovered.')
-    }, 2000)
+      addLog('Collector executed successfully without CSS selector errors.', 'info')
+      addLog('CONTRACT INTEGRITY FAILURE: Extracted final_total (₹8499) does not match base_price + fees + taxes (₹10147).', 'error')
+    }, 800)
+  }
+
+  const triggerHeal = () => {
+    setStep(3)
+    addLog('Agent detecting semantic extraction drift...', 'warn')
+    setTimeout(() => addLog('Triggering Bright Data Scraper Studio self-heal API...', 'info'), 1000)
+    setTimeout(() => addLog('Evaluating candidate scraper on 6/6 deterministic Deal Contract checks...'), 2500)
+    setTimeout(() => {
+      addLog('Candidate Passed. Production scraper updated.', 'success')
+      setStep(4)
+    }, 4000)
+  }
+
+  const openEvidence = (stage: number) => {
+    setSelectedVaultStage(stage)
+    setVaultOpen(true)
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-violet-400 text-xs font-mono tracking-wider uppercase mb-1">
-            <Wand2 size={14} /> SELF-HEALING STUDIO
-          </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Break it. Heal it. Keep the Collector.</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            A real-time interactive laboratory demonstrating DOM mutation detection, repair preview verification, and automatic deployment recovery.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleRun}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-semibold hover:bg-white/10 transition-colors"
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 pt-24 min-h-screen bg-black">
+      
+      {/* Top Controls / URL Bar */}
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-2 flex items-center gap-3">
+          <Search size={18} className="text-gray-500 ml-2" />
+          <input 
+            type="text" 
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="bg-transparent border-none outline-none text-white w-full font-mono text-sm"
+          />
+          <button 
+            onClick={step === 0 ? runJourney : () => setStep(0)}
+            className="bg-[#a855f7] hover:bg-[#9333ea] text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors whitespace-nowrap"
           >
-            <Play size={14} /> Normal Run
-          </button>
-          <button
-            onClick={handleBreak}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-500/15 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold hover:bg-rose-500/25 transition-colors"
-          >
-            <Bug size={14} /> Inject Drift
-          </button>
-          <button
-            onClick={handleHeal}
-            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-xs font-bold hover:opacity-90 shadow-lg shadow-violet-600/20 transition-all"
-          >
-            <HeartPulse size={14} /> Trigger Self-Heal
+            {step === 0 ? 'Run Journey' : 'Reset'}
           </button>
         </div>
-      </div>
 
-      {/* Collector Status Bar */}
-      <div className="bg-[#131927] border border-white/10 rounded-2xl p-5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-              state === 'healthy'
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                : state === 'broken'
-                ? 'bg-red-500/15 text-red-400 border border-red-500/30'
-                : 'bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse'
-            }`}
-          >
-            {state === 'healthy' && <CheckCircle2 size={14} />}
-            {state === 'broken' && <XCircle size={14} />}
-            {state === 'healing' && <AlertTriangle size={14} />}
-            {state.toUpperCase()}
-          </span>
-          <span className="font-mono text-xs text-gray-400">Collector ID: <code className="text-purple-300 font-bold">c_prod_8f2a91</code> (Identity preserved)</span>
-        </div>
-        <span className="font-mono text-xs text-gray-400">{state === 'healthy' ? '12 rows verified' : '0 valid rows'}</span>
-      </div>
-
-      {/* Interactive 2-State Visualizer */}
-      <div className="grid lg:grid-cols-12 gap-8 items-center">
-        {/* State 1: Before / Expected */}
-        <div className="lg:col-span-5 bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <span className="text-xs font-mono text-gray-400">01 / EXPECTED STATE</span>
-            <span className="text-xs font-mono text-emerald-400 font-bold">V1 CONTRACT</span>
-          </div>
-
-          <div className="space-y-3 font-mono text-xs">
-            <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1">
-              <span className="text-gray-400 block">Selector: <code>.total-price</code></span>
-              <span className="text-white font-bold block">Matched ₹10,147</span>
-            </div>
-            <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1">
-              <span className="text-gray-400 block">Arithmetic Check</span>
-              <span className="text-emerald-400 font-bold block">8499 + 848 + 800 == 10147 (PASS)</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center Indicator */}
-        <div className="lg:col-span-2 flex items-center justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
-            {state === 'healing' ? (
-              <HeartPulse className="animate-spin" size={24} />
-            ) : state === 'broken' ? (
-              <Bug className="text-red-400" size={24} />
-            ) : (
-              <ShieldCheck className="text-emerald-400" size={24} />
+        {step > 0 && (
+          <div className="flex gap-2 shrink-0">
+            <button 
+              onClick={breakWebsite}
+              disabled={step >= 2}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+                step >= 2 ? 'bg-black text-gray-600 border-white/10 opacity-50 cursor-not-allowed' : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+              }`}
+            >
+              <Bug size={14} /> Simulate Redesign
+            </button>
+            
+            {step === 4 && (
+              <button 
+                onClick={() => setDiffOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 rounded-xl text-xs font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all"
+              >
+                <History size={14} /> 3 Days Later
+              </button>
             )}
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* State 2: After / Drifting */}
-        <div className="lg:col-span-5 bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <span className="text-xs font-mono text-gray-400">02 / DOM DRIFT RECOVERY</span>
-            <span className={`text-xs font-mono font-bold ${state === 'broken' ? 'text-red-400' : 'text-emerald-400'}`}>
-              {state === 'broken' ? 'DRIFT DETECTED' : 'RECOVERY VERIFIED'}
-            </span>
+      {step > 0 && (
+        <div className="space-y-6 animate-fade-in-up">
+          
+          {/* Main Deal Summary Banner */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <Layers className="text-[#a855f7]" size={20} />
+                Deal Contract: 7f29
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">Observed price increase during journey: <span className="text-rose-400 font-bold">+19.4%</span></p>
+            </div>
+            
+            {step === 2 && (
+              <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-2 rounded-lg font-mono text-sm font-bold flex items-center gap-2 animate-pulse">
+                <AlertTriangle size={18} /> CONTRACT INTEGRITY FAILURE
+              </div>
+            )}
+            {step === 3 && (
+              <div className="bg-amber-500/20 border border-amber-500 text-amber-400 px-4 py-2 rounded-lg font-mono text-sm font-bold flex items-center gap-2">
+                <HeartPulse size={18} className="animate-spin" /> HEALING SCRAPER...
+              </div>
+            )}
+            {step === 4 && (
+              <div className="bg-emerald-500/20 border border-emerald-500 text-emerald-400 px-4 py-2 rounded-lg font-mono text-sm font-bold flex items-center gap-2">
+                <CheckCircle2 size={18} /> VERIFIED & HEALED
+              </div>
+            )}
           </div>
 
-          {state === 'broken' ? (
-            <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl space-y-1">
-                <span className="text-red-300 block font-bold">Selector matched subtotal node!</span>
-                <span className="text-red-400 block">.total-price returned ₹8,499</span>
+          {/* Journey Replay Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[
+              { stage: 1, title: 'SEARCH', val: '₹8,499' },
+              { stage: 2, title: 'PROPERTY', val: '₹8,499' },
+              { stage: 3, title: 'ROOM', val: '₹8,499' },
+            ].map(s => (
+              <div key={s.stage} onClick={() => openEvidence(s.stage)} className="bg-white/5 border border-white/10 rounded-2xl p-5 cursor-pointer hover:bg-white/10 transition-all group">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-xs font-mono font-bold text-[#a855f7]">{s.title}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                </div>
+                <div className="text-2xl font-bold font-mono text-white mb-2">{s.val}</div>
+                <div className="flex items-center text-xs font-mono text-gray-500 group-hover:text-[#a855f7] transition-colors gap-1">
+                  View evidence <ChevronRight size={12} />
+                </div>
               </div>
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl space-y-1">
-                <span className="text-red-300 block font-bold font-mono">CONTRACT FAILURE</span>
-                <span className="text-red-400 block">8499 + 848 + 800 = 10147 ≠ 8499</span>
+            ))}
+
+            {/* Checkout Card (Dynamic) */}
+            <div onClick={() => openEvidence(4)} className={`border rounded-2xl p-5 cursor-pointer transition-all group ${
+              step === 2 ? 'bg-red-500/10 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]' 
+              : step === 3 ? 'bg-amber-500/10 border-amber-500/50'
+              : 'bg-white/5 border-white/10 hover:bg-white/10'
+            }`}>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-xs font-mono font-bold text-[#a855f7]">CHECKOUT</span>
+                <span className={`w-2 h-2 rounded-full ${step === 2 ? 'bg-red-500 animate-ping' : step === 3 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+              </div>
+              <div className={`text-2xl font-bold font-mono mb-2 ${step === 2 ? 'text-red-400 line-through' : 'text-white'}`}>
+                {step === 2 ? '₹8,499' : '₹10,147'}
+              </div>
+              {step === 2 && (
+                <div className="text-[10px] font-mono text-red-400 mb-2 font-bold uppercase">
+                  Semantic Extraction Drift
+                </div>
+              )}
+              <div className="flex items-center text-xs font-mono text-gray-500 group-hover:text-[#a855f7] transition-colors gap-1">
+                View evidence <ChevronRight size={12} />
               </div>
             </div>
-          ) : (
-            <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1">
-                <span className="text-emerald-300 block font-bold">Repair Preview Passed 11/11 Checks</span>
-                <span className="text-emerald-400 block">New selector: <code>[data-testid="order-total"]</code></span>
+          </div>
+
+          {/* Integrity Engine Explanation (when broken) */}
+          {step === 2 && (
+            <div className="bg-red-950/40 border border-red-500/30 rounded-2xl p-6 animate-fade-in-up">
+              <h3 className="text-red-400 font-bold mb-4 flex items-center gap-2"><Bug size={18} /> Contract Integrity Engine Log</h3>
+              <div className="font-mono text-xs text-gray-300 space-y-2">
+                <p>{`> Executing rule: total_arithmetic`}</p>
+                <p className="text-gray-500">{`> base_price (₹8499) + mandatory_fees (₹848) + taxes (₹800)`}</p>
+                <p className="text-red-400 font-bold">{`> EXPECTED: ₹10147 | EXTRACTED: ₹8499`}</p>
+                <p className="text-red-400 mt-4">{`[!] Validation Failed. The scraper selector still exists, but the economic reality has mutated.`}</p>
               </div>
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1">
-                <span className="text-emerald-300 block font-bold">Production Collector Recovered</span>
-                <span className="text-emerald-400 block">12 rows collected with 100% integrity</span>
-              </div>
+              <button 
+                onClick={triggerHeal}
+                className="mt-6 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-red-500/20"
+              >
+                Heal with Bright Data
+              </button>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Timeline Card */}
-      <div className="bg-[#131927] border border-white/10 rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <h3 className="text-base font-bold text-white">Scraper Studio Self-Healing Pipeline</h3>
-          <button onClick={() => setState('healthy')} className="text-xs text-gray-400 hover:text-white flex items-center gap-1 font-mono">
-            <RotateCcw size={12} /> Reset Interactive Lab
-          </button>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-4">
-          {[
-            { step: '01', name: 'Drift Detection', text: 'Semantic & arithmetic invariants identify silent extraction corruption.' },
-            { step: '02', name: 'Proposal Generation', text: 'Scraper Studio suggests new DOM selector candidate.' },
-            { step: '03', name: 'Untrusted Preview Gate', text: 'Preview is compiled into Deal Contract & run through all 11 integrity checks.' },
-            { step: '04', name: 'Auto-Save Recovery', text: 'Only a valid preview is saved, triggering a fresh verified collector run.' }
-          ].map((item, i) => (
-            <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-1">
-              <span className="text-xs font-mono text-purple-400 font-bold">{item.step}</span>
-              <h4 className="text-sm font-bold text-white">{item.name}</h4>
-              <p className="text-xs text-gray-400">{item.text}</p>
+          {/* Terminal */}
+          <div className="bg-[#111113] border border-white/10 rounded-2xl overflow-hidden mt-8">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
+              <Code2 size={16} className="text-[#a855f7]" />
+              <span className="text-xs font-mono text-gray-400">WebReceipt Orchestrator Output</span>
             </div>
-          ))}
+            <TerminalLog logs={logs} onClear={() => setLogs([])} />
+          </div>
+
         </div>
-      </div>
+      )}
+
+      {/* Evidence Drawer */}
+      <EvidenceVault 
+        isOpen={vaultOpen}
+        onClose={() => setVaultOpen(false)}
+        selectedStage={selectedVaultStage}
+      />
+
+      {/* Promise Diff */}
+      <PromiseDiff 
+        isOpen={diffOpen}
+        onClose={() => setDiffOpen(false)}
+      />
+
     </div>
   )
 }
