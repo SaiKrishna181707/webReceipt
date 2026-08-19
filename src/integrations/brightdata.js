@@ -62,6 +62,7 @@ export class BrightDataCollector {
         const signal = options.signal ?? AbortSignal.timeout(this.requestTimeoutMs);
         response = await fetch(url, { ...options, signal });
         if (!RETRYABLE.has(response.status) || attempt === this.retries) return response;
+        await response.arrayBuffer().catch(() => {});
         last = new Error(`Bright Data transient HTTP ${response.status}`);
       } catch (error) {
         last = error;

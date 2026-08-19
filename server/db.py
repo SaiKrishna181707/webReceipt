@@ -44,6 +44,7 @@ async def init_db():
             field TEXT NOT NULL,
             selector TEXT NOT NULL,
             screenshot_path TEXT,
+            text_snippet TEXT,
             sha256_hash TEXT NOT NULL,
             observed_at TEXT NOT NULL
         )
@@ -82,16 +83,19 @@ async def save_contract(contract: DealContract):
         for idx, ev in enumerate(contract.evidence):
             ev_id = f"{contract.deal_id}_ev_{idx}"
             await db.execute("""
-            INSERT OR REPLACE INTO evidence (id, deal_id, field, selector, screenshot_path, sha256_hash, observed_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (ev_id, contract.deal_id, ev.field, ev.source_selector, ev.screenshot_path, ev.sha256_hash, ev.observed_at))
+            INSERT OR REPLACE INTO evidence (id, deal_id, field, selector, screenshot_path, text_snippet, sha256_hash, observed_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (ev_id, contract.deal_id, ev.field, ev.source_selector, ev.screenshot_path, ev.text_snippet, ev.sha256_hash, ev.observed_at))
 
-        # Save version
-        version_id = f"{contract.deal_id}_v1"
+        # Save dynamic version
+        async with db.execute("SELECT COALESCE(MAX(version), 0) + 1 FROM contract_versions WHERE deal_id = ?", (contract.deal_id,)) as cursor:
+            row = await cursor.fetchone()
+            next_version = row[0] if row else 1
+        version_id = f"{contract.deal_id}_v{next_version}"
         await db.execute("""
         INSERT OR REPLACE INTO contract_versions (id, deal_id, version, contract_json, created_at)
-        VALUES (?, ?, 1, ?, datetime('now'))
-        """, (version_id, contract.deal_id, contract_json))
+        VALUES (?, ?, ?, ?, datetime('now'))
+        """, (version_id, contract.deal_id, next_version, contract_json))
 
         await db.commit()
 

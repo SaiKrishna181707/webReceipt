@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, ArrowRight, CheckCircle2, Globe, Sparkles, Loader2, Code, Shield, Layers } from 'lucide-react'
+import { Plus, ArrowRight, CheckCircle2, Globe, Sparkles, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function NewScraperPage() {

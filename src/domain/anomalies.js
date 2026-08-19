@@ -7,7 +7,7 @@ export function detectAnomalies(contract) {
   const currency = contract.checkout.finalTotal.currency;
 
   if (final > advertised) {
-    const delta = final - advertised;
+    const delta = Math.round((final - advertised) * 100) / 100;
     const ratio = advertised > 0 ? delta / advertised : null;
     anomalies.push({
       id: 'observed_price_increase',

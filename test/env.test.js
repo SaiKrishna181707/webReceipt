@@ -14,9 +14,13 @@ test('zero-dependency env parser supports comments, export syntax and quoted has
 
 test('optional env loader does not overwrite already configured environment values', async () => {
   const file = path.join(os.tmpdir(), `webreceipt-env-${randomUUID()}`);
-  await fs.writeFile(file, 'PORT=9999\nNEW_KEY=loaded\n');
-  const env = {PORT:'4000'};
-  assert.equal(loadEnvFileIfPresent(file, env), true);
-  assert.deepEqual(env, {PORT:'4000', NEW_KEY:'loaded'});
-  assert.equal(loadEnvFileIfPresent(`${file}-missing`, env), false);
+  try {
+    await fs.writeFile(file, 'PORT=9999\nNEW_KEY=loaded\n');
+    const env = {PORT:'4000'};
+    assert.equal(loadEnvFileIfPresent(file, env), true);
+    assert.deepEqual(env, {PORT:'4000', NEW_KEY:'loaded'});
+    assert.equal(loadEnvFileIfPresent(`${file}-missing`, env), false);
+  } finally {
+    await fs.unlink(file).catch(() => {});
+  }
 });

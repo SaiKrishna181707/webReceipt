@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { renderHotelFixture } from '../src/fixture-page.js';
+import { compileDealContract } from '../src/domain/contract.js';
+import { evaluateIntegrity } from '../src/domain/integrity.js';
 
 const interactionUrl = new URL('../brightdata/interaction.js', import.meta.url);
 const parserUrl = new URL('../brightdata/parser.js', import.meta.url);
@@ -108,8 +110,6 @@ test('checked-in Scraper Studio parser normalizes realistic money formats on V1'
 });
 
 test('checked-in parser exhibits the intended V2 silent semantic drift and the real integrity engine catches it', async () => {
-  const { compileDealContract } = await import('../src/domain/contract.js');
-  const { evaluateIntegrity } = await import('../src/domain/integrity.js');
   const record = await executeCheckedInParser({
     '.total-price': 'Subtotal ₹8,499',
     '[data-testid="order-total"]': '₹10,147',

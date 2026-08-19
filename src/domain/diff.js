@@ -1,6 +1,7 @@
 function moneyChange(path, before, after) {
   if (!before || !after || (before.amount === after.amount && before.currency === after.currency)) return null;
-  return { path, kind: 'money', before: before.amount, after: after.amount, currency: after.currency, delta: after.amount - before.amount };
+  const delta = Math.round((after.amount - before.amount) * 100) / 100;
+  return { path, kind: 'money', before: before.amount, after: after.amount, currency: after.currency, delta };
 }
 
 function listChange(path, before = [], after = []) {

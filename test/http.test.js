@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 
 const port = 33000 + Math.floor(Math.random() * 1000);
+const stateFile = path.join(os.tmpdir(), `webreceipt-http-${port}.json`);
 let proc;
 
 async function waitForServer(targetPort) {
@@ -25,14 +29,17 @@ test.before(async () => {
       BRIGHT_DATA_API_TOKEN: '',
       BRIGHT_DATA_COLLECTOR_ID: '',
       WEBRECEIPT_OPERATOR_TOKEN: '',
-      WEBRECEIPT_STATE_FILE: `/tmp/webreceipt-http-${port}.json`,
+      WEBRECEIPT_STATE_FILE: stateFile,
     },
     stdio: ['ignore','pipe','pipe'],
   });
   await waitForServer(port);
 });
 
-test.after(() => proc?.kill('SIGTERM'));
+test.after(async () => {
+  proc?.kill('SIGTERM');
+  await fs.unlink(stateFile).catch(() => {});
+});
 
 test('HTTP health, observe, export and stress flows work end-to-end with security headers', async () => {
   let response = await fetch(`http://127.0.0.1:${port}/api/health`);
@@ -146,6 +153,7 @@ test('live Promise Diff is honest stored-history comparison rather than syntheti
 
 test('public deployment with Bright Data credentials locks mutating/live actions behind operator token', async (t) => {
   const protectedPort = port + 1500;
+  const protectedStateFile = path.join(os.tmpdir(), `webreceipt-protected-${protectedPort}.json`);
   const child = spawn(process.execPath, ['src/server.js'], {
     env: {
       ...process.env,
@@ -154,11 +162,14 @@ test('public deployment with Bright Data credentials locks mutating/live actions
       BRIGHT_DATA_COLLECTOR_ID: 'c_fake',
       WEBRECEIPT_OPERATOR_TOKEN: 'judge-secret',
       WEBRECEIPT_ALLOW_UNPROTECTED_LIVE: 'false',
-      WEBRECEIPT_STATE_FILE: `/tmp/webreceipt-protected-${protectedPort}.json`,
+      WEBRECEIPT_STATE_FILE: protectedStateFile,
     },
     stdio: ['ignore','pipe','pipe'],
   });
-  t.after(() => child.kill('SIGTERM'));
+  t.after(async () => {
+    child.kill('SIGTERM');
+    await fs.unlink(protectedStateFile).catch(() => {});
+  });
   await waitForServer(protectedPort);
 
   let response = await fetch(`http://127.0.0.1:${protectedPort}/api/fixture/break`, {method:'POST', body:'{}', headers:{'content-type':'application/json'}});

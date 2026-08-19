@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Shield, Search, Download, CheckCircle2, AlertTriangle, FileJson, ArrowUpRight, Copy, RefreshCw, ExternalLink, Key, Hash } from 'lucide-react'
+import { Shield, Search, Download, CheckCircle2, AlertTriangle, ArrowUpRight, Copy, RefreshCw, ExternalLink, Hash } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface DealContractItem {
@@ -154,7 +154,7 @@ export default function ContractsPage() {
 
           {/* Filter Pills */}
           <div className="flex gap-2">
-            {(['all', 'verified', 'drift_detected'] as const).map((st) => (
+            {(['all', 'verified', 'drift_detected', 'tampered'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}

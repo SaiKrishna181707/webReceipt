@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sliders, CheckCircle2, ArrowRight, RefreshCw, X, ShieldAlert } from 'lucide-react'
+import { Sliders, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface PromiseDiffProps {

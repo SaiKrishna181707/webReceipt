@@ -2,8 +2,9 @@ import asyncio
 import shutil
 import json
 import time
+import uuid
 import hashlib
-from typing import AsyncGenerator, Dict, Any, Callable, Awaitable
+from typing import Dict, Any, Callable, Awaitable
 from server.models import DealContract, Offer, Checkout, Terms, JourneyStep, Evidence, HealEvent
 from server.engine import ContractIntegrityEngine
 
@@ -15,17 +16,17 @@ class BrightDataCLIBridge:
     async def execute_cli_stream(
         self,
         cmd_args: list[str],
-        callback: Callable[[str, str], Awaitable[None]]
+        callback: Callable[[str, Dict[str, Any]], Awaitable[None]]
     ):
         """Executes a CLI command and streams stdout/stderr lines via callback."""
         if not self.has_cli:
             # Fallback simulator log streaming
             cmd_str = " ".join(cmd_args)
-            await callback("log", f"$ {cmd_str}")
+            await callback("log", {"line": f"$ {cmd_str}"})
             await asyncio.sleep(0.3)
             return
 
-        await callback("log", f"$ {' '.join(cmd_args)}")
+        await callback("log", {"line": f"$ {' '.join(cmd_args)}"})
         proc = await asyncio.create_subprocess_exec(
             *cmd_args,
             stdout=asyncio.subprocess.PIPE,
@@ -39,7 +40,7 @@ class BrightDataCLIBridge:
                     break
                 text = line.decode("utf-8", errors="replace").rstrip()
                 if text:
-                    await callback("log", f"[{stream_type}] {text}")
+                    await callback("log", {"line": f"[{stream_type}] {text}"})
 
         await asyncio.gather(
             read_stream(proc.stdout, "stdout"),
@@ -142,7 +143,7 @@ class BrightDataCLIBridge:
         ]
 
         dummy_contract = DealContract(
-            deal_id=f"deal-hotel-{int(time.time()) % 10000}",
+            deal_id=f"deal-hotel-{uuid.uuid4().hex[:10]}",
             merchant="Ocean View Resort & Spa",
             target_url=url,
             offer=offer_obj,

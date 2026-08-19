@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, Copy, Code2, ShieldCheck, Terminal, Download, ArrowRight, ExternalLink } from 'lucide-react'
+import { BookOpen, Copy, Code2, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function DocsPage() {

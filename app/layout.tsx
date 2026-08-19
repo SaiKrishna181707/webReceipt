@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body>
         <Navigation />
-        <main className="md:ml-64 pt-16 md:pt-0 pb-20 md:pb-0 min-h-screen">
+        <main className="md:ml-64 pt-16 md:pt-16 pb-20 md:pb-0 min-h-screen">
           {children}
         </main>
         <Toaster theme="dark" position="bottom-right" />

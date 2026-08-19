@@ -11,14 +11,12 @@ import {
   HeartPulse,
   Sliders,
   ShieldCheck,
-  RotateCcw,
-  Zap,
-  Terminal,
   Activity,
-  Layers,
   Sparkles
 } from 'lucide-react'
 import { toast } from 'sonner'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export default function MissionControlPage() {
   const [activeStage, setActiveStage] = useState(1)
@@ -78,7 +76,7 @@ export default function MissionControlPage() {
     setLogs((prev) => [
       ...prev,
       {
-        id: Math.random().toString(),
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(),
         timestamp: new Date().toLocaleTimeString(),
         text,
         type
@@ -122,10 +120,10 @@ export default function MissionControlPage() {
     addLog('$ bdata scraper run c_prod_8f2a91 https://webreceipt.dev/fixture/hotel --pretty', 'cmd')
 
     try {
-      const res = await fetch('http://localhost:8000/api/observe', {
+      const res = await fetch(`${API_URL}/api/observe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'http://localhost:8000/fixture/hotel' })
+        body: JSON.stringify({ url: `${API_URL}/fixture/hotel` })
       })
 
       if (!res.ok) throw new Error('API request failed')
@@ -146,17 +144,16 @@ export default function MissionControlPage() {
     setNodeStatus('failed')
     setHealDiff(null)
     setFinalPrice(8499)
-    addLog('$ curl -X POST http://localhost:8000/api/fixture/break', 'cmd')
+    addLog(`$ curl -X POST ${API_URL}/api/fixture/break`, 'cmd')
     addLog('[drift] Swapped hotel checkout fixture to V2 (DOM selector redesign)', 'warn')
 
     try {
-      await fetch('http://localhost:8000/api/fixture/break', { method: 'POST' })
-      const res = await fetch('http://localhost:8000/api/observe', {
+      await fetch(`${API_URL}/api/fixture/break`, { method: 'POST' })
+      await fetch(`${API_URL}/api/observe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'http://localhost:8000/fixture/hotel' })
+        body: JSON.stringify({ url: `${API_URL}/fixture/hotel` })
       })
-      const data = await res.json()
       setNodeStatus('failed')
     } catch {
       simulateLocalObservation(true)
@@ -165,21 +162,21 @@ export default function MissionControlPage() {
 
   const handleTriggerHeal = async () => {
     setNodeStatus('healing')
-    addLog('$ bdata scraper heal c_prod_8f2a91 "checkout.finalTotal returned subtotal ₹8499 instead of ₹10147 due to V2 selector drift" --url http://localhost:8000/fixture/hotel --pretty', 'cmd')
+    addLog(`$ bdata scraper heal c_prod_8f2a91 "checkout.finalTotal returned subtotal ₹8499 instead of ₹10147 due to V2 selector drift" --url ${API_URL}/fixture/hotel --pretty`, 'cmd')
 
     try {
-      const res = await fetch('http://localhost:8000/api/heal', {
+      const res = await fetch(`${API_URL}/api/heal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           collector_id: 'c_prod_8f2a91',
-          url: 'http://localhost:8000/fixture/hotel',
+          url: `${API_URL}/fixture/hotel`,
           description: 'checkout.finalTotal returned subtotal ₹8499 instead of ₹10147 due to V2 selector drift'
         })
       })
 
       if (!res.ok) throw new Error('Heal request failed')
-      const data = await res.json()
+      await res.json()
       setNodeStatus('recovered')
       setHealDiff({ before: '.total-price', after: '[data-testid="order-total"]' })
       setFinalPrice(10147)

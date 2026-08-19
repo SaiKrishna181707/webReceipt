@@ -61,11 +61,20 @@ export class JsonStore {
 
   save() {
     const snapshot = JSON.stringify(this.state, null, 2);
-    this.writeQueue = this.writeQueue.then(async () => {
+    this.writeQueue = this.writeQueue.catch(() => {}).then(async () => {
       await fs.mkdir(path.dirname(this.file), { recursive: true });
       const tmp = `${this.file}.tmp`;
       await fs.writeFile(tmp, snapshot, { mode: 0o600 });
-      await fs.rename(tmp, this.file);
+      try {
+        await fs.rename(tmp, this.file);
+      } catch (err) {
+        if (err.code === 'EPERM' || err.code === 'EEXIST' || err.code === 'EBUSY') {
+          await fs.copyFile(tmp, this.file);
+          await fs.unlink(tmp).catch(() => {});
+        } else {
+          throw err;
+        }
+      }
     });
     return this.writeQueue;
   }

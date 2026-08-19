@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Check, X, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react'
 
 interface FormInputProps {
   label: string
@@ -116,10 +116,13 @@ interface FormStepProps {
   currentStep: number
   totalSteps: number
   onStepChange: (step: number) => void
+  onComplete?: () => void
   children: React.ReactNode
 }
 
-export function FormStep({ currentStep, totalSteps, onStepChange, children }: FormStepProps) {
+export function FormStep({ currentStep, totalSteps, onStepChange, onComplete, children }: FormStepProps) {
+  const isFinalStep = currentStep === totalSteps - 1
+
   return (
     <div className="space-y-6">
       {/* Progress Indicator */}
@@ -156,6 +159,7 @@ export function FormStep({ currentStep, totalSteps, onStepChange, children }: Fo
       {/* Navigation */}
       <div className="flex justify-between pt-6 border-t border-white/10">
         <button
+          type="button"
           onClick={() => onStepChange(currentStep - 1)}
           disabled={currentStep === 0}
           className="px-6 py-2 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/5"
@@ -163,11 +167,11 @@ export function FormStep({ currentStep, totalSteps, onStepChange, children }: Fo
           Previous
         </button>
         <button
-          onClick={() => onStepChange(currentStep + 1)}
-          disabled={currentStep === totalSteps - 1}
+          type="button"
+          onClick={() => isFinalStep ? onComplete?.() : onStepChange(currentStep + 1)}
           className="bg-gradient-to-r from-purple-500 to-blue-500 px-6 py-2 rounded-xl font-medium hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {currentStep === totalSteps - 1 ? 'Complete' : 'Next'}
+          {isFinalStep ? 'Complete' : 'Next'}
         </button>
       </div>
     </div>

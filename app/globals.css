@@ -167,12 +167,9 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
-/* Touch targets - minimum 44px for accessibility */
-button, a, input, select {
+/* Touch targets for explicit touch areas */
+.touch-target {
   min-height: 44px;
-}
-
-button, a {
   min-width: 44px;
 }
 
@@ -327,7 +324,7 @@ button, a {
   }
   
   /* Larger touch targets on mobile */
-  button, a {
+  .touch-target {
     min-height: 48px;
     min-width: 48px;
   }

@@ -2,12 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 function parseValue(raw) {
-  const value = String(raw ?? '').trim();
+  let value = String(raw ?? '').trim();
   if (!value) return '';
-  const quote = value[0];
-  if (["'", '"', '`'].includes(quote) && value.at(-1) === quote) return value.slice(1, -1);
   const comment = value.search(/\s+#/);
-  return (comment >= 0 ? value.slice(0, comment) : value).trimEnd();
+  if (comment >= 0) {
+    value = value.slice(0, comment).trimEnd();
+  }
+  const quote = value[0];
+  if (["'", '"', '`'].includes(quote) && value.at(-1) === quote && value.length >= 2) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
 
 export function parseEnvText(text) {

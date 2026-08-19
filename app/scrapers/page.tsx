@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Boxes, Plus, Search, CheckCircle2, XCircle, AlertTriangle, Minus, ArrowUpRight, ExternalLink, RefreshCw, Layers } from 'lucide-react'
+import { Boxes, Plus, Search, CheckCircle2, XCircle, AlertTriangle, Minus, ArrowUpRight } from 'lucide-react'
 import { scrapers, Scraper } from '@/lib/mock-data'
 import { toast } from 'sonner'
 

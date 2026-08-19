@@ -7,15 +7,7 @@ import {
   Copy,
   Play,
   HeartPulse,
-  ExternalLink,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  ArrowLeft,
-  Terminal,
-  Activity,
-  Shield,
-  FileJson
+  ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { scrapers, output } from '@/lib/mock-data'

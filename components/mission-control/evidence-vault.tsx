@@ -1,6 +1,6 @@
 'use client'
 
-import { X, ShieldCheck, Copy, Image, Code, Hash, Lock, CheckCircle2 } from 'lucide-react'
+import { X, ShieldCheck, Copy, Code, Hash } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface EvidenceVaultProps {

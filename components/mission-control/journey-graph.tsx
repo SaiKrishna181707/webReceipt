@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, AlertTriangle, ShieldCheck, Zap, Layers, Sparkles } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Zap } from 'lucide-react'
 
 interface JourneyGraphProps {
   activeStage: number

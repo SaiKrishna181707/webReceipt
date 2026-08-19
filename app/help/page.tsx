@@ -23,7 +23,7 @@ export default function HelpPage() {
   })
 
   return (
-    <div className="min-h-screen pt-24 md:pt-0 pb-20 md:pb-0 px-6">
+    <div className="min-h-screen px-6">
       <div className="max-w-4xl mx-auto py-12">
         {/* Header */}
         <div className="text-center mb-12">

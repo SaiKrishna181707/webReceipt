@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Wand2, Play, Bug, HeartPulse, RotateCcw, CheckCircle2, XCircle, AlertTriangle, ShieldCheck, ArrowRight, Activity, Zap } from 'lucide-react'
+import { Wand2, Play, Bug, HeartPulse, RotateCcw, CheckCircle2, XCircle, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function DemoPage() {

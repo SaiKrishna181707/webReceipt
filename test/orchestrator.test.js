@@ -3,16 +3,24 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { JsonStore } from '../src/services/store.js';
 import { WebReceiptService } from '../src/services/orchestrator.js';
 import { SimulatorCollector } from '../src/integrations/simulator.js';
 import { mutationObservation } from '../src/fixtures/observations.js';
 
+const createdFiles = [];
 async function setup(name, collector = new SimulatorCollector()) {
-  const store = new JsonStore(path.join(os.tmpdir(), `webreceipt-${name}-${randomUUID()}.json`));
+  const filePath = path.join(os.tmpdir(), `webreceipt-${name}-${randomUUID()}.json`);
+  createdFiles.push(filePath);
+  const store = new JsonStore(filePath);
   await store.reset();
   return { store, collector, service: new WebReceiptService({ collector, store }) };
 }
+
+test.after(async () => {
+  await Promise.all(createdFiles.map((file) => fs.unlink(file).catch(() => {})));
+});
 
 test('simulator refuses to pretend it scraped an arbitrary third-party URL', async () => {
   const { service } = await setup('simulator-honesty');

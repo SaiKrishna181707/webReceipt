@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Terminal, Copy, Trash2, ShieldCheck, Bug } from 'lucide-react'
+import { Terminal, Copy, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export interface LogLine {

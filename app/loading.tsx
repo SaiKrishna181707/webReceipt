@@ -1,25 +1,25 @@
 export default function Loading() {
   return (
-    <div className="loading-shell" aria-label="Loading ScrapeHeal">
-      <div className="page-head">
-        <div>
-          <div className="kicker">LOADING / MISSION CONTROL</div>
-          <div className="skeleton skeleton-title" />
-          <div className="skeleton skeleton-copy" />
-        </div>
+    <div className="p-6 space-y-6 animate-pulse" aria-label="Loading WebReceipt">
+      <div className="space-y-2">
+        <div className="h-3 w-40 bg-purple-500/20 rounded" />
+        <div className="h-8 w-64 bg-white/10 rounded-lg" />
+        <div className="h-4 w-96 bg-white/5 rounded" />
       </div>
-      <div className="grid stats">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((x) => (
-          <div className="card skeleton-card" key={x}>
-            <div className="skeleton skeleton-label" />
-            <div className="skeleton skeleton-number" />
-            <div className="skeleton skeleton-small" />
+          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3" key={x}>
+            <div className="h-3 w-24 bg-white/10 rounded" />
+            <div className="h-8 w-16 bg-white/20 rounded" />
+            <div className="h-3 w-32 bg-white/5 rounded" />
           </div>
         ))}
       </div>
-      <div className="grid charts loading-charts">
-        <div className="card skeleton-panel" />
-        <div className="card skeleton-panel" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="h-72 rounded-2xl bg-white/[0.03] border border-white/10 p-6" />
+        <div className="h-72 rounded-2xl bg-white/[0.03] border border-white/10 p-6" />
       </div>
     </div>
   )

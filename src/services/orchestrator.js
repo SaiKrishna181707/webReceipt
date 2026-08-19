@@ -12,7 +12,7 @@ function compileFromRaw(raw, { targetUrl, collector } = {}) {
   return compileDealContract({
     ...raw,
     ...(targetUrl ? { targetUrl } : {}),
-    collectorId: raw.collectorId ?? collector?.collectorId ?? raw.collectorId,
+    collectorId: raw.collectorId ?? collector?.collectorId,
   });
 }
 

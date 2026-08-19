@@ -21,15 +21,31 @@ export function Navigation() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
   useEffect(() => {
-    // Check system preference
-    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    const saved = localStorage.getItem('webreceipt-theme')
+    if (saved) {
+      const isD = saved === 'dark'
+      setIsDark(isD)
+      if (isD) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
       setIsDark(false)
+      document.documentElement.classList.remove('dark')
     }
   }, [])
 
   const toggleTheme = () => {
-    setIsDark(!isDark)
-    document.documentElement.classList.toggle('dark')
+    const next = !isDark
+    setIsDark(next)
+    if (next) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('webreceipt-theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('webreceipt-theme', 'light')
+    }
   }
 
   return (
@@ -53,7 +69,7 @@ export function Navigation() {
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
             
             return (
               <Link
@@ -99,7 +115,7 @@ export function Navigation() {
         <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
             
             return (
               <Link

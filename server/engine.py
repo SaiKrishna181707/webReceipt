@@ -77,6 +77,8 @@ class ContractIntegrityEngine:
             "offer": contract.offer.model_dump(),
             "checkout": contract.checkout.model_dump(),
             "terms": contract.terms.model_dump(),
+            "journey": [j.model_dump() for j in contract.journey],
+            "evidence": [e.model_dump() for e in contract.evidence],
         }
         encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()

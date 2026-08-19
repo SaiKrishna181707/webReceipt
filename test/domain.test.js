@@ -105,7 +105,7 @@ test('promise diff captures prices, fees, terms, claims and inclusions', () => {
 });
 
 test('public-target policy rejects credentials, private networks and exact private path segments without false positives', () => {
-  assert.match(assertPublicTarget('https://example.com/hotels/room#frag'), /^https:/);
+  assert.equal(assertPublicTarget('https://example.com/hotels/room#frag'), 'https://example.com/hotels/room');
   assert.match(assertPublicTarget('https://example.com/accounting/report'), /^https:/, 'accounting must not be confused with /account');
   assert.throws(() => assertPublicTarget('ftp://example.com/file'));
   assert.throws(() => assertPublicTarget('https://user:pass@example.com/room'));

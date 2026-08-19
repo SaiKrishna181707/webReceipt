@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { FileText, Shield, Hash, CheckCircle2, Lock, Eye, Copy, ExternalLink, Image, Code, Sparkles } from 'lucide-react'
+import { FileText, Hash, CheckCircle2, Eye, Copy, Image, Code } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface EvidenceStage {
