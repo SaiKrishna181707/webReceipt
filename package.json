@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:brightdata": "node src/server.js",
     "lint": "next lint",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "verify:receipt": "node scripts/verify-receipt.mjs",
     "verify": "node scripts/validate-scraper-studio.mjs && node --test --test-concurrency=1 test/*.test.js && node src/stress-cli.js"
   },
   "dependencies": {

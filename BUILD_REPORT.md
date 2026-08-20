@@ -2,14 +2,14 @@
 
 Last full audit: **18 Aug 2026 (IST)**.
 
-This report records what was actually executed against the current source tree. It intentionally separates local verification from cloud-only steps that require participant credentials.
+This report records what was actually executed against the source tree at that audit. It intentionally separates local verification from cloud-only steps that require participant credentials. A later submission-readiness pass corrected stale command/path documentation without changing the product UI or runtime behavior.
 
 ## Final local verification
 
 - `npm run verify`: **PASS**.
   - Scraper Studio package validator: **PASS**.
-  - `npm test`: **57/57 passing**.
-  - Chaos Checkout: **7/7 mutation scenarios resilient/recovered**.
+  - Node test suite: **57/57 passing** in the recorded audit.
+  - Chaos Checkout: **3/3 intentional semantic/evidence failures detected and healed; 4/4 structural/format mutations absorbed without semantic drift**.
 - Deterministic monetary fuzzing: **500 internally consistent contracts accepted** and the corresponding **500 ₹1-corrupted totals rejected**.
 - Test coverage (`node --test --experimental-test-coverage`):
   - **98.67% line coverage**
@@ -18,7 +18,7 @@ This report records what was actually executed against the current source tree. 
 - Persistence concurrency: **48 simultaneous observations** while preserving valid atomic JSON and retention limits.
 - Restart integrity: persisted receipts are revalidated from their contract/evidence hashes and semantic rules; structurally unusable persisted records are discarded instead of trusted.
 - Corrupt persistence recovery: invalid JSON state is backed up and recovered rather than crashing startup.
-- Production-process smoke test (`NODE_ENV=production npm start`): **PASS**.
+- Sponsor-harness production-process smoke test (`NODE_ENV=production npm run start:brightdata`): **PASS** in the recorded audit path.
   - health endpoint: healthy
   - healthy receipt: **11/11 integrity checks pass**
   - wrong-but-valid semantic break: detected → preview verified → approved → fresh run verified
@@ -35,7 +35,9 @@ This report records what was actually executed against the current source tree. 
 - Scraper Studio function-body validation: **PASS** for `brightdata/interaction.js` and `brightdata/parser.js`.
 - Git whitespace audit: `git diff --check` **clean**.
 - Repository secret scan: **no committed API token, GitHub token, or private credential detected**.
-- No TODO/FIXME/HACK markers remain in the submission surface.
+- No development placeholder markers remain in the submission surface.
+
+The current `package.json` now exposes `npm test` and `npm run verify:receipt` as reproducible wrappers for commands/files that were already present in the repository. `npm start` remains the Next.js product server; `npm run start:brightdata` is the explicit sponsor-harness entry point.
 
 ## Custom Scraper Studio verification
 
@@ -59,7 +61,7 @@ The checked-in parser itself is executed under tests against controlled V1/V2 DO
 
 ## Verified repair-safety lifecycle
 
-The live adapter and orchestration now fail closed around Bright Data's approval gate:
+The Bright Data adapter and orchestration fail closed around the approval gate:
 
 ```text
 production extraction fails semantic integrity
@@ -105,7 +107,7 @@ Judge-facing UI was exercised with deterministic API responses in Chromium at:
 
 The rendered repair state visibly communicates **preview verified → approved**, and a healthy receipt displays **11/11** integrity checks.
 
-Direct Chromium navigation to localhost is restricted by this execution environment, so browser interaction was exercised through rendered page content + deterministic API stubs. The production HTTP server itself was separately smoke-tested over localhost with `curl`.
+Direct Chromium navigation to localhost is restricted by this execution environment, so browser interaction was exercised through rendered page content + deterministic API stubs. The sponsor HTTP server itself was separately smoke-tested over localhost with `curl`.
 
 ## Node/runtime compatibility
 
@@ -117,23 +119,24 @@ GitHub Actions is configured to run the verification suite on **Node 20 and Node
 
 ### Real Bright Data cloud run
 
-A **real Bright Data cloud collection/self-heal has not been executed from this environment** because no participant Bright Data API token or published Collector ID was provided.
+A **real Bright Data cloud collection/self-heal has not been evidenced in this repository** because no participant-owned Bright Data API token, genuine production Collector ID, and captured run artifacts are committed.
 
 To complete the sponsor-backed submission proof before judging:
 
-1. deploy WebReceipt publicly;
+1. deploy the sponsor harness publicly (`npm run start:brightdata` or the Dockerfile);
 2. create/publish the custom Browser Worker from `brightdata/` in Scraper Studio;
 3. run it against the public `/fixture/hotel` V1 URL;
 4. save it to Production and record the real `c_...` Collector ID;
-5. configure `BRIGHT_DATA_API_TOKEN`, `BRIGHT_DATA_COLLECTOR_ID` and an operator token;
-6. switch the fixture to V2;
+5. configure `BRIGHT_DATA_API_TOKEN`, `BRIGHT_DATA_COLLECTOR_ID` and an operator token in deployment secrets;
+6. switch the sponsor fixture to V2;
 7. demonstrate the real collector returning the plausible wrong total;
 8. show WebReceipt detecting the semantic contradiction;
 9. show the Scraper Studio repair preview being verified before approval;
-10. rerun the same Collector ID and show **11/11** checks pass.
+10. rerun the same Collector ID and show **11/11** checks pass;
+11. save token-masked artifacts under `evidence/`.
 
-See `docs/BRIGHT_DATA_SETUP.md` and `brightdata/CLI_RUNBOOK.md`.
+See `docs/BRIGHT_DATA_SETUP.md`, `brightdata/CLI_RUNBOOK.md`, and `evidence/README.md`.
 
 ### Docker engine
 
-The Dockerfile was reviewed and hardened for a non-root runtime, but a Docker daemon is **not available in this execution environment**, so a real `docker build` was not claimed. The same production Node process used by the container was started and smoke-tested directly.
+The Dockerfile was reviewed and hardened for a non-root runtime, but the recorded audit environment did not provide a Docker daemon, so a real `docker build` was not claimed. The same `src/server.js` production process used by the container was smoke-tested directly.

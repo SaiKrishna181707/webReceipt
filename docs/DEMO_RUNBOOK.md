@@ -1,78 +1,88 @@
 # Two-minute WebReceipt demo runbook
 
+Use two clearly separated proof tracks. Do not present simulator output as a real Bright Data cloud run.
+
 ## Pre-flight
 
 ```bash
 npm run verify
+npm run verify:receipt -- examples/webreceipt.json
 ```
 
-For sponsor-backed recording, use a public deployment, a **production custom Scraper Studio Browser Worker**, the real Collector ID/API token, and `WEBRECEIPT_OPERATOR_TOKEN`.
+For sponsor-backed recording, deploy the sponsor harness (`npm run start:brightdata` / Dockerfile), use a production custom Scraper Studio Browser Worker, the real Collector ID/API token, and `WEBRECEIPT_OPERATOR_TOKEN`.
 
-## 0:00–0:15 — pain
+## Track A — product UI walkthrough (deterministic simulator)
+
+### 0:00–0:15 — pain
 
 “Receipts remember what you paid. They don't remember what the internet promised.”
 
-Show the public offer: ₹8,499, free cancellation, breakfast included.
+### 0:15–0:35 — Deal Contract
 
-## 0:15–0:35 — custom Scraper Studio journey
-
-Briefly show `brightdata/interaction.js`: screenshot offer → click checkout → screenshot final public checkout → parse/collect.
-
-Generate the receipt and show:
+Open `/console` and run **Observe journey**. Show:
 
 - advertised: ₹8,499
 - final: ₹10,147
-- cancellation: free until Aug 21
+- cancellation terms
 - evidence attached
-- **11/11 integrity checks pass**
+- all integrity checks pass
 
-## 0:35–0:50 — provenance
+The current Next.js console uses `SimulatorCollector`; say that plainly.
 
-Click final total. Show public URL, captured text, timestamp, screenshot, DOM evidence, evidence hash and contract hash.
+### 0:35–0:50 — provenance
 
-## 0:50–1:05 — silent corruption
+Click a contract field or journey stage. Show public URL, captured text, timestamp, DOM evidence, evidence hash and contract hash.
 
-Press **Break website**. Same URL, redesigned DOM.
+### 0:50–1:05 — silent corruption
 
-The old selector still returns a believable number:
+Run **Simulate redesign**. The simulator injects the wrong-but-valid total:
 
 ```text
 finalTotal = ₹8,499
 ```
 
-WebReceipt shows:
+WebReceipt shows the semantic contradiction:
 
 ```text
-CONTRACT INTEGRITY FAILURE
 expected ₹10,147
 extracted ₹8,499
 ```
 
-## 1:05–1:38 — verify the healer
+### 1:05–1:35 — verify the healer
 
-This is the climax.
+Run **Heal with Bright Data** and explain that this UI path is a deterministic simulation of the same verified-heal protocol:
 
 ```text
-Scraper Studio self-heal requested
-→ pending_answer
-→ preview_result received
-→ WebReceipt compiles preview
-→ 11/11 checks pass
-→ ONLY NOW approve + auto-save
-→ fresh production collector run
-→ 11/11 checks pass again
+repair proposed
+→ preview_result treated as untrusted
+→ Deal Contract compiled
+→ integrity checks pass
+→ approve
+→ fresh run
+→ integrity checks pass again
 ```
 
-Say: “Self-healing is not enough if an AI repair can silently change meaning. WebReceipt verifies the healer before shipping the fix.”
+The real sponsor proof for this sequence is Track B.
 
-If a deliberately bad preview is shown during Q&A, WebReceipt rejects it before deployment.
+### 1:35–2:00 — Promise Diff
 
-## 1:38–1:52 — Promise Diff
+Run **Promise Diff** and show the synthetic day+3 comparison. Keep the synthetic label explicit.
 
-After two real observations, use **Compare stored runs** in Bright Data live mode. In simulator mode, **Simulate day +3** is clearly labeled synthetic.
+## Track B — real Bright Data sponsor proof
 
-Show one before/after term or price change and its evidence.
+Record a short terminal segment using `brightdata/CLI_RUNBOOK.md`:
 
-## 1:52–2:00 — close
+1. show the real `c_*` Collector ID;
+2. run V1 on the public sponsor fixture;
+3. break the same public fixture URL;
+4. rerun the same collector and capture the wrong-but-valid result;
+5. request self-heal and capture the preview/diff;
+6. verify the preview before approval;
+7. approve/autosave;
+8. rerun the same `c_*` ID and show the healthy post-heal result.
+
+Save token-masked raw evidence under `evidence/`.
+
+## Close
 
 “WebReceipt gives you a receipt for what the internet promised you. The web can change after you buy. Your receipt shouldn't.”
