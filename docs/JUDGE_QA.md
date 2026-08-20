@@ -8,7 +8,9 @@ Transaction receipts remember what was paid, but mutable webpages do not preserv
 
 ## Why is Bright Data central rather than decorative?
 
-The product depends on a custom Scraper Studio Browser Worker to navigate the public journey, click into checkout, capture screenshots, parse structured fields, and keep that collector working after the page changes. Remove Scraper Studio and the observation/self-healing pipeline is gone.
+The sponsor-backed path uses a custom Scraper Studio Browser Worker to navigate the public journey, click into checkout, capture screenshots, parse structured fields, and keep that collector working after the page changes. The repository also contains a real Bright Data adapter and verified approval gate in `src/`; the sponsor harness is launched with `npm run start:brightdata` or the Dockerfile.
+
+The current Next.js product UI is intentionally treated as a deterministic simulator demonstration unless a later authorized change wires that UI to the Bright Data adapter.
 
 ## What is technically new about the failure demo?
 
@@ -21,10 +23,11 @@ A generated repair is still a code change. WebReceipt treats `preview_result` as
 ## What exactly is real versus simulated?
 
 - `brightdata/interaction.js` and `brightdata/parser.js` are the real custom Scraper Studio code intended for the published collector.
-- `/fixture/hotel` is a real public browser/DOM failure lab once the app is deployed.
-- V1→V2 changes actual DOM semantics while preserving the legacy selector.
-- Chaos Checkout is deterministic local/adversarial testing. Its first four cases are post-extraction semantic fixtures, not claims that a browser was launched seven times.
-- The synthetic day+3 Promise Diff exists only in simulator mode. Bright Data live mode compares actual stored observations.
+- `src/integrations/brightdata.js` and `src/server.js` implement the real Bright Data API path used by the sponsor harness.
+- The sponsor harness exposes `/fixture/hotel` plus controlled break/reset endpoints for a deterministic public V1→V2 proof.
+- The Next.js `/console` and `/mutation-lab` currently use `SimulatorCollector`; their heal flow demonstrates the same contract gate without making a cloud-run claim.
+- Chaos Checkout contains seven mutations: four are absorbed without semantic drift, while three intentionally create semantic/evidence failures that must be detected and healed.
+- The synthetic Promise Diff in the Next UI is a simulator demonstration. Real comparisons require stored real observations from the sponsor-backed path.
 
 ## What do the hashes prove?
 
@@ -40,8 +43,8 @@ Only public anonymous HTTP(S) pages. The app and Browser Worker reject obvious c
 
 ## Why is the controlled fixture necessary?
 
-A judging demo cannot depend on a third-party site redesigning itself at the right moment. The fixture gives a deterministic V1/V2 failure that the real custom collector can crawl after deployment. The same canonical schema can then be adapted to a real public lodging journey for credibility.
+A judging demo cannot depend on a third-party site redesigning itself at the right moment. The fixture gives a deterministic V1/V2 failure that the real custom collector can crawl after the sponsor harness is deployed publicly. A separate real long-tail public target should be added for credibility if time permits.
 
 ## What remains to be done outside this repository?
 
-Create/publish the custom Browser Worker in the participant's Bright Data account, configure the real Collector ID/API token on the deployed app, and record at least one genuine Bright Data V1→V2→self-heal run. The repository does not falsely claim that cloud run occurred without those credentials.
+Create/publish the custom Browser Worker in the participant's Bright Data account, record the real Collector ID, run and capture at least one genuine Bright Data V1→failure→self-heal→post-heal sequence, and record the final demo video. The repository must not claim those external steps occurred until the evidence exists.
