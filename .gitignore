@@ -11,3 +11,6 @@ venv/
 .venv/
 
 
+
+# Local Claude Code tooling config (permissions, dev-server launch)
+.claude/

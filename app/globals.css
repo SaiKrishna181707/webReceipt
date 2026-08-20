@@ -1,39 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   BRICK LAB — a moulded-ABS design system.
+   Every surface is a real brick: hot top edge, chamfered sides, dark underside,
+   a cast shadow onto the plate below, and studs you can see clutch into place.
+   ========================================================================== */
+
 :root {
-  --bg: #000000;
-  --bg-subtle: #09090b;
-  --panel: #111113;
-  --panel-hover: #1f1f22;
+  --font-display: 'Baloo 2';
+
+  --bg: #0d0e0b;
+  --bg-subtle: #121310;
+  --panel: #232420;
+  --panel-hover: #33352f;
   --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.2);
-  --text: #f0f6fc;
-  --muted: #a1a1aa;
-  
-  --violet: #a855f7;
-  --violet-glow: rgba(168, 85, 247, 0.25);
-  --cyan: #06b6d4;
-  --cyan-glow: rgba(6, 182, 212, 0.25);
-  --emerald: #10b981;
-  --emerald-glow: rgba(16, 185, 129, 0.25);
-  --rose: #f43f5e;
-  --amber: #f59e0b;
-  --glow: #a855f7;
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --text: #f6f7f3;
+  --muted: #9ba09a;
+
+  /* Official-ish LEGO ABS colours */
+  --brick-red: #e3000b;
+  --brick-yellow: #f6c500;
+  --brick-blue: #0057a8;
+  --brick-green: #00852b;
+  --brick-orange: #ff6a13;
+  --brick-grey: #6c6e68;
+
+  --stud-size: 34px;
 }
 
 .light {
-  --bg: #f8fafc;
-  --bg-subtle: #f1f5f9;
+  --bg: #e8e9e4;
+  --bg-subtle: #f2f3ef;
   --panel: #ffffff;
-  --panel-hover: #f8fafc;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.16);
-  --text: #0f172a;
-  --muted: #64748b;
+  --panel-hover: #f5f6f2;
+  --line: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.2);
+  --text: #171814;
+  --muted: #4a4c48;
 }
 
 * {
@@ -60,68 +68,281 @@ body {
   overflow-x: hidden;
 }
 
-.mono {
-  font-family: 'Fira Code', 'DM Mono', monospace;
+h1,
+h2,
+h3,
+.display {
+  font-family: 'Baloo 2', Inter, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
 }
 
-/* Custom modern scrollbar */
+.mono {
+  font-family: 'Fira Code', monospace;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #171814;
 }
 
+/* The scrollbar is a yellow 1x3 brick */
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffd21e 0%, #f6c500 45%, #d4a600 100%);
+  border-radius: 3px;
+  border: 2px solid #171814;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, #ff6b72 0%, #e3000b 100%);
 }
 
-/* Glassmorphism & Modern Card Utility Classes */
-.glass-panel {
-  background: rgba(13, 20, 36, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--line);
+/* ============================================================================
+   THE BASEPLATE — the studded 32x32 plate the entire site is built on
+   ========================================================================== */
+
+.baseplate {
+  background-color: #0d0e0b;
+  background-image:
+    /* stud top highlight */
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.075) 0 22%, transparent 24%),
+    /* stud body shadow */
+    radial-gradient(circle at 50% 58%, rgba(0, 0, 0, 0.55) 0 26%, transparent 28%);
+  background-size: var(--stud-size) var(--stud-size), var(--stud-size) var(--stud-size);
+  background-position: 0 0, 0 0;
 }
 
+/* Plate seams every 8 studs, like real baseplate edges */
+.baseplate-seams::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: calc(var(--stud-size) * 8) calc(var(--stud-size) * 8);
+}
+
+/* ============================================================================
+   BRICK SURFACES
+   ========================================================================== */
+
+.brick {
+  position: relative;
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -3px 0 rgba(0, 0, 0, 0.45),
+    inset 2px 0 0 rgba(255, 255, 255, 0.05), inset -2px 0 0 rgba(0, 0, 0, 0.22),
+    0 6px 0 -1px rgba(0, 0, 0, 0.5), 0 16px 28px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* Studs across the top face of any .brick-studs element */
+.brick-studs::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 14px;
+  right: 14px;
+  height: 14px;
+  pointer-events: none;
+  background-image: radial-gradient(
+    ellipse 11px 8px at 14px 50%,
+    var(--stud-color, rgba(255, 255, 255, 0.34)) 0 62%,
+    transparent 64%
+  );
+  background-size: 30px 14px;
+  background-repeat: repeat-x;
+  filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.16));
+}
+
+/* A card that behaves like a brick pressed onto the plate */
+.brick-card {
+  position: relative;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.015) 38%, rgba(0, 0, 0, 0.2) 100%),
+    #232420;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    inset 2px 0 0 rgba(255, 255, 255, 0.045), inset -2px 0 0 rgba(0, 0, 0, 0.28),
+    0 7px 0 -2px rgba(0, 0, 0, 0.55), 0 22px 38px -18px rgba(0, 0, 0, 0.9);
+  transition: transform 0.28s cubic-bezier(0.2, 1.4, 0.4, 1), box-shadow 0.28s ease;
+}
+
+.brick-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    0 13px 0 -2px rgba(0, 0, 0, 0.55), 0 34px 54px -20px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(246, 197, 0, 0.28);
+}
+
+/* Studs on the top of a card, rendered as real cylinders */
+.brick-card-studs::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 18px;
+  height: 16px;
+  width: calc(100% - 36px);
+  pointer-events: none;
+  background-image: radial-gradient(ellipse 13px 9px at 16px 55%, rgba(0, 0, 0, 0.5) 0 60%, transparent 62%),
+    radial-gradient(ellipse 13px 9px at 16px 45%, var(--stud-color, #3a3c36) 0 60%, transparent 62%),
+    radial-gradient(ellipse 9px 4px at 16px 38%, rgba(255, 255, 255, 0.3) 0 60%, transparent 62%);
+  background-size: 34px 16px;
+  background-repeat: repeat-x;
+}
+
+/* ============================================================================
+   BRICK BUTTONS — they physically depress and the clutch shadow collapses
+   ========================================================================== */
+
+.brick-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 7px;
+  font-family: 'Baloo 2', Inter, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transform: translateY(0);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.32),
+    0 6px 0 -1px var(--brick-btn-edge, rgba(0, 0, 0, 0.55)), 0 12px 20px -8px rgba(0, 0, 0, 0.7);
+  transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.11s ease, filter 0.18s ease;
+}
+
+.brick-btn:hover {
+  filter: brightness(1.09) saturate(1.06);
+}
+
+.brick-btn:active,
+.brick-btn[data-pressed='true'] {
+  transform: translateY(5px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(0, 0, 0, 0.34),
+    0 1px 0 -1px var(--brick-btn-edge, rgba(0, 0, 0, 0.55)), 0 3px 7px -4px rgba(0, 0, 0, 0.8);
+}
+
+.brick-btn:disabled {
+  filter: grayscale(0.75) brightness(0.65);
+  transform: translateY(4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 0 -1px rgba(0, 0, 0, 0.5);
+  cursor: not-allowed;
+}
+
+/* Two studs sitting on the button's top face */
+.brick-btn-studs::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 12px;
+  pointer-events: none;
+  background-image: radial-gradient(ellipse 10px 6px at 11px 60%, rgba(0, 0, 0, 0.35) 0 62%, transparent 64%),
+    radial-gradient(ellipse 10px 6px at 11px 42%, var(--stud-color, rgba(255, 255, 255, 0.5)) 0 62%, transparent 64%);
+  background-size: 24px 12px;
+  background-repeat: repeat-x;
+}
+
+/* ============================================================================
+   CSS-3D BRICK — a real six-face brick for decorative moments
+   ========================================================================== */
+
+.scene-3d {
+  perspective: 1100px;
+  perspective-origin: 50% 40%;
+}
+
+.brick-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+.tilt-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+.tilt-3d:hover {
+  transform: rotateX(6deg) rotateY(-8deg) translateZ(24px);
+}
+
+/* ============================================================================
+   BRICK-BUILT TYPE
+   ========================================================================== */
+
+.brick-text {
+  background: linear-gradient(180deg, #ffe98a 0%, #ffd21e 34%, #f6c500 62%, #d4a600 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 8px 20px rgba(246, 197, 0, 0.28));
+}
+
+.brick-text-red {
+  background: linear-gradient(180deg, #ff9a9f 0%, #ff3b45 34%, #e3000b 66%, #9c0008 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 8px 22px rgba(227, 0, 11, 0.32));
+}
+
+.text-moulded {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
+   LEGACY UTILITY REMAP
+   Older panels called for glass; in Brick Lab everything is moulded plastic,
+   so these aliases keep every page on-theme without touching each call site.
+   ========================================================================== */
+
+.glass-panel,
 .glass-card {
-  background: rgba(13, 20, 36, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  position: relative;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.012) 40%, rgba(0, 0, 0, 0.22) 100%),
+    #232420;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    inset 2px 0 0 rgba(255, 255, 255, 0.04), inset -2px 0 0 rgba(0, 0, 0, 0.26),
+    0 6px 0 -2px rgba(0, 0, 0, 0.5), 0 20px 34px -16px rgba(0, 0, 0, 0.88);
+  backdrop-filter: none;
 }
 
 .glass-card-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.28s cubic-bezier(0.2, 1.4, 0.4, 1), box-shadow 0.28s ease;
 }
 
 .glass-card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.4);
-  box-shadow: 0 12px 40px -10px rgba(139, 92, 246, 0.15);
+  transform: translateY(-5px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.24), inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    0 12px 0 -2px rgba(0, 0, 0, 0.55), 0 32px 50px -20px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(246, 197, 0, 0.26);
 }
 
-.glow-violet {
-  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.4);
+.glow-stud {
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    0 8px 0 -2px rgba(0, 0, 0, 0.55), 0 28px 46px -18px rgba(0, 0, 0, 0.9),
+    0 0 44px -10px rgba(246, 197, 0, 0.34);
 }
 
-.glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.4);
+.glow-lime {
+  box-shadow: 0 6px 0 -2px rgba(0, 0, 0, 0.5), 0 0 40px -10px rgba(0, 133, 43, 0.55);
 }
 
-.glow-cyan {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.4);
+.glow-azure {
+  box-shadow: 0 6px 0 -2px rgba(0, 0, 0, 0.5), 0 0 40px -10px rgba(0, 87, 168, 0.6);
 }
 
-/* Keyframe Animations */
+/* ============================================================================
+   MOTION
+   ========================================================================== */
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -130,17 +351,6 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 1;
-    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.6));
-  }
-  50% {
-    opacity: 0.7;
-    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.2));
   }
 }
 
@@ -154,20 +364,12 @@ body {
 }
 
 @keyframes floatSlow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
     transform: translateY(-6px);
-  }
-}
-
-@keyframes borderGlow {
-  0%, 100% {
-    border-color: rgba(139, 92, 246, 0.3);
-  }
-  50% {
-    border-color: rgba(6, 182, 212, 0.3);
   }
 }
 
@@ -176,7 +378,7 @@ body {
 }
 
 .animate-pulse-glow {
-  animation: pulseGlow 2.5s infinite ease-in-out;
+  animation: clutchPulse 2.4s infinite ease-in-out;
 }
 
 .animate-float {
@@ -184,28 +386,43 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
 
 .animate-border-glow {
-  animation: borderGlow 4s infinite ease-in-out;
+  animation: clutchPulse 4s infinite ease-in-out;
 }
 
-/* Touch targets for primary touch areas */
+/* Scroll reveal: bricks snap down into the build */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 46px, 0) scale(0.96);
+  transition: opacity 0.5s ease, transform 0.62s cubic-bezier(0.2, 1.45, 0.4, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================================================================
+   SUPPORT / ACCESSIBILITY
+   ========================================================================== */
+
 .touch-target {
   min-height: 44px;
   min-width: 44px;
 }
 
-/* Focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--violet);
-  outline-offset: 2px;
+  outline: 3px solid var(--brick-yellow);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
-/* Button micro-interactions */
 .btn-hover {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -218,21 +435,14 @@ body {
   transform: scale(0.98);
 }
 
-/* Input focus animation */
 .input-focus {
   transition: all 0.2s ease;
 }
 
-.input-focus:focus {
-  transform: scale(1.01);
-}
-
-/* Progress bar animation */
 .progress-bar {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Tooltip styles */
 .tooltip {
   position: relative;
 }
@@ -243,7 +453,7 @@ body {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--panel2);
+  background: var(--panel);
   color: var(--text);
   padding: 4px 8px;
   border-radius: 4px;
@@ -258,9 +468,8 @@ body {
   opacity: 1;
 }
 
-/* Skeleton loading */
 .skeleton {
-  background: linear-gradient(90deg, var(--panel) 25%, var(--panel2) 50%, var(--panel) 75%);
+  background: linear-gradient(90deg, #232420 25%, #33352f 50%, #232420 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
 }
@@ -274,19 +483,6 @@ body {
   }
 }
 
-/* Notification badge */
-.notification-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  background: var(--red);
-  border-radius: 50%;
-  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-/* Success animation */
 @keyframes success-check {
   0% {
     stroke-dashoffset: 100;
@@ -302,9 +498,9 @@ body {
   animation: success-check 0.5s ease forwards;
 }
 
-/* Error shake animation */
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   25% {
@@ -319,33 +515,33 @@ body {
   animation: shake 0.3s ease;
 }
 
-/* Responsive utilities */
 @media (max-width: 768px) {
+  :root {
+    --stud-size: 26px;
+  }
+
   .hero-title {
     font-size: 2.5rem !important;
   }
-  
+
   .section-title {
     font-size: 2rem !important;
   }
-  
-  /* Larger touch targets on mobile */
+
   .touch-target {
     min-height: 48px;
     min-width: 48px;
   }
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
     --line: #ffffff;
-    --line2: #ffffff;
+    --line-strong: #ffffff;
     --muted: #ffffff;
   }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -353,5 +549,10 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 }

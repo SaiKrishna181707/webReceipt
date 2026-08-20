@@ -27,31 +27,31 @@ function labelFor(path: string): string {
 
 export function PromiseDiff({ diff }: { diff: DiffResult }) {
   return (
-    <section className="glass-card rounded-2xl border border-white/10 overflow-hidden">
+    <section className="glass-card rounded-[8px] border border-white/10 overflow-hidden">
       <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/30">
+          <div className="p-2 rounded-[6px] bg-stud-500/10 text-stud-400 border border-stud-500/30">
             <GitCompare size={18} />
           </div>
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 font-bold">Promise Diff</div>
+            <div className="text-[10px] font-mono uppercase tracking-wider text-plate-300 font-bold">Promise Diff</div>
             <h3 className="font-bold text-white">git diff for commercial promises</h3>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[11px] font-mono text-gray-500">
+        <div className="flex items-center gap-2 text-[11px] font-mono text-plate-300">
           <span title={diff.before.collector.version}>{formatTime(diff.before.observedAt)}</span>
           <ArrowRight size={12} />
-          <span title={diff.after.collector.version} className="text-gray-300">{formatTime(diff.after.observedAt)}</span>
+          <span title={diff.after.collector.version} className="text-plate-100">{formatTime(diff.after.observedAt)}</span>
         </div>
       </div>
 
       {diff.changes.length === 0 ? (
-        <div className="px-6 py-8 text-center text-sm text-gray-500">No changes between these two observations.</div>
+        <div className="px-6 py-8 text-center text-sm text-plate-300">No changes between these two observations.</div>
       ) : (
         <ul className="divide-y divide-white/5">
           {diff.changes.map((c, i) => (
             <li key={`${c.path}-${i}`} className="px-6 py-4">
-              <div className="text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">{labelFor(c.path)}</div>
+              <div className="text-xs font-mono uppercase tracking-wider text-plate-300 mb-2">{labelFor(c.path)}</div>
               <ChangeBody change={c} />
             </li>
           ))}
@@ -64,7 +64,7 @@ export function PromiseDiff({ diff }: { diff: DiffResult }) {
 function DiffLine({ sign, children }: { sign: '+' | '-'; children: React.ReactNode }) {
   const isAdd = sign === '+'
   return (
-    <div className={`flex items-start gap-2 font-mono text-sm rounded-md px-3 py-1.5 ${isAdd ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'}`}>
+    <div className={`flex items-start gap-2 font-mono text-sm rounded-md px-3 py-1.5 ${isAdd ? 'bg-lime-500/10 text-lime-300' : 'bg-rose-500/10 text-rose-300'}`}>
       <span className="shrink-0 opacity-70 select-none">{sign}</span>
       <span className="break-words">{children}</span>
     </div>
@@ -79,7 +79,7 @@ function ChangeBody({ change }: { change: DiffChange }) {
           <DiffLine sign="-">{money(change.before, change.currency)}</DiffLine>
           <DiffLine sign="+">
             {money(change.after, change.currency)}{' '}
-            <span className={`ml-1 text-xs font-bold ${change.delta > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+            <span className={`ml-1 text-xs font-bold ${change.delta > 0 ? 'text-rose-400' : 'text-lime-400'}`}>
               ({signedMoney(change.delta, change.currency)})
             </span>
           </DiffLine>
@@ -100,7 +100,7 @@ function ChangeBody({ change }: { change: DiffChange }) {
           {removed.map((x) => <DiffLine key={`r-${x}`} sign="-">{x}</DiffLine>)}
           {added.map((x) => <DiffLine key={`a-${x}`} sign="+">{x}</DiffLine>)}
           {removed.length === 0 && added.length === 0 && (
-            <div className="text-sm font-mono text-gray-500">{change.after.join(', ') || '—'}</div>
+            <div className="text-sm font-mono text-plate-300">{change.after.join(', ') || '—'}</div>
           )}
         </div>
       )

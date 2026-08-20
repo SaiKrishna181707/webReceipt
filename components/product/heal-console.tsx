@@ -57,9 +57,9 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
   ]
 
   return (
-    <section className="glass-card rounded-2xl border border-white/10 overflow-hidden">
-      <div className={`px-6 py-4 border-b border-white/10 ${healed ? 'bg-emerald-500/[0.06]' : 'bg-amber-500/[0.06]'}`}>
-        <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 font-bold">Self-Healing Flow</div>
+    <section className="glass-card rounded-[8px] border border-white/10 overflow-hidden">
+      <div className={`px-6 py-4 border-b border-white/10 ${healed ? 'bg-lime-500/[0.06]' : 'bg-amber-500/[0.06]'}`}>
+        <div className="text-[10px] font-mono uppercase tracking-wider text-plate-300 font-bold">Self-Healing Flow</div>
         <h3 className="font-bold text-white">
           {healed ? 'Recovered with verified repair' : 'Verification gate — untrusted preview'}
         </h3>
@@ -68,13 +68,13 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
       <ol className="p-6 space-y-0">
         {steps.map((s, i) => {
           const Icon = s.icon
-          const color = s.state === 'done' ? 'emerald' : s.state === 'rejected' ? 'rose' : 'gray'
+          const color = s.state === 'done' ? 'lime' : s.state === 'rejected' ? 'rose' : 'gray'
           const dot =
-            color === 'emerald'
-              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+            color === 'lime'
+              ? 'bg-lime-500/20 text-lime-400 border-lime-500/40'
               : color === 'rose'
                 ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                : 'bg-white/5 text-gray-600 border-white/10'
+                : 'bg-white/5 text-plate-400 border-white/10'
           return (
             <li key={i} className="flex gap-4">
               <div className="flex flex-col items-center">
@@ -84,8 +84,8 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
                 {i < steps.length - 1 && <span className="w-px flex-1 my-1 bg-white/10" />}
               </div>
               <div className={`pb-6 ${i === steps.length - 1 ? 'pb-0' : ''}`}>
-                <div className={`text-sm font-semibold ${color === 'gray' ? 'text-gray-500' : 'text-white'}`}>{s.title}</div>
-                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.detail}</p>
+                <div className={`text-sm font-semibold ${color === 'gray' ? 'text-plate-300' : 'text-white'}`}>{s.title}</div>
+                <p className="text-xs text-plate-300 mt-0.5 leading-relaxed">{s.detail}</p>
               </div>
             </li>
           )
@@ -94,8 +94,8 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
 
       {repair.previewContractHash && (
         <div className="px-6 pb-5 -mt-1">
-          <div className="flex items-center gap-2 text-[11px] font-mono text-gray-500 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
-            <Hash size={12} /> preview contract hash: <span className="text-gray-300">{shortHash(repair.previewContractHash)}</span>
+          <div className="flex items-center gap-2 text-[11px] font-mono text-plate-300 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
+            <Hash size={12} /> preview contract hash: <span className="text-plate-100">{shortHash(repair.previewContractHash)}</span>
           </div>
         </div>
       )}

@@ -50,11 +50,11 @@ const ENDPOINTS: { method: string; path: string; body: string; returns: string; 
 
 export default function DocsPage() {
   return (
-    <div className="max-w-3xl space-y-14">
+    <div className="mx-auto max-w-3xl space-y-14 px-4 py-10 sm:px-6 lg:px-8">
       <header className="space-y-2">
-        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-violet-400">Docs</div>
+        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-stud-400">Docs</div>
         <h1 className="text-3xl font-bold text-white">How WebReceipt works</h1>
-        <p className="text-gray-400">
+        <p className="text-plate-200">
           A self-healing consumer evidence engine. It compiles public purchase journeys into one canonical Deal
           Contract, seals every claim with tamper-evident evidence, and verifies extraction against deterministic
           semantic invariants.
@@ -71,33 +71,33 @@ export default function DocsPage() {
       </Section>
 
       <Section title="Integrity checks">
-        <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5">
+        <div className="rounded-[8px] border border-white/10 overflow-hidden divide-y divide-white/5">
           {CHECKS.map(([id, desc]) => (
             <div key={id} className="flex flex-col sm:flex-row gap-1 sm:gap-4 px-4 py-3">
-              <code className="text-xs font-mono text-emerald-300 sm:w-52 shrink-0">{id}</code>
-              <span className="text-sm text-gray-400">{desc}</span>
+              <code className="text-xs font-mono text-lime-300 sm:w-52 shrink-0">{id}</code>
+              <span className="text-sm text-plate-200">{desc}</span>
             </div>
           ))}
         </div>
       </Section>
 
       <Section title="API reference">
-        <p className="text-gray-400 text-sm">
+        <p className="text-plate-200 text-sm">
           All routes run on the Node.js runtime and drive the same engine that powers the Console. Bodies are JSON.
         </p>
         <div className="space-y-3">
           {ENDPOINTS.map((e) => (
-            <div key={e.path} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div key={e.path} className="rounded-[8px] border border-white/10 bg-white/[0.02] p-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${e.method === 'GET' ? 'bg-cyan-500/15 text-cyan-300' : 'bg-violet-500/15 text-violet-300'}`}>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${e.method === 'GET' ? 'bg-azure-500/15 text-azure-300' : 'bg-stud-500/15 text-stud-200'}`}>
                   {e.method}
                 </span>
                 <code className="text-sm font-mono text-white">{e.path}</code>
-                <span className="text-[11px] font-mono text-gray-500 ml-auto">→ {e.returns}</span>
+                <span className="text-[11px] font-mono text-plate-300 ml-auto">→ {e.returns}</span>
               </div>
-              <p className="text-sm text-gray-400 mt-2">{e.desc}</p>
+              <p className="text-sm text-plate-200 mt-2">{e.desc}</p>
               {e.body !== '—' && (
-                <pre className="mt-2 bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-gray-300 overflow-x-auto">
+                <pre className="mt-2 bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-plate-100 overflow-x-auto">
                   {e.body}
                 </pre>
               )}
@@ -107,21 +107,21 @@ export default function DocsPage() {
       </Section>
 
       <Section title="Run it locally">
-        <pre className="bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-gray-300 overflow-x-auto">
+        <pre className="bg-black/50 border border-white/10 rounded-[6px] p-4 text-sm font-mono text-plate-100 overflow-x-auto">
 {`npm install
 npm run dev        # Next.js console at http://localhost:3000
 npm run verify     # engine checks: schema + unit tests + chaos suite`}
         </pre>
       </Section>
 
-      <div className="rounded-2xl border border-violet-500/30 bg-violet-500/[0.06] p-6 flex items-center justify-between gap-4 flex-wrap">
+      <div className="rounded-[8px] border border-stud-500/30 bg-stud-500/[0.06] p-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h3 className="text-white font-semibold">Ready to see it run?</h3>
-          <p className="text-gray-400 text-sm">Walk the full observe → break → heal → diff loop on live data.</p>
+          <p className="text-plate-200 text-sm">Walk the full observe → break → heal → diff loop on live data.</p>
         </div>
         <Link
           href="/console"
-          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium px-5 py-2.5 transition-colors shrink-0"
+          className="inline-flex items-center gap-2 rounded-[6px] bg-brick-600 hover:bg-brick-500 text-white font-medium px-5 py-2.5 transition-colors shrink-0"
         >
           Launch Console <ArrowRight size={15} />
         </Link>
@@ -141,9 +141,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Concept({ name, body }: { name: string; body: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+    <div className="rounded-[6px] border border-white/10 bg-white/[0.02] p-4">
       <h3 className="text-white font-semibold text-sm mb-1">{name}</h3>
-      <p className="text-sm text-gray-400 leading-relaxed">{body}</p>
+      <p className="text-sm text-plate-200 leading-relaxed">{body}</p>
     </div>
   )
 }

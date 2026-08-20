@@ -29,21 +29,21 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
       <button aria-label="Close evidence" onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative w-full sm:max-w-3xl bg-[#0b0e17] border-t sm:border border-emerald-500/30 sm:rounded-2xl shadow-2xl max-h-[88vh] overflow-y-auto animate-fade-in-up">
+      <div className="relative w-full sm:max-w-3xl bg-[#0b0e17] border-t sm:border border-lime-500/30 sm:rounded-[8px] shadow-2xl max-h-[88vh] overflow-y-auto animate-fade-in-up">
         {/* Header */}
         <div className="sticky top-0 bg-[#0b0e17] border-b border-white/10 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <div className="p-2 rounded-[6px] bg-lime-500/15 text-lime-400 border border-lime-500/30">
               <Hash size={18} />
             </div>
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-lime-400 font-bold">
                 Tamper-evident evidence
               </div>
               <h3 className="text-white font-bold">{FIELD_LABELS[evidence.field] ?? evidence.field}</h3>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-lg text-plate-200 hover:text-white hover:bg-white/10 transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -51,10 +51,10 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
         <div className="p-6 space-y-5">
           {/* Captured text */}
           <div>
-            <div className="text-[11px] font-mono uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-plate-300 mb-2 flex items-center gap-1.5">
               <Code2 size={12} /> Captured text
             </div>
-            <pre className="bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-cyan-200 whitespace-pre-wrap break-words">
+            <pre className="bg-black/50 border border-white/10 rounded-[6px] p-4 text-sm font-mono text-azure-200 whitespace-pre-wrap break-words">
               {evidence.capturedText}
             </pre>
           </div>
@@ -70,16 +70,16 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
           </div>
 
           {/* SHA-256 */}
-          <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+          <div className="bg-black/40 border border-white/10 rounded-[6px] p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-plate-300 flex items-center gap-1.5">
                 <Hash size={12} /> SHA-256 evidence hash
               </span>
-              <button onClick={() => copy(evidence.hash, 'Hash')} className="text-gray-400 hover:text-white flex items-center gap-1 text-xs">
+              <button onClick={() => copy(evidence.hash, 'Hash')} className="text-plate-200 hover:text-white flex items-center gap-1 text-xs">
                 <Copy size={12} /> Copy
               </button>
             </div>
-            <p className="font-mono text-xs text-emerald-300 break-all">{evidence.hash}</p>
+            <p className="font-mono text-xs text-lime-300 break-all">{evidence.hash}</p>
           </div>
         </div>
       </div>
@@ -101,16 +101,16 @@ function Meta({
   onCopy?: () => void
 }) {
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-1 flex items-center gap-1.5">
+    <div className="bg-white/[0.03] border border-white/10 rounded-[6px] p-3">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-plate-300 mb-1 flex items-center gap-1.5">
         {icon} {label}
         {onCopy && (
-          <button onClick={onCopy} className="ml-auto text-gray-500 hover:text-white">
+          <button onClick={onCopy} className="ml-auto text-plate-300 hover:text-white">
             <Copy size={11} />
           </button>
         )}
       </div>
-      <div className={`text-gray-200 break-all ${mono ? 'font-mono text-xs' : 'text-sm'}`}>{value}</div>
+      <div className={`text-plate-100 break-all ${mono ? 'font-mono text-xs' : 'text-sm'}`}>{value}</div>
     </div>
   )
 }

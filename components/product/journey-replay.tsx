@@ -23,7 +23,7 @@ export function JourneyReplay({ journey, currency, finalState = 'ok', onStepClic
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-sm font-mono uppercase tracking-wider text-gray-400">Journey Replay</h2>
+        <h2 className="text-sm font-mono uppercase tracking-wider text-plate-200">Journey Replay</h2>
         {delta > 0 && (
           <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-full px-3 py-1">
             <ArrowUpRight size={13} />
@@ -41,39 +41,39 @@ export function JourneyReplay({ journey, currency, finalState = 'ok', onStepClic
             <div key={step.index} className="flex items-stretch gap-2 shrink-0">
               <button
                 onClick={() => onStepClick?.(step)}
-                className={`group text-left w-40 rounded-2xl border p-4 transition-all ${
+                className={`group text-left w-40 rounded-[8px] border p-4 transition-all ${
                   state === 'failed'
                     ? 'bg-rose-500/10 border-rose-500/50 shadow-[0_0_24px_-6px_rgba(244,63,94,0.4)]'
                     : state === 'healing'
                       ? 'bg-amber-500/10 border-amber-500/50'
-                      : 'bg-white/[0.03] border-white/10 hover:border-violet-500/40 hover:bg-white/[0.06]'
+                      : 'bg-white/[0.03] border-white/10 hover:border-stud-500/40 hover:bg-white/[0.06]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-mono font-bold text-violet-400">
+                  <span className="text-[10px] font-mono font-bold text-stud-400">
                     {String(step.index).padStart(2, '0')} · {step.label.toUpperCase()}
                   </span>
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      state === 'failed' ? 'bg-rose-500 animate-ping' : state === 'healing' ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+                      state === 'failed' ? 'bg-rose-500 animate-ping' : state === 'healing' ? 'bg-amber-400 animate-pulse' : 'bg-lime-400'
                     }`}
                   />
                 </div>
                 <div
                   className={`text-xl font-bold font-mono ${
-                    state === 'failed' ? 'text-rose-400' : raised ? 'text-white' : 'text-gray-200'
+                    state === 'failed' ? 'text-rose-400' : raised ? 'text-white' : 'text-plate-100'
                   }`}
                 >
                   {money(step.displayedPrice.amount, step.displayedPrice.currency)}
                 </div>
                 {step.evidenceId && (
-                  <div className="mt-2 flex items-center gap-1 text-[10px] font-mono text-gray-500 group-hover:text-violet-300 transition-colors">
+                  <div className="mt-2 flex items-center gap-1 text-[10px] font-mono text-plate-300 group-hover:text-stud-200 transition-colors">
                     View evidence <ChevronRight size={11} />
                   </div>
                 )}
               </button>
               {i < journey.length - 1 && (
-                <div className="flex items-center text-gray-600">
+                <div className="flex items-center text-plate-400">
                   <ChevronRight size={16} />
                 </div>
               )}
