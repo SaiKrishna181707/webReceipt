@@ -6,9 +6,9 @@ This file is the short operator/agent guide for reproducing the repository witho
 
 - Do not invent a Bright Data Collector ID. A production ID must be a real `c_*` value returned by Bright Data.
 - Do not commit Bright Data API tokens, operator secrets, session cookies, or unmasked credential-bearing output.
-- Do not describe the Next.js `/console` flow as a real Bright Data cloud run. The product UI intentionally remains backed by `SimulatorCollector` so the visual demo is deterministic.
-- The deployed Next.js server now has a separate protected live Bright Data surface at `/api/brightdata/health`, `/api/brightdata/observe`, and `/api/brightdata/heal`. These routes reuse the real `BrightDataCollector`, Deal Contract compiler, integrity gate, and receipt store without changing the frontend.
-- The standalone sponsor harness (`npm run start:brightdata` or the provided `Dockerfile`) remains the controlled public fixture used for the complete break/reset/self-heal proof in `brightdata/CLI_RUNBOOK.md`.
+- Do not describe a simulator result as a real Bright Data cloud run. Real sponsor-backed evidence belongs under `evidence/`.
+- The deployed Next.js server has a live Bright Data surface at `/api/brightdata/health`, `/api/brightdata/observe`, and `/api/brightdata/heal`, plus the real-collection bridge in `/api/observe` for healthy user-entered public URLs when Bright Data credentials are configured.
+- The public `/fixture/hotel` target is the controlled checkout fixture used for the same-URL semantic-drift/self-heal proof.
 - Preserve the existing product UI and runtime behavior unless a task explicitly authorizes changing them.
 
 ## Local setup
@@ -36,12 +36,18 @@ npm run verify:receipt -- examples/semantic-failure.json
 
 ## Bright Data live setup
 
-Set the real participant-owned credentials in the environment, never in git:
+The verified production collector is:
+
+```text
+c_mt3ha1iv1jgm8eg813
+```
+
+Set participant-owned credentials only in the deployment environment, never in git:
 
 ```text
 BRIGHT_DATA_API_TOKEN=...
-BRIGHT_DATA_COLLECTOR_ID=c_...
-BRIGHT_DATA_TARGET_URL=https://PUBLIC_TARGET
+BRIGHT_DATA_COLLECTOR_ID=c_mt3ha1iv1jgm8eg813
+BRIGHT_DATA_TARGET_URL=https://web-receipt-tawny.vercel.app/fixture/hotel
 WEBRECEIPT_OPERATOR_TOKEN=...
 ```
 
@@ -53,34 +59,28 @@ POST /api/brightdata/observe
 POST /api/brightdata/heal
 ```
 
-The two POST routes require `X-WebReceipt-Operator` when `WEBRECEIPT_OPERATOR_TOKEN` is configured. The live surface remains locked by default if a Collector ID/token exist but no operator token has been set.
+The two protected POST routes require `X-WebReceipt-Operator` when `WEBRECEIPT_OPERATOR_TOKEN` is configured. The live surface remains locked by default if a Collector ID/token exist but no operator token has been set.
 
-For the controlled self-healing demonstration, run the sponsor harness:
+## Verified Bright Data evidence
 
-```bash
-npm run start:brightdata
+A genuine Scraper Studio collector was created on 2026-08-21:
+
+```text
+Collector ID: c_mt3ha1iv1jgm8eg813
+Name: webreceipt-proof-of-promise
+Status: done
+Target: https://web-receipt-tawny.vercel.app/fixture/hotel
 ```
 
-This server exposes the same live Bright Data adapter plus `/fixture/hotel`, `/api/fixture/break`, and `/api/fixture/reset`. The Dockerfile launches the same server.
+The first real run extracted the advertised INR 8,499 price, INR 499 property fee, INR 349 service fee, INR 800 tax, and the true INR 10,147 order total. Token-free raw evidence is committed under `evidence/01-create.json` and `evidence/02-run-v1.json`.
 
-## Production Collector ID status
+## Remaining sponsor-proof sequence
 
-No verified production `c_*` Collector ID is committed to this repository yet. This is intentionally not replaced with an example value.
-
-After a genuine Bright Data create/publish/run flow:
-
-1. record the real Collector ID here;
-2. keep the secret token only in deployment secrets;
-3. save token-masked raw run evidence under `evidence/`;
-4. update the judge/demo docs only with claims supported by those artifacts.
-
-## External proof still required for sponsor-backed judging
-
-- a genuine custom collector create/publish event;
-- at least one real V1 run;
-- a real failing run after a layout/semantic change;
-- a real self-heal preview/approval;
-- a real post-heal run on the same Collector ID;
-- the final demo video.
+- run the same Collector ID after the controlled V2 semantic/layout change;
+- capture the incorrect/failing output separately;
+- request a self-heal on `c_mt3ha1iv1jgm8eg813`;
+- inspect/approve only a valid preview;
+- rerun the same Collector ID and capture the healthy post-heal output;
+- record the final demo commit and video.
 
 See `evidence/README.md` for the capture format.
