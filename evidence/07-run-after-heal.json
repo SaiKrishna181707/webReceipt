@@ -1,0 +1,50 @@
+[
+  {
+    "advertised_price": {
+      "value": 8499,
+      "currency": "INR",
+      "symbol": "₹"
+    },
+    "base_price": {
+      "value": 8499,
+      "currency": "INR",
+      "symbol": "₹"
+    },
+    "property_fee": {
+      "value": 499,
+      "currency": "INR",
+      "symbol": "₹"
+    },
+    "service_fee": {
+      "value": 349,
+      "currency": "INR",
+      "symbol": "₹"
+    },
+    "tax": {
+      "value": 800,
+      "currency": "INR",
+      "symbol": "₹"
+    },
+    "order_total": {
+      "value": 10147,
+      "currency": "INR",
+      "symbol": "₹"
+    },
+    "cancellation_terms": "Cancellation:\n Free cancellation until 21 Aug",
+    "refundability": "Refundability:\n Refundable",
+    "payment_timing": "Payment:\n Pay now",
+    "inclusions": "Includes:\n Breakfast",
+    "offer_name": "Ocean House · Deluxe Room",
+    "journey_state": "Step 3 of 3 · Final amount reviewed",
+    "input": {
+      "url": "https://web-receipt-tawny.vercel.app/fixture/hotel"
+    },
+    "evidence_metadata": {
+      "collector_id": "c_mt3ha1iv1jgm8eg813",
+      "observed_response_id": "d2t1787350199152rppj3b6gbpf",
+      "saved_capture_response_id": "d2t1787350230792rojdm3dofc5g",
+      "same_collector_after_heal": true,
+      "capture_note": "Normalized token-free copy of the displayed successful post-heal run. A second run was also written locally to 07-run-after-heal.json by the operator."
+    }
+  }
+]
