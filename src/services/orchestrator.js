@@ -5,17 +5,20 @@ import { detectAnomalies } from '../domain/anomalies.js';
 import { diffContracts } from '../domain/diff.js';
 import { assertPublicTarget } from '../domain/target-policy.js';
 import { firstPreviewRecord } from '../integrations/brightdata.js';
+import { normalizeBrightDataRecord } from '../integrations/brightdata-normalize.js';
 import { changedPromiseObservation, MUTATIONS } from '../fixtures/observations.js';
 
 function compileFromRaw(raw, { targetUrl, collector } = {}) {
   if (!raw || typeof raw !== 'object') throw new Error('Collector returned no structured observation.');
+  const normalized = collector?.kind === 'brightdata'
+    ? normalizeBrightDataRecord(raw, { targetUrl, collectorId: collector?.collectorId })
+    : raw;
   return compileDealContract({
-    ...raw,
+    ...normalized,
     ...(targetUrl ? { targetUrl } : {}),
-    collectorId: raw.collectorId ?? collector?.collectorId,
+    collectorId: normalized.collectorId ?? collector?.collectorId,
   });
 }
-
 
 function assertSimulatorTarget(targetUrl) {
   const url = new URL(targetUrl);
@@ -53,18 +56,27 @@ export class WebReceiptService {
     this.store = store;
   }
 
-  async repair({ contract, integrity, mutation = 'healthy', targetUrl }) {
-    const prompt = makeHealPrompt(contract, integrity);
-    await this.store.event('integrity', 'Semantic contract failure detected', {
-      mutation,
-      failures: integrity.failures.map((failure) => failure.id),
-    });
+  async repair({ contract = null, integrity = null, failure = null, mutation = 'healthy', targetUrl }) {
+    const prompt = makeHealPrompt(contract, integrity, failure);
+    if (integrity) {
+      await this.store.event('integrity', 'Semantic contract failure detected', {
+        mutation,
+        failures: integrity.failures.map((item) => item.id),
+      });
+    } else {
+      await this.store.event('integrity', 'Collector failed before Deal Contract compilation', {
+        mutation,
+        error: String(failure?.message || failure || 'unknown collector failure'),
+      });
+    }
     await this.store.event('heal', 'Requested a Scraper Studio self-heal proposal', { prompt });
 
     const proposal = await this.collector.heal({ mutation, prompt });
 
     const repair = {
       requested: true,
+      trigger: integrity ? 'semantic_integrity' : 'collector_failure',
+      initialError: failure ? String(failure?.message || failure) : null,
       proposalStatus: proposal?.status ?? 'unknown',
       approval: proposal?.approval ?? 'unknown',
       previewIntegrity: null,
@@ -116,7 +128,7 @@ export class WebReceiptService {
         : 'Repair preview failed semantic contract verification', {
         mutation,
         status: repair.previewIntegrity.status,
-        failures: repair.previewIntegrity.failures.map((failure) => failure.id),
+        failures: repair.previewIntegrity.failures.map((item) => item.id),
       });
 
       if (!previewValid) {
@@ -125,7 +137,7 @@ export class WebReceiptService {
         repair.rejection = rejection;
         await this.store.event('reject', 'Rejected self-heal before deployment', {
           mutation,
-          failures: repair.previewIntegrity.failures.map((failure) => failure.id),
+          failures: repair.previewIntegrity.failures.map((item) => item.id),
         });
         return repair;
       }
@@ -160,7 +172,7 @@ export class WebReceiptService {
       : 'Deployed repair still violates the Deal Contract', {
       mutation,
       status: repair.postIntegrity.status,
-      failures: repair.postIntegrity.failures.map((failure) => failure.id),
+      failures: repair.postIntegrity.failures.map((item) => item.id),
     });
     return repair;
   }
@@ -174,12 +186,33 @@ export class WebReceiptService {
     await this.store.event('run', 'Observation started', { targetUrl: normalizedTarget, mutation, collector: this.collector.kind });
     if (mutation !== 'healthy' && typeof this.collector.inject === 'function') this.collector.inject(mutation);
 
-    const raw = await this.collector.collect({ url: normalizedTarget, mutation });
-    let contract = compileFromRaw(raw, { targetUrl: normalizedTarget, collector: this.collector });
-    let integrity = evaluateIntegrity(contract);
+    let raw;
+    let contract;
+    let integrity;
     let repair = null;
+    try {
+      raw = await this.collector.collect({ url: normalizedTarget, mutation });
+      contract = compileFromRaw(raw, { targetUrl: normalizedTarget, collector: this.collector });
+      integrity = evaluateIntegrity(contract);
+    } catch (error) {
+      // Real collectors can fail before producing a compilable observation (for
+      // example Bright Data parse_error after an interaction/layout change). In
+      // heal mode, that failure is itself a repair trigger; without autoHeal we
+      // fail clearly rather than manufacturing a fake contract.
+      if (!(autoHeal && this.collector.kind === 'brightdata')) throw error;
+      repair = await this.repair({
+        failure: error,
+        mutation,
+        targetUrl: normalizedTarget,
+      });
+      if (!repair.postContract || !repair.postIntegrity) {
+        throw new Error(`Bright Data collector failure was not repaired: ${error.message}`);
+      }
+      contract = repair.postContract;
+      integrity = repair.postIntegrity;
+    }
 
-    if (integrity.status === 'invalid' && autoHeal) {
+    if (integrity.status === 'invalid' && autoHeal && !repair) {
       repair = await this.repair({ contract, integrity, mutation, targetUrl: normalizedTarget });
       if (repair.postContract) {
         contract = repair.postContract;
@@ -218,7 +251,7 @@ export class WebReceiptService {
     const normalizedTarget = targetUrl ? assertPublicTarget(targetUrl, { allowLocal: this.collector.kind === 'simulator' }) : null;
     const contracts = this.store.state.contracts
       .map((entry) => entry.contract)
-      .filter((contract) => !normalizedTarget || contract.targetUrl === normalizedTarget);
+      .filter((item) => !normalizedTarget || item.targetUrl === normalizedTarget);
     if (contracts.length < 2) throw new Error('Need at least two stored observations for the same target before calculating a live Promise Diff.');
     const [after, before] = contracts;
     const changes = diffContracts(before, after);
@@ -266,7 +299,7 @@ export class WebReceiptService {
         rejected,
         healed,
         finalStatus: finalIntegrity.status,
-        failedChecks: initialIntegrity.failures.map((failure) => failure.id),
+        failedChecks: initialIntegrity.failures.map((item) => item.id),
       });
     }
 
@@ -287,9 +320,10 @@ export class WebReceiptService {
   }
 }
 
-function makeHealPrompt(contract, integrity) {
-  const failures = integrity.failures
-    .map((failure) => `${failure.id}: ${JSON.stringify(failure.details)}`)
-    .join('; ');
-  return `WebReceipt semantic integrity failure. Preserve the output schema and collector identity. Re-extract values from the current public page based on field meaning, not legacy selectors. Failures: ${failures}. Critical rule: checkout.finalTotal must represent the amount due and equal checkout.basePrice + checkout.mandatoryFees + checkout.taxes + checkout.optionalAddons - checkout.discounts. Attach source evidence for critical fields. Target: ${contract.targetUrl}`;
+function makeHealPrompt(contract, integrity, failure) {
+  if (failure) {
+    return 'The scraper fails after the page interaction changed. Repair the interaction and parser while keeping the existing output schema and same collector. Ensure order_total is the final payable amount, not a subtotal, and preserve prices, required fees, tax, terms, offer_name, and journey_state.';
+  }
+  const failedChecks = integrity.failures.map((item) => item.id).slice(0, 4).join(', ');
+  return `Checkout extraction is semantically invalid (${failedChecks}). Repair the scraper while keeping the existing output schema and same collector. Extract fields by meaning, not old selectors. order_total must be the final payable amount and must match base price plus required fees and tax.`;
 }

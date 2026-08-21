@@ -9,9 +9,9 @@ export const maxDuration = 300
 // The existing product UI never calls this route, so simulator behavior remains
 // unchanged. Judges/operators can drive this endpoint from curl or a coding agent.
 export async function POST(req: Request) {
-  const body = await readBody(req)
   return runSafely(async () => {
     requireBrightDataOperator(req)
+    const body = await readBody(req)
     const targetUrl = resolveBrightDataTarget(body)
     const service = await getBrightDataService()
 

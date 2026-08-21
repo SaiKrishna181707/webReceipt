@@ -1,9 +1,23 @@
 import { NextResponse } from 'next/server'
+import { readWebJson } from '@/src/web-request.js'
 
 // Mirrors the error classification in src/server.js so the Next API surface
 // returns the same stable {error, code} shapes and HTTP statuses.
 function classify(error: unknown): { status: number; code: string; message: string } {
-  const message = String((error as { message?: string })?.message || 'Unexpected error')
+  const candidate = error as { status?: unknown; code?: unknown; message?: unknown }
+  const message = String(candidate?.message || 'Unexpected error')
+  const status = Number(candidate?.status)
+  const code = String(candidate?.code || '')
+
+  // Do not rely on instanceof here. Next's production bundler can duplicate
+  // module/class identities across route chunks, so structural status/code is
+  // the stable contract between the request reader and route handler.
+  if ([400, 413].includes(status) && ['invalid_json', 'body_too_large'].includes(code))
+    return { status, code, message }
+  if (/Request body must be valid(?: UTF-8)? JSON|Request body must be a JSON object/i.test(message))
+    return { status: 400, code: 'invalid_json', message }
+  if (/Request body exceeds \d+ bytes/i.test(message))
+    return { status: 413, code: 'body_too_large', message }
   if (/valid URL|Only http|Credential-bearing|publicly reachable|login\/private|public anonymous|Target hostname|Target must|requires targetUrl/i.test(message))
     return { status: 400, code: 'invalid_target', message }
   if (/Operator authorization required/i.test(message)) return { status: 401, code: 'operator_required', message }
@@ -17,7 +31,11 @@ function classify(error: unknown): { status: number; code: string; message: stri
     return { status: 503, code: 'brightdata_not_configured', message }
   if (/Bright Data .*timed out/i.test(message)) return { status: 504, code: 'brightdata_timeout', message }
   if (/^Bright Data /i.test(message)) return { status: 502, code: 'brightdata_upstream', message }
-  return { status: 500, code: 'internal_error', message }
+  return {
+    status: 500,
+    code: 'internal_error',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error.' : message,
+  }
 }
 
 /** Wrap a route handler body, returning JSON on success or a classified error. */
@@ -31,10 +49,5 @@ export async function runSafely<T>(fn: () => Promise<T>) {
 }
 
 export async function readBody(req: Request): Promise<Record<string, unknown>> {
-  try {
-    const text = await req.text()
-    return text ? JSON.parse(text) : {}
-  } catch {
-    return {}
-  }
+  return readWebJson(req) as Promise<Record<string, unknown>>
 }

@@ -10,6 +10,7 @@
     "start:brightdata": "node src/server.js",
     "lint": "next lint",
     "test": "node --test --test-concurrency=1 test/*.test.js",
+    "smoke:next": "node scripts/smoke-next.mjs",
     "verify:receipt": "node scripts/verify-receipt.mjs",
     "verify": "node scripts/validate-scraper-studio.mjs && node --test --test-concurrency=1 test/*.test.js && node src/stress-cli.js"
   },

@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic'
 // so the engine requests a Scraper Studio repair, verifies the untrusted preview
 // against every contract invariant, deploys it, and re-runs the collector.
 export async function POST(req: Request) {
-  const body = await readBody(req)
   return runSafely(async () => {
+    const body = await readBody(req)
     const service = await getService()
     return service.observe({
       targetUrl: (body.targetUrl as string) || undefined,
