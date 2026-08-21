@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 
 const GLYPHS =
-  'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾜﾝ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~'
+  'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~'
 
 interface Column {
   x: number
@@ -53,7 +53,7 @@ export function MatrixRain({
       ctx.textBaseline = 'top'
 
       rows = Math.ceil(height / fontSize)
-      // Sparse streams distributed across the entire viewport instead of a left-side block.
+      // Sparse streams distributed across the entire viewport.
       const count = Math.max(1, Math.ceil((width / fontSize) * 0.11))
       columns = Array.from({ length: count }, () => ({
         x: Math.random() * Math.max(0, width - fontSize),
