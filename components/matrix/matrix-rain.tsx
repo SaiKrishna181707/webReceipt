@@ -2,42 +2,19 @@
 
 import { useEffect, useRef } from 'react'
 
-/* ============================================================================
-   CODE RAIN
-
-   One canvas, one requestAnimationFrame loop, no React state — the rain never
-   causes a re-render. A DOM particle system at this density would be thousands
-   of nodes and a permanent layout cost; here the whole environment is a single
-   composited layer.
-
-   Cost control, in order of impact:
-     · the loop is throttled to ~20fps (the rain is *meant* to step, not glide)
-     · device pixel ratio is capped at 1.5
-     · the trail is a translucent black fill, so old glyphs decay for free
-       instead of being tracked and erased
-     · the loop stops entirely when the tab is hidden or motion is reduced
-   ========================================================================== */
-
-/** Half-width katakana, the glyphs the films actually used, plus digits. */
 const GLYPHS =
   'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~'
 
 interface Column {
-  /** Head position, in rows. Fractional so columns fall out of step. */
   y: number
-  /** Rows per tick. */
   speed: number
-  /** Rows until this column resets to the top. */
   length: number
-  /** The glyph currently at the head — held for a few ticks, then swapped. */
   head: string
   ticks: number
 }
 
 export function MatrixRain({
-  /** Glyph size in px. Larger reads calmer and costs less. */
   fontSize = 16,
-  /** 0–1. The stylesheet's --rain-opacity thins this further on small screens. */
   opacity = 0.42,
   className = '',
 }: {
@@ -54,7 +31,6 @@ export function MatrixRain({
     if (!ctx) return
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
     let columns: Column[] = []
     let width = 0
     let height = 0
@@ -76,8 +52,8 @@ export function MatrixRain({
       ctx.textBaseline = 'top'
 
       rows = Math.ceil(height / fontSize)
-      // Reduce the number of falling streams by 30% so the page content stays clear.
-      const count = Math.ceil((width / fontSize) * 0.7)
+      // Keep only 40% of the already-reduced streams for a much quieter background.
+      const count = Math.max(1, Math.ceil((width / fontSize) * 0.28))
       columns = Array.from({ length: count }, () => ({
         y: -Math.random() * rows,
         speed: 0.32 + Math.random() * 0.7,
@@ -100,14 +76,12 @@ export function MatrixRain({
         const y = Math.floor(col.y) * fontSize
 
         if (col.y >= 0 && y < height) {
-          // Dimmer tail so the foreground typography remains easy to read.
-          ctx.fillStyle = 'rgba(0,150,48,0.32)'
+          ctx.fillStyle = 'rgba(0,150,48,0.20)'
           ctx.fillText(glyph(), x, y - fontSize * 2)
 
-          // Softer head with a smaller halo than before.
-          ctx.shadowColor = 'rgba(51,255,102,0.45)'
-          ctx.shadowBlur = 5
-          ctx.fillStyle = '#9be8ad'
+          ctx.shadowColor = 'rgba(51,255,102,0.28)'
+          ctx.shadowBlur = 4
+          ctx.fillStyle = '#75b984'
           ctx.fillText(col.head, x, y)
           ctx.shadowBlur = 0
         }
