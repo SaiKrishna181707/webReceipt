@@ -4,8 +4,26 @@ const FLAT_MARKERS = [
   'payment_timing', 'inclusions', 'journey_state',
 ];
 
+const SYMBOL_CURRENCIES = new Map([
+  ['₹', 'INR'],
+  ['€', 'EUR'],
+  ['£', 'GBP'],
+]);
+
 function text(value) {
   return String(value ?? '').trim();
+}
+
+function normalizedUrl(value) {
+  const raw = text(value);
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return '';
+  }
 }
 
 function moneyAmount(value, label) {
@@ -17,9 +35,23 @@ function moneyAmount(value, label) {
   return amount;
 }
 
-function moneyCurrency(value, fallback = '') {
-  const currency = value && typeof value === 'object' ? text(value.currency) : '';
-  return currency || fallback;
+function moneyCurrency(value) {
+  return value && typeof value === 'object' ? text(value.currency).toUpperCase() : '';
+}
+
+function moneySymbol(value) {
+  return value && typeof value === 'object' ? text(value.symbol) : '';
+}
+
+function resolveCurrency(fields) {
+  const explicit = new Set(fields.map(moneyCurrency).filter(Boolean));
+  if (explicit.size > 1)
+    throw new Error(`Bright Data flat output has inconsistent currencies: ${[...explicit].join(', ')}.`);
+  if (explicit.size === 1) return [...explicit][0];
+
+  const inferred = new Set(fields.map(moneySymbol).map((symbol) => SYMBOL_CURRENCIES.get(symbol)).filter(Boolean));
+  if (inferred.size === 1) return [...inferred][0];
+  throw new Error('Bright Data flat output is missing an unambiguous currency.');
 }
 
 function stripLabel(value, label) {
@@ -28,7 +60,7 @@ function stripLabel(value, label) {
 
 function moneyEvidenceText(label, field, currency) {
   const amount = moneyAmount(field, label);
-  const symbol = field && typeof field === 'object' ? text(field.symbol) : '';
+  const symbol = moneySymbol(field);
   return `Bright Data structured output: ${symbol ? `${symbol}` : `${currency} `}${amount}`;
 }
 
@@ -77,14 +109,20 @@ export function normalizeBrightDataRecord(record, { targetUrl, collectorId } = {
   if (isCanonical(record)) {
     return {
       ...record,
-      ...(!record.targetUrl && targetUrl ? { targetUrl } : {}),
-      ...(!record.collectorId && collectorId ? { collectorId } : {}),
+      ...(targetUrl ? { targetUrl } : {}),
+      ...(collectorId ? { collectorId } : {}),
     };
   }
 
   if (!isFlat(record)) return record;
 
-  const sourceUrl = text(record.input?.url) || text(targetUrl);
+  const requestedUrl = normalizedUrl(targetUrl);
+  const returnedUrl = normalizedUrl(record.input?.url);
+  if (targetUrl && !requestedUrl) throw new Error('Bright Data requested target URL is invalid.');
+  if (record.input?.url && !returnedUrl) throw new Error('Bright Data flat output contains an invalid input URL.');
+  if (requestedUrl && returnedUrl && requestedUrl !== returnedUrl)
+    throw new Error('Bright Data flat output input URL does not match the requested target.');
+  const sourceUrl = requestedUrl || returnedUrl;
   if (!sourceUrl) throw new Error('Bright Data flat output is missing the source URL.');
 
   const advertised = moneyAmount(record.advertised_price, 'advertised_price');
@@ -93,8 +131,14 @@ export function normalizeBrightDataRecord(record, { targetUrl, collectorId } = {
   const serviceFee = moneyAmount(record.service_fee, 'service_fee');
   const taxes = moneyAmount(record.tax, 'tax');
   const finalTotal = moneyAmount(record.order_total, 'order_total');
-  const currency = moneyCurrency(record.order_total,
-    moneyCurrency(record.base_price, moneyCurrency(record.advertised_price, 'INR')));
+  const currency = resolveCurrency([
+    record.advertised_price,
+    record.base_price,
+    record.property_fee,
+    record.service_fee,
+    record.tax,
+    record.order_total,
+  ]);
   const collectorVersion = 'brightdata-generated-flat-v1';
   const subject = text(record.offer_name) || sourceUrl;
   const cancellation = stripLabel(record.cancellation_terms, 'Cancellation');
