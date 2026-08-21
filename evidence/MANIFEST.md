@@ -32,7 +32,21 @@
 - The same Collector ID `c_mt3ha1iv1jgm8eg813` failed before healing with `parse_error` / `Parse error: value must be finite number`.
 - Bright Data response ID: `d2t1787349538226r45el6nl3rrg`.
 - Raw token-free failure evidence: `evidence/04-run-v3-before-heal.json`.
-- Next proof step: run `bdata scraper heal` against the same Collector ID and same URL, review the preview, approve only if the Deal Contract invariants pass, then rerun the same collector.
+
+## Self-heal proposal and verification
+
+- Bright Data self-healing completed its planner/code-fixer/preview/validator flow and stopped at the human approval gate with `status = awaiting_approval`.
+- The proposed template reports one changed step and preserves the same Collector ID `c_mt3ha1iv1jgm8eg813`.
+- Preview advertised/base price: INR 8,499.
+- Preview property fee: INR 499.
+- Preview service fee: INR 349.
+- Preview tax: INR 800.
+- Preview final order total: INR 10,147.
+- Deal Contract arithmetic gate passes: `8499 + 499 + 349 + 800 = 10147`.
+- Cancellation, refundability, payment timing, inclusions, offer name, and journey state remain present.
+- The repaired journey reaches `Step 3 of 3 · Final amount reviewed`.
+- Token-free normalized preview evidence: `evidence/05-heal-proposal.json`.
+- Approval is intentionally performed only after this verification; the post-approval rerun must use the same Collector ID and same target URL.
 
 ## Security
 
