@@ -1,0 +1,24 @@
+{
+  "response_id": "d2t1787349316099r1fovj3fhl3g",
+  "collector_id": "c_mt3ha1iv1jgm8eg813",
+  "target_url": "https://web-receipt-tawny.vercel.app/fixture/hotel",
+  "fixture_version": "v2",
+  "result": [
+    {
+      "advertised_price": { "value": 8499, "currency": "INR", "symbol": "₹" },
+      "base_price": { "value": 8499, "currency": "INR", "symbol": "₹" },
+      "property_fee": { "value": 499, "currency": "INR", "symbol": "₹" },
+      "service_fee": { "value": 349, "currency": "INR", "symbol": "₹" },
+      "tax": { "value": 800, "currency": "INR", "symbol": "₹" },
+      "order_total": { "value": 10147, "currency": "INR", "symbol": "₹" },
+      "cancellation_terms": "Cancellation: Free cancellation until 21 Aug",
+      "refundability": "Refundability: Refundable",
+      "payment_timing": "Payment: Pay now",
+      "inclusions": "Includes: Breakfast",
+      "offer_name": "Ocean House · Deluxe Room",
+      "journey_state": "Step 1 of 2 · Offer",
+      "input": { "url": "https://web-receipt-tawny.vercel.app/fixture/hotel" }
+    }
+  ],
+  "observation": "The existing collector survived the first V2 semantic/selector drift and still extracted the correct INR 10,147 total. This is retained as resilience evidence; a stronger V3 interaction drift is used for the self-heal demonstration."
+}
