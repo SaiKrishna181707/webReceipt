@@ -4,12 +4,9 @@
    tiles — tungsten (W, 74) and rhenium (R, 75) — and the lowercase runs
    between them in the same face.
 
-   Clean type, deliberately. No distress filter, no texture asset: the mark has
-   to survive a 16px favicon and a hero headline with the same file, and grain
-   is the first thing that turns to mud at small sizes.
-
-   Everything is driven by `size` — tiles, capitals and atomic numbers are all
-   laid out in `em` from that one number.
+   The element tiles are intentionally larger than the lowercase letters so
+   the W/R read as the visual anchors of the wordmark, matching the reference
+   lockup while keeping the complete wordmark tight and seamless.
    ========================================================================== */
 
 interface LogoProps {
@@ -34,10 +31,10 @@ export function WebReceiptLogo({ size = 21, className = '' }: LogoProps) {
   )
 }
 
-/** One tile off the table: white rule, forest-green face, capital, number. */
+/** One enlarged tile off the periodic table: white rule, forest-green face. */
 function ElementTile({ symbol, number }: { symbol: string; number: number }) {
   return (
-    <span className="wr-tile" aria-hidden>
+    <span className="wr-tile" style={{ fontSize: '1.45em' }} aria-hidden>
       <span className="wr-tile-symbol">{symbol}</span>
       <span className="wr-tile-number">{number}</span>
     </span>
