@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { MatrixRain } from './matrix-rain'
 
 const PORTRAIT = '/scofield.png'
 const EASE = 'cubic-bezier(0.23,1,0.32,1)'
+const QUOTE = 'Every problem has a solution.'
 
 export function BootIntro() {
+  const rootRef = useRef<HTMLDivElement>(null)
   const [reduced, setReduced] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [portraitSrc, setPortraitSrc] = useState(PORTRAIT)
@@ -16,6 +19,45 @@ export function BootIntro() {
     sync()
     media.addEventListener?.('change', sync)
     return () => media.removeEventListener?.('change', sync)
+  }, [])
+
+  // A previous intro implementation could remain in a client-side cached tree.
+  // Remove only duplicate quote panels outside this current intro, never the
+  // actual intro content below.
+  useEffect(() => {
+    const hideLegacyQuote = () => {
+      const root = rootRef.current
+      if (!root) return
+
+      const candidates = Array.from(document.body.querySelectorAll<HTMLElement>('*')).filter(
+        (el) => !root.contains(el) && el.textContent?.includes(QUOTE),
+      )
+
+      for (const candidate of candidates) {
+        let el: HTMLElement | null = candidate
+        let box: HTMLElement | null = null
+
+        while (el && el !== document.body) {
+          const rect = el.getBoundingClientRect()
+          const style = window.getComputedStyle(el)
+          const hasBorder = parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderLeftWidth) > 0
+          if (rect.width > 280 && rect.height > 70 && hasBorder) {
+            box = el
+            break
+          }
+          el = el.parentElement
+        }
+
+        if (box) {
+          box.style.setProperty('display', 'none', 'important')
+        }
+      }
+    }
+
+    hideLegacyQuote()
+    const observer = new MutationObserver(hideLegacyQuote)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
   }, [])
 
   const exit = useCallback(() => {
@@ -47,20 +89,27 @@ export function BootIntro() {
 
   return (
     <div
+      ref={rootRef}
+      data-wr-boot-intro="true"
       role="dialog"
       aria-modal="true"
       aria-label="WebReceipt intro"
       onClick={exit}
-      className={`fixed inset-0 z-[9999] cursor-pointer bg-black transition-all ${leaving ? 'pointer-events-none -translate-y-6 opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[9999] cursor-pointer overflow-hidden bg-black transition-all ${leaving ? 'pointer-events-none -translate-y-6 opacity-0' : 'opacity-100'}`}
       style={{ transitionDuration: reduced ? '0ms' : '460ms', transitionTimingFunction: EASE }}
     >
-      <div className="relative mx-auto h-full max-w-[1500px] px-6 md:px-0">
+      <div className="absolute inset-0 z-0 opacity-25">
+        <MatrixRain fontSize={17} opacity={0.75} />
+      </div>
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_45%_50%,rgba(0,0,0,.12),rgba(0,0,0,.72)_75%)]" />
+
+      <div className="relative z-[2] mx-auto h-full max-w-[1500px] px-6 md:px-0">
         <div className="absolute inset-y-0 left-0 w-full md:w-[58%]">
           <img
             src={portraitSrc}
             alt="Michael Scofield intro portrait"
             onError={() => setPortraitSrc('/webreceipt-mark.svg')}
-            className="h-full w-full bg-black object-contain object-left-bottom"
+            className="h-full w-full bg-transparent object-contain object-left-bottom"
             style={{ objectPosition: 'left bottom', filter: 'brightness(.92) contrast(1.06)' }}
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
@@ -84,7 +133,7 @@ export function BootIntro() {
           Click anywhere to enter
         </span>
       </div>
-      <div className="crt-scanlines pointer-events-none absolute inset-0 opacity-[0.14]" />
+      <div className="crt-scanlines pointer-events-none absolute inset-0 z-[3] opacity-[0.14]" />
     </div>
   )
 }
