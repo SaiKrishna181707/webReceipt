@@ -1,0 +1,12 @@
+{
+  "collector_id": "c_mt3ha1iv1jgm8eg813",
+  "status": "approved_and_saved",
+  "target_url": "https://web-receipt-tawny.vercel.app/fixture/hotel",
+  "cli": "@brightdata/cli@0.3.2",
+  "command": "brightdata scraper approve c_mt3ha1iv1jgm8eg813 --url https://web-receipt-tawny.vercel.app/fixture/hotel --auto-save --pretty -o 06-heal-approved.json",
+  "terminal_result": "Output written to 06-heal-approved.json",
+  "same_collector_preserved": true,
+  "auto_save_requested": true,
+  "verification": "The subsequent same-collector production run returned the repaired structured output with order_total = 10147 INR.",
+  "capture_note": "Normalized token-free record derived from the operator terminal output. This is not a fabricated copy of Bright Data's local approval envelope; the original local 06-heal-approved.json remains on the operator machine."
+}
