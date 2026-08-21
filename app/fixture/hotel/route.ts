@@ -8,11 +8,13 @@ export const dynamic = 'force-dynamic'
  * This is intentionally separate from the product UI and requires no login,
  * personal data, or payment interaction.
  *
- * V2 deliberately changes the checkout semantics while keeping the same URL so
- * the hackathon demo can prove same-collector detection and self-healing.
+ * V3 keeps the same public URL but inserts a new review step before the final
+ * amount exists in the DOM. This creates a realistic interaction drift for the
+ * same-collector Bright Data self-heal demonstration without touching the
+ * product frontend.
  */
 export async function GET() {
-  return new Response(renderHotelFixture('v2'), {
+  return new Response(renderHotelFixture('v3'), {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
