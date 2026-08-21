@@ -1,0 +1,15 @@
+{
+  "collector_id": "c_mt3ha1iv1jgm8eg813",
+  "target_url": "https://web-receipt-tawny.vercel.app/fixture/hotel",
+  "response_id": "d2t1787349538226r45el6nl3rrg",
+  "result": [
+    {
+      "input": {
+        "url": "https://web-receipt-tawny.vercel.app/fixture/hotel"
+      },
+      "error": "Parse error: value must be finite number",
+      "error_code": "parse_error"
+    }
+  ],
+  "notes": "Real V3 pre-heal failure captured from Bright Data CLI. No API token or authorization material included."
+}
