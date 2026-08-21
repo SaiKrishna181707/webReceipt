@@ -8,6 +8,7 @@ type SmokePuff = {
   y: number
   size: number
   delay: number
+  drift: number
 }
 
 export function CursorSmoke() {
@@ -22,27 +23,29 @@ export function CursorSmoke() {
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-    const clearIdle = () => {
+    const clearTimers = () => {
       if (idleTimer.current) clearTimeout(idleTimer.current)
       idleTimer.current = null
-      setActive(false)
       if (spawnTimer.current) clearInterval(spawnTimer.current)
       spawnTimer.current = null
+      setActive(false)
+      setPuffs([])
     }
 
     const emit = () => {
       const { x, y } = positionRef.current
       const puff: SmokePuff = {
         id: idRef.current++,
-        x: x + (Math.random() - 0.5) * 18,
-        y: y + (Math.random() - 0.5) * 8,
-        size: 18 + Math.random() * 28,
-        delay: Math.random() * 180,
+        x: x + (Math.random() - 0.5) * 12,
+        y: y + 2 + Math.random() * 8,
+        size: 26 + Math.random() * 42,
+        delay: Math.random() * 120,
+        drift: (Math.random() - 0.5) * 55,
       }
-      setPuffs((current) => [...current.slice(-7), puff])
+      setPuffs((current) => [...current.slice(-11), puff])
       window.setTimeout(() => {
         setPuffs((current) => current.filter((item) => item.id !== puff.id))
-      }, 2600)
+      }, 3600)
     }
 
     const startIdle = () => {
@@ -50,14 +53,14 @@ export function CursorSmoke() {
       idleTimer.current = setTimeout(() => {
         setActive(true)
         emit()
-        spawnTimer.current = setInterval(emit, 420)
-      }, 2000)
+        spawnTimer.current = setInterval(emit, 300)
+      }, 3000)
     }
 
     const onPointerMove = (event: PointerEvent) => {
       positionRef.current = { x: event.clientX, y: event.clientY }
       setPosition(positionRef.current)
-      clearIdle()
+      clearTimers()
       startIdle()
     }
 
@@ -79,14 +82,19 @@ export function CursorSmoke() {
         @keyframes wr-smoke-rise {
           0% {
             opacity: 0;
-            transform: translate3d(-50%, -10%, 0) scale(0.45) rotate(0deg);
-            filter: blur(5px);
+            transform: translate3d(-50%, -5%, 0) scale(0.3) rotate(0deg);
+            filter: blur(6px);
           }
-          18% { opacity: 0.2; }
+          12% {
+            opacity: 0.18;
+          }
+          42% {
+            opacity: 0.12;
+          }
           100% {
             opacity: 0;
-            transform: translate3d(calc(-50% + var(--drift)), -95px, 0) scale(1.65) rotate(18deg);
-            filter: blur(12px);
+            transform: translate3d(calc(-50% + var(--drift)), -125px, 0) scale(2.15) rotate(24deg);
+            filter: blur(16px);
           }
         }
         .wr-smoke-puff {
@@ -96,9 +104,9 @@ export function CursorSmoke() {
           width: var(--size);
           height: var(--size);
           border-radius: 9999px;
-          background: radial-gradient(circle, rgba(184, 210, 191, 0.22) 0%, rgba(111, 143, 119, 0.11) 42%, transparent 72%);
-          box-shadow: 0 0 22px rgba(133, 168, 141, 0.1);
-          animation: wr-smoke-rise 2.35s ease-out forwards;
+          background: radial-gradient(circle, rgba(205, 220, 208, 0.20) 0%, rgba(128, 151, 134, 0.13) 32%, rgba(91, 116, 98, 0.07) 52%, transparent 76%);
+          box-shadow: 0 0 28px rgba(145, 170, 151, 0.12);
+          animation: wr-smoke-rise 3.25s ease-out forwards;
           animation-delay: var(--delay);
           will-change: transform, opacity, filter;
         }
@@ -113,15 +121,11 @@ export function CursorSmoke() {
               '--y': `${puff.y}px`,
               '--size': `${puff.size}px`,
               '--delay': `${puff.delay}ms`,
-              '--drift': `${(Math.random() - 0.5) * 45}px`,
+              '--drift': `${puff.drift}px`,
             } as React.CSSProperties
           }
         />
       ))}
-      <span
-        className="absolute rounded-full bg-white/5 blur-xl"
-        style={{ left: position.x - 14, top: position.y - 14, width: 28, height: 28 }}
-      />
     </div>
   )
 }
