@@ -26,3 +26,5 @@ jobs:
         run: npm run verify
       - name: Compile the production Next.js app and Bright Data API routes
         run: npm run build
+      - name: Smoke-test the built Next.js API surface
+        run: npm run smoke:next
