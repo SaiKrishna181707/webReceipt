@@ -117,8 +117,11 @@ test('live parse_error triggers preview verification, approval, and same-collect
   assert.equal(result.repair.approved, true);
   assert.equal(result.repair.postApprovalVerified, true);
   assert.equal(collector.collectCalls, 2);
-  assert.match(collector.healPrompt, /collector failure before Deal Contract compilation/i);
-  assert.match(collector.healPrompt, /final amount/i);
+  assert.match(collector.healPrompt, /page interaction changed/i);
+  assert.match(collector.healPrompt, /existing output schema/i);
+  assert.match(collector.healPrompt, /same collector/i);
+  assert.match(collector.healPrompt, /final payable amount/i);
+  assert.ok(collector.healPrompt.length < 400, `heal prompt should remain concise, got ${collector.healPrompt.length}`);
   const eventTypes = new Set(store.state.events.map((event) => event.type));
   for (const type of ['integrity', 'heal', 'verify', 'approve', 'success']) assert.ok(eventTypes.has(type), type);
 });
