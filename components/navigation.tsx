@@ -21,8 +21,8 @@ const MOBILE_NAV_ID = 'wr-mobile-nav'
 /* ============================================================================
    NAVIGATION
 
-   The header of a system, not a marketing site: the wordmark in brackets, a
-   status readout, and the routes as terminal commands. Hovering a route types a
+   The header of a system, not a marketing site: the wordmark, a status
+   readout, and the routes as terminal commands. Hovering a route types a
    prompt in front of it — the `>` is absolutely positioned so nothing shifts.
    ========================================================================== */
 export function Navigation() {
@@ -46,15 +46,9 @@ export function Navigation() {
             <Link
               href="/"
               aria-label="WebReceipt home"
-              className="group flex shrink-0 items-center gap-1.5 font-mono text-matrix-400/40"
+              className="group flex shrink-0 items-center font-mono text-matrix-400/40"
             >
-              <span aria-hidden className="text-sm transition-colors group-hover:text-matrix-400">
-                [
-              </span>
-              <WebReceiptLogo size={19} className="transition-transform duration-300 group-hover:-translate-y-px" />
-              <span aria-hidden className="text-sm transition-colors group-hover:text-matrix-400">
-                ]
-              </span>
+              <WebReceiptLogo size={21} className="transition-transform duration-300 group-hover:-translate-y-px" />
             </Link>
 
             <span className="hidden h-4 w-px bg-matrix-400/15 lg:block" aria-hidden />
