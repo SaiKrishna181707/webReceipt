@@ -4,12 +4,19 @@ import { NextResponse } from 'next/server'
 // returns the same stable {error, code} shapes and HTTP statuses.
 function classify(error: unknown): { status: number; code: string; message: string } {
   const message = String((error as { message?: string })?.message || 'Unexpected error')
-  if (/valid URL|Only http|Credential-bearing|publicly reachable|login\/private|public anonymous|Target hostname|Target must/i.test(message))
+  if (/valid URL|Only http|Credential-bearing|publicly reachable|login\/private|public anonymous|Target hostname|Target must|requires targetUrl/i.test(message))
     return { status: 400, code: 'invalid_target', message }
+  if (/Operator authorization required/i.test(message)) return { status: 401, code: 'operator_required', message }
+  if (/Another Bright Data operation is already running/i.test(message)) return { status: 409, code: 'live_operation_busy', message }
   if (/Need at least two stored observations/i.test(message)) return { status: 409, code: 'insufficient_history', message }
   if (/simulator-only|available only in simulator|Simulator mode only produces data/i.test(message))
     return { status: 400, code: 'unsupported_mode', message }
   if (/Unknown simulator mutation|Chaos Checkout mutations/i.test(message)) return { status: 400, code: 'invalid_mutation', message }
+  if (/Bright Data is configured but live operations are locked/i.test(message)) return { status: 503, code: 'live_locked', message }
+  if (/Bright Data live mode is not configured|Bright Data mode requires/i.test(message))
+    return { status: 503, code: 'brightdata_not_configured', message }
+  if (/Bright Data .*timed out/i.test(message)) return { status: 504, code: 'brightdata_timeout', message }
+  if (/^Bright Data /i.test(message)) return { status: 502, code: 'brightdata_upstream', message }
   return { status: 500, code: 'internal_error', message }
 }
 

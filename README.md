@@ -117,9 +117,10 @@ extracted      8499  <-- Silent failure detected!
 WebReceipt's sponsor-backed path relies on Bright Data for the real browser journey and repair lifecycle:
 
 1. **Scraper Studio (Browser Worker)**: navigates multi-step public booking flows, executes JavaScript, clicks through checkout panels, and captures DOM/screenshot evidence.
-2. **AI Flow / Self-Healing API**: when the Contract Integrity Engine detects semantic failure, the real adapter can request a repair. WebReceipt treats the proposed preview as untrusted, validates it against the Deal Contract, and only approves/autosaves a repair after it passes.
+2. **Collection API**: `POST /dca/trigger` runs the stable production `c_*` Collector ID and `/dca/dataset` returns structured output that WebReceipt compiles into the Deal Contract.
+3. **AI Flow / Self-Healing API**: when the Contract Integrity Engine detects semantic failure, the real adapter can request a repair. WebReceipt treats the proposed preview as untrusted, validates it against the Deal Contract, and only approves/autosaves a repair after it passes.
 
-The current Next.js product UI uses a deterministic simulator. The real Bright Data adapter and controlled public fixture are exposed by the sponsor harness in `src/server.js`, launched with `npm run start:brightdata` or by the Dockerfile. See `docs/BRIGHT_DATA_SETUP.md`.
+The product UI intentionally remains on the deterministic simulator so the judged walkthrough is reproducible. The deployed Next.js app now also exposes a **separate protected live Bright Data API** under `/api/brightdata/*`; this uses the same `BrightDataCollector` and Deal Contract engine without changing the frontend. The standalone sponsor harness in `src/server.js` remains available for the controlled break/reset website used in the full self-healing proof. See `docs/BRIGHT_DATA_SETUP.md`.
 
 ---
 
@@ -139,13 +140,42 @@ npm run dev
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` for the sponsor-backed live harness. Never commit real secrets.
+Copy `.env.example` to `.env` for the sponsor-backed live path. Never commit real secrets.
 
 ```env
 BRIGHT_DATA_API_TOKEN=your_token
 BRIGHT_DATA_COLLECTOR_ID=c_prod_123
+BRIGHT_DATA_TARGET_URL=https://public.example.com/your-target
 WEBRECEIPT_OPERATOR_TOKEN=use-a-strong-secret
 ```
+
+### Protected Bright Data API in the Next.js deployment
+
+Readiness is public and never exposes the API token:
+
+```bash
+curl https://YOUR_DEPLOYMENT/api/brightdata/health
+```
+
+Run the production Scraper Studio collector and compile the output through WebReceipt:
+
+```bash
+curl -X POST https://YOUR_DEPLOYMENT/api/brightdata/observe \
+  -H 'content-type: application/json' \
+  -H "x-webreceipt-operator: $WEBRECEIPT_OPERATOR_TOKEN" \
+  -d '{"targetUrl":"https://PUBLIC_TARGET"}'
+```
+
+If that real run fails the semantic Deal Contract checks, the verified self-heal path can be invoked with:
+
+```bash
+curl -X POST https://YOUR_DEPLOYMENT/api/brightdata/heal \
+  -H 'content-type: application/json' \
+  -H "x-webreceipt-operator: $WEBRECEIPT_OPERATOR_TOKEN" \
+  -d '{"targetUrl":"https://PUBLIC_TARGET"}'
+```
+
+Live operations are locked unless `WEBRECEIPT_OPERATOR_TOKEN` is configured. `WEBRECEIPT_ALLOW_UNPROTECTED_LIVE=true` exists only as an explicit opt-out and is not recommended for public deployments.
 
 ### Verification
 
@@ -157,13 +187,13 @@ npm run verify:receipt -- examples/webreceipt.json
 
 ### Real Bright Data sponsor harness
 
-For a real Scraper Studio create/run/heal proof, deploy or run the non-UI sponsor harness:
+For the controlled create/run/break/heal proof, deploy or run the non-UI sponsor harness:
 
 ```bash
 npm run start:brightdata
 ```
 
-The Dockerfile launches the same `src/server.js` process. This path exposes `/fixture/hotel`, the controlled break/reset endpoints, and `BrightDataCollector`.
+The Dockerfile launches the same `src/server.js` process. This path exposes `/fixture/hotel`, the controlled break/reset endpoints, and the same `BrightDataCollector` used by the protected Next.js API bridge.
 
 ---
 
@@ -174,10 +204,10 @@ Open the **Console** at `/console` and walk the guided simulator steps. A broade
 1. **Observe Journey (0:00-0:30)**: run *Observe journey* to compile the Deal Contract (₹8,499 → ₹10,147) with evidence for every claim.
 2. **Evidence Provenance (0:30-0:50)**: click a journey stage or contract field to open the evidence drawer — captured text, source URL, DOM path, timestamp and SHA-256 hash.
 3. **Break It (0:50-1:10)**: run *Simulate redesign* to inject a *wrong-but-valid* total. The Contract Integrity Engine flips to invalid on `total_arithmetic`.
-4. **Verified Heal Gate (1:10-1:30)**: run *Heal with Bright Data*. In the current Next UI this is a deterministic simulation of the same preview-verification protocol implemented by the real adapter.
+4. **Verified Heal Gate (1:10-1:30)**: run *Heal with Bright Data*. In the product UI this remains a deterministic simulation of the same preview-verification protocol implemented by the real adapter.
 5. **Promise Diff (1:30-2:00)**: run *Promise Diff* to view the synthetic commercial promise changes.
 
-For sponsor judging, pair this UI walkthrough with the real terminal proof in `brightdata/CLI_RUNBOOK.md` using a genuine `c_*` Collector ID and token-masked evidence under `evidence/`.
+For sponsor judging, pair this UI walkthrough with a genuine Scraper Studio run through `/api/brightdata/observe` and the real terminal create/run/heal proof in `brightdata/CLI_RUNBOOK.md`. Preserve the production `c_*` Collector ID and token-masked evidence under `evidence/`.
 
 ---
 
