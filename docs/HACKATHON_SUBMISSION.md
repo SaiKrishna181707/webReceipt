@@ -1,12 +1,12 @@
 # Into the Scrape-Verse submission guide
 
-This file maps WebReceipt to the hackathon judging requirements without claiming sponsor evidence that has not been captured yet.
+This file maps WebReceipt to the hackathon judging requirements and distinguishes verified sponsor evidence from deployment configuration that still needs to be checked separately.
 
 ## Recommended track
 
 **Best Use of Bright Data / Web-Slinger**
 
-WebReceipt is built around the part the sponsor track rewards: a custom Scraper Studio collector produces a stable structured contract, downstream logic detects semantic drift, and the same Collector ID can be repaired through Bright Data self-healing without changing the consumer-facing schema.
+WebReceipt is built around the part the sponsor track rewards: a custom Scraper Studio collector produces a stable structured contract, downstream logic detects semantic drift, and the same Collector ID is repaired through Bright Data self-healing without changing the consumer-facing schema.
 
 ## One-line pitch
 
@@ -24,27 +24,52 @@ WebReceipt runs a public purchase journey, extracts the commercially important f
 finalTotal = basePrice + mandatoryFees + taxes + optionalAddons - discounts
 ```
 
-If a redesign causes a wrong-but-valid extraction, WebReceipt detects the semantic failure. Its repair loop requests a Bright Data self-heal, treats the returned preview as untrusted, validates the preview against the same Deal Contract invariants, approves only a valid repair, and then re-runs the same production Collector ID before declaring recovery.
+If a redesign causes a wrong or incomplete extraction, WebReceipt detects the semantic failure. Its repair loop requests a Bright Data self-heal, treats the returned preview as untrusted, validates the preview against the same Deal Contract invariants, approves only a valid repair, and then re-runs the same production Collector ID before declaring recovery.
 
 ## Bright Data is central, not decorative
 
-The real sponsor-backed path is:
+The verified sponsor-backed path is:
 
 ```text
 public target
-→ Bright Data Scraper Studio Browser Worker (c_* Collector ID)
-→ POST /dca/trigger
+→ Bright Data Scraper Studio Browser Worker
+→ c_mt3ha1iv1jgm8eg813
 → structured dataset
-→ WebReceipt Deal Contract compiler
-→ semantic integrity checks
-→ receipt/evidence history
-→ on failure: refactor_template self-heal
-→ verify preview
-→ approve/reject
+→ controlled semantic / interaction drift
+→ failing extraction
+→ Bright Data refactor_template self-heal
+→ preview_result
+→ WebReceipt arithmetic + field-preservation gate
+→ human approval + auto-save
 → re-run same Collector ID
+→ recovered structured contract
 ```
 
-The product UI remains intentionally deterministic for a reliable visual walkthrough. Real Bright Data calls run through the protected `/api/brightdata/*` server routes and the standalone sponsor harness/CLI flow. This separation keeps secrets and paid/mutating operations off the browser while still wiring the production Collector ID into the actual WebReceipt engine.
+The product UI remains intentionally deterministic for a reliable visual walkthrough. Real Bright Data calls run through the sponsor CLI flow and are also wired into protected server routes for deployments that have the required credentials configured. This separation keeps secrets and paid/mutating operations off the browser while preserving a real production collector path.
+
+## Verified sponsor proof
+
+Collector:
+
+```text
+ID: c_mt3ha1iv1jgm8eg813
+Name: webreceipt-proof-of-promise
+Target: https://web-receipt-tawny.vercel.app/fixture/hotel
+```
+
+Observed lifecycle:
+
+1. V1 healthy run extracted advertised/base INR 8,499, INR 499 property fee, INR 349 service fee, INR 800 tax, and INR 10,147 final order total.
+2. V2 changed layout/semantics at the exact same URL; the same collector stayed correct, demonstrating resilience.
+3. V3 introduced a new `Review final amount` interaction before the true total is rendered.
+4. The same collector then failed with `parse_error: value must be finite number`.
+5. `brightdata scraper heal` generated a proposed repair and stopped at `awaiting_approval`.
+6. Preview output restored INR 10,147 and preserved cancellation, refundability, payment timing, inclusions, offer name, and journey state.
+7. WebReceipt's gate verified `8499 + 499 + 349 + 800 = 10147` before approval.
+8. The proposal was approved with `scraper approve --auto-save`.
+9. The exact same collector was rerun against the exact same V3 URL and recovered the correct INR 10,147 contract with `Step 3 of 3 · Final amount reviewed`.
+
+Evidence is committed under `evidence/01-create.json` through `evidence/07-run-after-heal.json`, with lifecycle metadata in `evidence/MANIFEST.md`.
 
 ## Judge demo sequence
 
@@ -59,18 +84,18 @@ The product UI remains intentionally deterministic for a reliable visual walkthr
 
 ### Sponsor proof
 
-Run the real sequence from `brightdata/CLI_RUNBOOK.md` using the production Collector ID:
+Show the committed evidence and, if reproducing live, run the same sequence from `brightdata/CLI_RUNBOOK.md` using production Collector ID `c_mt3ha1iv1jgm8eg813`:
 
-1. `bdata scraper create` / publish the custom Browser Worker.
-2. `bdata scraper run` against V1.
-3. Break the public controlled fixture without changing its URL.
-4. `bdata scraper run` again and preserve the failing structured output.
-5. `bdata scraper heal` with the semantic repair prompt.
-6. Capture the preview/diff and validate it through WebReceipt.
-7. Approve/save only a valid proposal.
-8. Re-run the **same** `c_*` Collector ID and show the recovered contract.
+1. show the real collector creation evidence;
+2. show the healthy V1 output;
+3. show V2 resilience;
+4. show the V3 `parse_error` failure;
+5. show the self-heal prompt and `awaiting_approval` state;
+6. show the preview passing the WebReceipt arithmetic gate;
+7. show human approval / auto-save;
+8. show the recovered V3 output from the **same** collector ID.
 
-Also show:
+If the production deployment has Bright Data credentials configured, also show:
 
 ```text
 GET  /api/brightdata/health
@@ -78,35 +103,37 @@ POST /api/brightdata/observe
 POST /api/brightdata/heal
 ```
 
-to demonstrate that the deployed application can drive the same production collector server-side without changing the frontend.
+Do not present these deployed routes as configured unless the live health response confirms it.
 
-## Evidence required before final submission
+## Evidence checklist
 
-Do not mark these complete until genuine Bright Data output exists.
-
-- [ ] Real custom Scraper Studio collector created/published.
-- [ ] Real production `c_*` Collector ID recorded in `CLAUDE.md`.
-- [ ] `BRIGHT_DATA_API_TOKEN` stored only in deployment secrets.
-- [ ] V1 production run captured under `evidence/`.
-- [ ] Broken-layout/failing production run captured separately.
-- [ ] Self-heal proposal/preview captured.
-- [ ] Approval/rejection outcome captured.
-- [ ] Post-heal run captured with the same Collector ID.
-- [ ] `evidence/MANIFEST.md` records timestamps and repository commit SHA.
-- [ ] Demo video shows the problem, Bright Data workflow, structured output, self-healing, and final product.
-- [ ] Repository setup steps reproduce the project without secret material.
+- [x] Real custom Scraper Studio collector created.
+- [x] Real production `c_*` Collector ID recorded in repository docs.
+- [x] V1 production run captured under `evidence/`.
+- [x] Post-change V2 resilience run captured separately.
+- [x] Genuine V3 failing production run captured separately.
+- [x] Self-heal proposal/preview captured.
+- [x] Preview verified against Deal Contract arithmetic and field-preservation rules.
+- [x] Approval outcome captured.
+- [x] Post-heal run captured with the same Collector ID and same URL.
+- [x] `evidence/MANIFEST.md` records collector identity, response IDs, target commits, and lifecycle facts.
+- [x] Repository evidence contains no Bright Data API token or operator secret.
+- [ ] Verify the actual Vercel production project has the Bright Data token/collector environment variables if the live server-side route is part of the demo.
+- [ ] Demo video shows the problem, Bright Data workflow, structured output, self-healing, human approval, recovery, and final product.
 
 ## Judging rubric mapping
 
 | Criterion | WebReceipt evidence |
 | --- | --- |
 | Potential impact | Preserves consumer-facing commercial promises and evidence, not only payment events. |
-| Creativity / innovation | Detects semantic extraction drift where a selector still returns syntactically valid but economically wrong data. |
-| Technical excellence | Canonical schema, integrity checks, evidence hashing/provenance, guarded live operations, retries, verification tests. |
-| Use of Scraper Studio | Custom Browser Worker and production Collector ID are the source of the real observation pipeline. |
-| Reliability / self-healing | Preview-before-approval gate plus fresh post-heal rerun of the same Collector ID. |
+| Creativity / innovation | Demonstrates both resilience to one redesign and a real failure on a later journey change, then repairs the same collector. |
+| Technical excellence | Canonical schema, integrity checks, evidence provenance, guarded live operations, retries, controlled fixture versions, and verification tests. |
+| Use of Scraper Studio | A real custom Browser Worker with production Collector ID `c_mt3ha1iv1jgm8eg813` produced all sponsor evidence. |
+| Reliability / self-healing | Genuine V3 failure → Bright Data heal → preview-before-approval integrity gate → human approval → fresh same-ID rerun. |
 | Presentation | Deterministic product walkthrough paired with independently inspectable real sponsor evidence. |
 
 ## Submission truthfulness boundary
 
-Until the evidence checklist above is complete, describe the repository as **Bright Data integrated and ready for a production collector**, not as having completed a genuine sponsor cloud run. Never substitute an example Collector ID or fabricated response for the missing proof.
+The Bright Data **CLI sponsor lifecycle is genuinely complete and evidenced**: collector creation, healthy run, drift, real failure, self-heal proposal, human approval, and same-collector recovery have all occurred.
+
+A separate claim remains conditional: do not say the deployed `/api/brightdata/*` production routes are credential-configured until the live deployment's health endpoint confirms the required environment variables are present. The repository must continue to keep API tokens and operator secrets out of git.
