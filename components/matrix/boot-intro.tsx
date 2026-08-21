@@ -1,195 +1,134 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { GuidePortrait } from './guide-portrait'
-import { WebReceiptLogo } from '@/components/brand/webreceipt-logo'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-/* ============================================================================
-   OPENING SEQUENCE
-
-   Black → a figure resolves in the dark → a scan passes over him → the code
-   environment comes up → the interface loads. 3.4 seconds, once per session,
-   skippable at any point with the button or Escape.
-
-   The short runtime is the point. A cinematic that plays on every navigation
-   stops being cinematic and becomes a toll, so this checks sessionStorage
-   before it ever renders, and never runs at all under reduced motion.
-   ========================================================================== */
-
-const SESSION_KEY = 'wr.intro.v1'
-
-/** Cue sheet, in ms from the first frame. */
-const CUE = {
-  figure: 280,
-  scan: 980,
-  print: 1160,
-  ready: 2550,
-  lift: 3500,
-  end: 4450,
-} as const
-
-const BOOT_LINES = [
-  'Every problem has a solution.',
-  'You just have to be smart enough',
-  'to find it.',
-]
+const PORTRAIT = '/scofield.png'
+const LINES = ['Every problem has a solution.', 'You just have to be smart enough', 'to find it']
+const EASE = 'cubic-bezier(0.23,1,0.32,1)'
 
 export function BootIntro() {
-  /** `null` until we've checked the session — nothing renders before that. */
-  const [active, setActive] = useState<boolean | null>(null)
-  const [cue, setCue] = useState<'black' | 'figure' | 'scan' | 'ready' | 'lift'>('black')
-  const [printed, setPrinted] = useState(0)
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
-  /** Decided once per mount. StrictMode runs the effect below twice, and the
-      second pass must not read the session flag the first pass just wrote —
-      that self-cancels the sequence and it never plays in development. */
-  const shouldPlay = useRef<boolean | null>(null)
+  const full = useMemo(() => LINES.join('\n'), [])
+  const [reduced, setReduced] = useState(false)
+  const [typed, setTyped] = useState(0)
+  const [leaving, setLeaving] = useState(false)
+  const [portraitSrc, setPortraitSrc] = useState(PORTRAIT)
+  const complete = typed >= full.length
 
-  const finish = useCallback(() => {
-    timers.current.forEach(clearTimeout)
-    timers.current = []
-    shouldPlay.current = false
-    setActive(false)
-    document.body.style.overflow = ''
-    window.dispatchEvent(new Event('wr:intro-done'))
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => setReduced(media.matches)
+    sync()
+    media.addEventListener?.('change', sync)
+    return () => media.removeEventListener?.('change', sync)
   }, [])
 
   useEffect(() => {
-    if (shouldPlay.current === null) {
-      const seen = sessionStorage.getItem(SESSION_KEY) === '1'
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      shouldPlay.current = !seen && !reduced
-      if (shouldPlay.current) sessionStorage.setItem(SESSION_KEY, '1')
-    }
-
-    if (!shouldPlay.current) {
-      setActive(false)
-      // Anything waiting on the sequence still gets its cue.
-      window.dispatchEvent(new Event('wr:intro-done'))
+    if (reduced) {
+      setTyped(full.length)
       return
     }
-
-    setActive(true)
-    setCue('black')
-    setPrinted(0)
-    document.body.style.overflow = 'hidden'
-
-    const at = (ms: number, fn: () => void) => timers.current.push(setTimeout(fn, ms))
-    at(CUE.figure, () => setCue('figure'))
-    at(CUE.scan, () => setCue('scan'))
-    BOOT_LINES.forEach((_, i) => at(CUE.print + i * 250, () => setPrinted(i + 1)))
-    at(CUE.ready, () => setCue('ready'))
-    at(CUE.lift, () => setCue('lift'))
-    at(CUE.end, finish)
-
+    let index = 0
+    let interval: number | undefined
+    const start = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        index += 1
+        setTyped(index)
+        if (index >= full.length && interval !== undefined) window.clearInterval(interval)
+      }, 26)
+    }, 900)
     return () => {
-      timers.current.forEach(clearTimeout)
-      timers.current = []
+      window.clearTimeout(start)
+      if (interval !== undefined) window.clearInterval(interval)
+    }
+  }, [full.length, reduced])
+
+  const exit = useCallback(() => {
+    if (leaving) return
+    setLeaving(true)
+    window.setTimeout(() => {
+      document.body.style.overflow = ''
+      window.dispatchEvent(new Event('wr:intro-done'))
+    }, reduced ? 0 : 460)
+  }, [leaving, reduced])
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
       document.body.style.overflow = ''
     }
-  }, [finish])
+  }, [])
 
-  // Escape skips. Anyone who reaches for it has already decided.
   useEffect(() => {
-    if (!active) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') finish()
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        exit()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [active, finish])
+  }, [exit])
 
-  if (!active) return null
-
-  const lifting = cue === 'lift'
-  const ready = cue === 'ready' || lifting
+  const visible = full.slice(0, typed).split('\n')
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Opening sequence"
-      onClick={ready ? finish : undefined}
-      className="fixed inset-0 z-[9999] overflow-hidden transition-opacity duration-[900ms] ease-out"
-      style={{
-        // The black lifts rather than cutting, so the code behind bleeds through.
-        background: lifting ? 'rgba(0,0,0,0.35)' : '#000',
-        opacity: lifting ? 0 : 1,
-        transitionProperty: 'opacity, background-color',
-      }}
+      aria-label="WebReceipt intro"
+      onClick={exit}
+      className={`fixed inset-0 z-[9999] cursor-pointer bg-black transition-all ${leaving ? 'pointer-events-none -translate-y-6 opacity-0' : 'opacity-100'}`}
+      style={{ transitionDuration: reduced ? '0ms' : '460ms', transitionTimingFunction: EASE }}
     >
-      <div className="relative flex h-full w-full items-end px-6 pb-20 sm:items-center sm:px-10 sm:pb-0 lg:px-16">
-        <div className="flex w-full max-w-6xl flex-col items-center gap-7 sm:flex-row sm:items-center sm:gap-12 lg:gap-20">
-          {/* The figure. Fades up out of the dark and breathes very slightly —
-              the only movement in the frame for the first second. */}
-          <div
-            className="relative w-[min(52vw,340px)] shrink-0 transition-all duration-[1200ms] ease-out sm:w-[min(37vw,380px)]"
-            style={{
-              opacity: cue === 'black' ? 0 : 1,
-              transform: cue === 'black' ? 'translateY(10px) scale(0.985)' : 'none',
-            }}
-          >
-            <GuidePortrait
-              size={380}
-              fullFigure
-              cinematic={cue === 'scan'}
-              className="!h-auto !w-full aspect-[2/3] animate-float border-0 bg-transparent shadow-[0_0_55px_-30px_rgba(51,255,102,.8)]"
-            />
-          </div>
-
-          {/* The boot log, printing beside him. */}
-          <div className="min-w-0 max-w-xl flex-1 self-center sm:pb-10">
-            <div
-              className="transition-opacity duration-700"
-              style={{ opacity: cue === 'black' ? 0 : 1 }}
-            >
-              <WebReceiptLogo size={22} />
-            </div>
-
-            <div className="terminal terminal-phosphor mt-5 max-w-xl">
-              <div className="terminal-bar">
-                <span className="status-dot status-dot-live" style={{ ['--dot' as string]: '#33ff66' }} aria-hidden />
-                <span className="sys-label flex-1">Secure channel</span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-matrix-400">live</span>
-              </div>
-              <div className="relative z-[1] space-y-2 px-5 py-5">
-              {BOOT_LINES.slice(0, printed).map((line, i) => (
-                <p
-                  key={line}
-                  className={`sys-prompt animate-fade-in-up font-mono text-[11.5px] uppercase tracking-[0.16em] ${
-                    i === BOOT_LINES.length - 1 ? 'text-matrix-300' : 'text-void-200'
-                  } ${i === printed - 1 ? 'caret' : ''}`}
-                >
-                  {line}
-                </p>
-              ))}
-              </div>
-            </div>
-
-            <p
-              className="mt-6 font-mono text-[10px] uppercase tracking-[0.34em] text-matrix-400 transition-opacity duration-500"
-              style={{ opacity: ready ? 1 : 0 }}
-            >
-              Click anywhere to enter
-            </p>
-          </div>
+      <div className="relative mx-auto flex h-full max-w-[1500px] flex-col items-center gap-8 px-6 py-12 md:flex-row md:gap-0 md:px-0 md:py-0">
+        <div className="relative h-[42%] w-full shrink-0 md:h-full md:w-[48%]">
+          <img
+            src={portraitSrc}
+            alt="Michael Scofield intro portrait"
+            onError={() => setPortraitSrc('/webreceipt-mark.svg')}
+            className="h-full w-full bg-black object-contain object-left-bottom"
+            style={{ objectPosition: 'left bottom', filter: 'brightness(.92) contrast(1.06)' }}
+          />
+          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-black to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
+          {!reduced && <div className="absolute inset-x-0 top-0 h-px animate-scan bg-matrix/70" aria-hidden="true" />}
         </div>
 
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            finish()
-          }}
-          className="sys-btn sys-btn-ghost absolute bottom-8 right-6 h-9 px-4 text-[11px]"
-        >
-          Skip
-        </button>
+        <div className="flex w-full flex-1 items-center md:pr-16">
+          <div className="relative w-full">
+            <div className="absolute -left-2 top-16 hidden h-4 w-4 rotate-45 border-b border-l border-matrix bg-black md:block" aria-hidden="true" />
+            <div className="relative rounded-3xl border border-matrix bg-black/90 px-7 py-8 shadow-phosphor md:px-10 md:py-10">
+              <p className="whitespace-pre-wrap text-lg leading-relaxed text-matrix md:text-3xl md:leading-[1.5]">
+                {visible.map((line, i) => (
+                  <span key={`${line}-${i}`}>
+                    {line}
+                    {i < visible.length - 1 ? '\n' : null}
+                  </span>
+                ))}
+                {!complete && !reduced && <span className="caret" />}
+              </p>
+            </div>
 
-        <span className="absolute bottom-9 left-6 font-mono text-[10px] uppercase tracking-[0.24em] text-void-400">
-          Press esc to skip
-        </span>
+            <div
+              className="mt-8 flex items-center justify-between gap-4 transition-opacity"
+              style={{ opacity: complete ? 1 : 0, transitionDuration: reduced ? '0ms' : '200ms' }}
+            >
+              <span className="text-xs uppercase tracking-[0.32em] text-void-300">Click anywhere to enter</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  exit()
+                }}
+                className="rounded-md border border-void-500 px-4 py-2 text-xs uppercase tracking-[0.28em] text-void-200 transition-colors duration-150 hover:border-matrix hover:text-matrix"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+      <div className="crt-scanlines pointer-events-none absolute inset-0 opacity-[0.14]" />
     </div>
   )
 }

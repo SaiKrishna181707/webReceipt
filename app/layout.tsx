@@ -3,6 +3,7 @@ import './globals.css'
 import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
 import { MatrixBackground } from '@/components/matrix/matrix-background'
+import { Spiders } from '@/components/matrix/spiders'
 import { BootIntro } from '@/components/matrix/boot-intro'
 import { SystemFooter } from '@/components/matrix/system-footer'
 
@@ -15,26 +16,23 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      {/* The whole product runs inside one construct: black, and full of code. */}
       <body className="construct-body relative min-h-screen bg-black text-void-100 selection:bg-matrix-500/35 selection:text-white">
         <a href="#main" className="skip-link">
           Skip to content
         </a>
 
-        {/* The environment. Fixed, pointer-transparent, behind everything. */}
         <MatrixBackground />
-
+        <Spiders />
         <Navigation />
 
-        {/* No width cap here — pages own their own shell so the hero can go
-            full-bleed while the consoles stay in a readable column. */}
-        <main id="main" className="relative min-h-screen pt-16">
+        <main id="main" className="relative z-10 min-h-screen pt-16">
           {children}
         </main>
 
-        <SystemFooter />
+        <div className="relative z-10">
+          <SystemFooter />
+        </div>
 
-        {/* The screen this is all being watched on. Never clickable. */}
         <div className="crt-overlay" aria-hidden />
         <div className="crt-vignette" aria-hidden />
 
