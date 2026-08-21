@@ -46,8 +46,8 @@ function shouldUseBrightData(targetUrl?: string): boolean {
 // self-heals or mutates the collector; the protected /api/brightdata/heal route
 // owns mutation/repair operations.
 export async function POST(req: Request) {
-  const body = await readBody(req)
   return runSafely(async () => {
+    const body = await readBody(req)
     const targetUrl = (body.targetUrl as string) || undefined
     const mutation = (body.mutation as string) || 'healthy'
 
