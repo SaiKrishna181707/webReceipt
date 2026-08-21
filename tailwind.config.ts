@@ -1,102 +1,103 @@
 import type { Config } from 'tailwindcss'
 
 /**
- * OCEAN DRIVE palette — a 1986 Miami sunset.
+ * THE CONSTRUCT — a Matrix-inspired palette.
  *
- * Two hues carry the whole interface: flamingo neon (#ff2e97) and pool aqua
- * (#2de2e6), thrown against a violet night sky that burns orange at the
- * horizon. Everything else is either the sun (gold), the palms (mint), or
- * chrome.
+ * One hue carries the entire interface: phosphor green, in three intensities.
  *
- * The legacy `plate/stud/brick/azure/lime/tangerine` scales are kept as
- * aliases so no surface can fall back to an off-theme default while the
- * codebase migrates to the neon names.
+ *   bright  (#33ff66)  active, verified, the thing you're looking at
+ *   mid     (#00b83f)  structure, labels, kickers, borders
+ *   dim     (#005c1f)  falling code, grids, everything in the background
+ *
+ * Two hues exist only to report state and are used sparingly:
+ *   amber   warnings — an amber CRT, never a neon orange
+ *   red     failures — the one alarm colour in the system
+ *
+ * The old Vice City scale names are kept as aliases (`neon`, `gold`, `aqua`,
+ * `mint`, `blood`, `violet`, `night`, `brick`, `stud`, …) and remapped onto the
+ * green system. Nothing can fall back to an off-theme pink or orange, and the
+ * product consoles keep working while their call sites migrate.
  */
 
-const NEON = {
-  200: '#ffc0e2',
-  300: '#ff8ecb',
-  400: '#ff5cb0',
-  500: '#ff2e97',
-  600: '#e60c78',
-  700: '#b0055b',
-  800: '#750039',
+/** Bright phosphor — the primary accent. Active states and the brand green. */
+const GREEN = {
+  100: '#e4ffec',
+  200: '#b7ffcc',
+  300: '#7bffa0',
+  400: '#33ff66',
+  500: '#00e64a',
+  600: '#00b83f',
+  700: '#008a30',
+  800: '#005c1f',
+  900: '#00330f',
 }
 
-const AQUA = {
-  200: '#a8fbff',
-  300: '#6ff2f7',
-  400: '#2de2e6',
-  500: '#00c4cc',
-  600: '#009aa3',
-  700: '#026e77',
-  800: '#02474e',
+/** Mid phosphor — structure, kickers, labels. Reads as "system", not "alert". */
+const PHOSPHOR = {
+  100: '#d3f7dd',
+  200: '#a5eab8',
+  300: '#6fd68c',
+  400: '#3fbf66',
+  500: '#1fa049',
+  600: '#12803a',
+  700: '#0b602b',
+  800: '#07401c',
+  900: '#04240f',
 }
 
-const SUNSET = {
-  200: '#ffd9a8',
-  300: '#ffbb6b',
-  400: '#ff9a3c',
-  500: '#ff7418',
-  600: '#e05605',
-  700: '#a83f06',
-  800: '#6e2a06',
+/** Data teal — a second, cooler green for information channels. */
+const TEAL = {
+  100: '#dbfff5',
+  200: '#aefde9',
+  300: '#6ff5d4',
+  400: '#2fe3ba',
+  500: '#00c79c',
+  600: '#009e7c',
+  700: '#00745c',
+  800: '#004b3b',
+  900: '#00291f',
 }
 
-const GOLD = {
-  200: '#ffe8b0',
-  300: '#ffd166',
-  400: '#ffc23c',
-  500: '#ffab1a',
-  600: '#e08600',
-  700: '#a86200',
-  800: '#6e4000',
+/** Amber CRT — warnings only. Desaturated on purpose; this is not neon. */
+const AMBER = {
+  100: '#faf6d8',
+  200: '#f0e8ab',
+  300: '#e2d472',
+  400: '#ccbb45',
+  500: '#ab9a2b',
+  600: '#877820',
+  700: '#645818',
+  800: '#413810',
+  900: '#241f09',
 }
 
-/** Mint — the "valid / healed" green, pulled off a 1986 pool tile. */
-const MINT = {
-  200: '#b6ffd8',
-  300: '#7dffb0',
-  400: '#35f39a',
-  500: '#06d67d',
-  600: '#04ab63',
-  700: '#047947',
-  800: '#03532f',
+/** Alarm red — integrity failures, rejected repairs, broken collectors. */
+const RED = {
+  100: '#ffdcdc',
+  200: '#ffb3b3',
+  300: '#ff8080',
+  400: '#ff4d4d',
+  500: '#f52222',
+  600: '#c41414',
+  700: '#920f0f',
+  800: '#5e0a0a',
+  900: '#330606',
 }
 
-/** Scarface red — failures, broken tubes, integrity alarms. */
-const BLOOD = {
-  200: '#ffc4d0',
-  300: '#ff8fa9',
-  400: '#ff5476',
-  500: '#ff2d5e',
-  600: '#e00b41',
-  700: '#a80430',
-  800: '#6e0220',
-}
-
-/** Violet — the dusk sky and every deep panel shadow. */
-const VIOLET = {
-  200: '#d5b8ff',
-  300: '#b184ff',
-  400: '#8b4dff',
-  500: '#6a1fd0',
-  600: '#4c14a0',
-  700: '#340c72',
-  800: '#200747',
-}
-
-/** Chrome → night: text at the top, backgrounds at the bottom. */
-const NIGHT = {
-  100: '#f6f3ff',
-  200: '#dcd6f2',
-  300: '#a79fc4',
-  400: '#7d759c',
-  500: '#544d75',
-  600: '#2a1745',
-  700: '#1b1030',
-  800: '#120a1e',
-  900: '#0a0510',
+/**
+ * Void → phosphor text. 900 is true black (the screen is off), 100 is the pale
+ * green-white that terminal type is actually printed in.
+ */
+const VOID = {
+  100: '#e8ffee',
+  200: '#a9c9b1',
+  300: '#6f8f78',
+  400: '#4c6552',
+  500: '#334438',
+  600: '#1b2a1f',
+  700: '#101a13',
+  800: '#080d09',
+  900: '#000000',
 }
 
 const config: Config = {
@@ -109,61 +110,78 @@ const config: Config = {
         foreground: 'var(--text)',
         border: 'var(--line)',
 
-        neon: NEON,
-        aqua: AQUA,
-        sunset: SUNSET,
-        gold: GOLD,
-        mint: MINT,
-        blood: BLOOD,
-        violet: VIOLET,
-        vice: VIOLET,
-        night: NIGHT,
+        // ---- the system ------------------------------------------------
+        matrix: GREEN,
+        phosphor: PHOSPHOR,
+        data: TEAL,
+        warn: AMBER,
+        alarm: RED,
+        void: VOID,
 
-        // ---- legacy aliases, remapped onto the sunset ------------------
-        brick: NEON,
-        stud: GOLD,
-        azure: AQUA,
-        lime: MINT,
-        tangerine: SUNSET,
-        plate: NIGHT,
-        rose: BLOOD,
-        amber: GOLD,
+        // ---- legacy scale names, remapped onto the green system --------
+        // `neon` and `mint` are the bright phosphor; `gold` is the mid
+        // phosphor that used to carry every kicker; `aqua` is the data teal.
+        neon: GREEN,
+        mint: GREEN,
+        gold: PHOSPHOR,
+        aqua: TEAL,
+        blood: RED,
+        rose: RED,
+        sunset: AMBER,
+        amber: AMBER,
+        // Violet was the dusk sky. There is no sky here — it becomes the void.
+        violet: VOID,
+        vice: VOID,
+        night: VOID,
+        plate: VOID,
+        brick: GREEN,
+        stud: PHOSPHOR,
+        azure: TEAL,
+        lime: GREEN,
+        tangerine: AMBER,
       },
       fontFamily: {
-        // Kanit carries the headlines: geometric, tropical, and it has a real
-        // italic — which is where all the 80s speed comes from.
-        display: ['var(--font-display)', 'Kanit', 'system-ui', 'sans-serif'],
-        // Monoton is a neon tube. Wordmarks only, never body copy.
-        neon: ['Monoton', 'var(--font-display)', 'cursive'],
-        mono: ['"Fira Code"', 'ui-monospace', 'monospace'],
+        // Inter carries the headlines. The Matrix interface is typographically
+        // plain on purpose — the atmosphere comes from the code behind it.
+        display: ['var(--font-display)', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        // Every piece of system information is monospaced.
+        mono: ['"JetBrains Mono"', '"Fira Code"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        neon: '0 0 0 1px rgba(255,46,151,.5), 0 0 18px -2px rgba(255,46,151,.55), 0 0 60px -14px rgba(255,46,151,.5)',
-        'neon-sm': '0 0 0 1px rgba(255,46,151,.45), 0 0 10px -1px rgba(255,46,151,.5)',
-        aqua: '0 0 0 1px rgba(45,226,230,.5), 0 0 18px -2px rgba(45,226,230,.55), 0 0 60px -14px rgba(45,226,230,.45)',
-        gold: '0 0 0 1px rgba(255,194,60,.5), 0 0 18px -2px rgba(255,194,60,.5), 0 0 56px -14px rgba(255,194,60,.4)',
-        // Chrome trim: a hot top edge, a dark underside, and a long dusk shadow
-        chrome:
-          'inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.6), 0 12px 30px -14px rgba(0,0,0,.95)',
-        deco: '0 1px 0 rgba(255,255,255,.07) inset, 0 24px 50px -28px rgba(0,0,0,1), 0 0 46px -26px rgba(255,46,151,.7)',
+        // A lit edge plus a short halo. Green light spills; it never fills.
+        matrix: '0 0 0 1px rgba(51,255,102,.42), 0 0 16px -4px rgba(51,255,102,.5), 0 0 48px -18px rgba(51,255,102,.34)',
+        'matrix-sm': '0 0 0 1px rgba(51,255,102,.34), 0 0 10px -3px rgba(51,255,102,.45)',
+        neon: '0 0 0 1px rgba(51,255,102,.42), 0 0 16px -4px rgba(51,255,102,.5), 0 0 48px -18px rgba(51,255,102,.34)',
+        'neon-sm': '0 0 0 1px rgba(51,255,102,.34), 0 0 10px -3px rgba(51,255,102,.45)',
+        aqua: '0 0 0 1px rgba(47,227,186,.4), 0 0 16px -4px rgba(47,227,186,.45), 0 0 46px -18px rgba(47,227,186,.3)',
+        gold: '0 0 0 1px rgba(63,191,102,.4), 0 0 16px -4px rgba(63,191,102,.42), 0 0 44px -18px rgba(63,191,102,.28)',
+        alarm: '0 0 0 1px rgba(255,77,77,.42), 0 0 16px -4px rgba(255,77,77,.45)',
+        // Panel: hairline top edge, black underside, long fall-off.
+        chrome: 'inset 0 1px 0 rgba(51,255,102,.12), inset 0 -1px 0 rgba(0,0,0,.7), 0 14px 34px -16px rgba(0,0,0,1)',
+        deco: 'inset 0 1px 0 rgba(51,255,102,.1), 0 24px 50px -28px rgba(0,0,0,1), 0 0 40px -26px rgba(51,255,102,.5)',
       },
       backgroundImage: {
-        'sunset-sky':
-          'linear-gradient(180deg,#0a0510 0%,#200747 24%,#4c14a0 44%,#c2247f 66%,#ff5476 78%,#ff9a3c 88%,#ffc23c 100%)',
-        chrome:
-          'linear-gradient(180deg,#ffffff 0%,#dcd6f2 26%,#a79fc4 48%,#f6f3ff 52%,#7d759c 74%,#dcd6f2 100%)',
-        'neon-rule': 'linear-gradient(90deg,transparent,#ff2e97 18%,#ffc23c 50%,#2de2e6 82%,transparent)',
+        'matrix-rule': 'linear-gradient(90deg,transparent,rgba(51,255,102,.85) 26%,rgba(51,255,102,.85) 74%,transparent)',
+        'neon-rule': 'linear-gradient(90deg,transparent,rgba(51,255,102,.85) 26%,rgba(51,255,102,.85) 74%,transparent)',
+        'code-fade': 'linear-gradient(180deg,rgba(51,255,102,.16),transparent)',
+        chrome: 'linear-gradient(180deg,#e8ffee 0%,#a9c9b1 46%,#e8ffee 52%,#4c6552 100%)',
+        'sunset-sky': 'linear-gradient(180deg,#000000 0%,#04240f 46%,#000000 100%)',
       },
       animation: {
-        marquee: 'marquee var(--duration, 40s) linear infinite',
-        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
-        flicker: 'flicker 6s steps(1, end) infinite',
-        'neon-pulse': 'neonPulse 3.2s ease-in-out infinite',
-        sway: 'sway 7s ease-in-out infinite',
-        'sun-bars': 'sunBars 9s linear infinite',
-        scan: 'scan 7s linear infinite',
-        'drive-by': 'driveBy 9s linear infinite',
-        float: 'floatSlow 5s ease-in-out infinite',
+        marquee: 'marquee var(--duration, 44s) linear infinite',
+        'fade-in-up': 'fadeInUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards',
+        // A tube that never quite settles — kept for the wordmark flicker.
+        flicker: 'flicker 7s steps(1, end) infinite',
+        'neon-pulse': 'phosphorPulse 3.4s ease-in-out infinite',
+        scan: 'scanSweep 6s linear infinite',
+        'scan-once': 'scanSweep 0.62s cubic-bezier(0.4,0,0.2,1) 1',
+        'caret-blink': 'caretBlink 1.05s steps(1, end) infinite',
+        float: 'floatSlow 6s ease-in-out infinite',
+        'grid-drift': 'gridDrift 26s linear infinite',
+        sway: 'sway 8s ease-in-out infinite',
+        'sun-bars': 'phosphorPulse 3.4s ease-in-out infinite',
+        'drive-by': 'marquee var(--duration, 44s) linear infinite',
       },
       keyframes: {
         marquee: {
@@ -171,39 +189,37 @@ const config: Config = {
           '100%': { transform: 'translateX(calc(-50% - var(--gap)/2))' },
         },
         fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        // A tube that never quite settles — the ballast is going.
         flicker: {
-          '0%, 41%, 43.5%, 45%, 61%, 63%, 100%': { opacity: '1' },
-          '42%, 44%, 62%': { opacity: '.34' },
-          '42.5%': { opacity: '.7' },
+          '0%, 46%, 47.6%, 49%, 71%, 72.4%, 100%': { opacity: '1' },
+          '46.8%, 48.2%, 71.7%': { opacity: '.42' },
+          '47%': { opacity: '.78' },
         },
-        neonPulse: {
-          '0%, 100%': { filter: 'brightness(1) saturate(1)' },
-          '50%': { filter: 'brightness(1.28) saturate(1.2)' },
+        phosphorPulse: {
+          '0%, 100%': { opacity: '.72' },
+          '50%': { opacity: '1' },
         },
-        sway: {
-          '0%, 100%': { transform: 'rotate(-1.6deg)' },
-          '50%': { transform: 'rotate(1.6deg)' },
-        },
-        sunBars: {
-          '0%': { backgroundPosition: '0 0' },
-          '100%': { backgroundPosition: '0 -64px' },
-        },
-        scan: {
+        scanSweep: {
           '0%': { transform: 'translateY(-110%)' },
           '100%': { transform: 'translateY(110%)' },
         },
-        driveBy: {
-          '0%': { transform: 'translateX(-12%)', opacity: '0' },
-          '8%, 92%': { opacity: '1' },
-          '100%': { transform: 'translateX(112%)', opacity: '0' },
+        caretBlink: {
+          '0%, 49%': { opacity: '1' },
+          '50%, 100%': { opacity: '0' },
         },
         floatSlow: {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-8px)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        gridDrift: {
+          '0%': { backgroundPosition: '0 0' },
+          '100%': { backgroundPosition: '0 640px' },
+        },
+        sway: {
+          '0%, 100%': { transform: 'translateX(-1px)' },
+          '50%': { transform: 'translateX(1px)' },
         },
       },
     },

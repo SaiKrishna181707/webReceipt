@@ -1,5 +1,12 @@
-import { ArrowRight } from 'lucide-react'
-import { NeonLink, DecoPanel, TubeRail, type ViceTone } from '@/components/vice/vice-ui'
+import { ArrowRight, BookOpen } from 'lucide-react'
+import {
+  SystemLink,
+  MatrixPanel,
+  SystemRail,
+  Kicker,
+  SystemStatus,
+  type MatrixTone,
+} from '@/components/matrix/matrix-ui'
 
 const CHECKS: [string, string][] = [
   ['total_arithmetic', 'base + mandatoryFees + taxes + optionalAddons − discounts equals finalTotal'],
@@ -51,72 +58,99 @@ const ENDPOINTS: { method: string; path: string; body: string; returns: string; 
 export default function DocsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-14 px-4 py-10 sm:px-6 lg:px-8">
-      <header className="space-y-3">
-        <div className="font-mono text-[11px] uppercase tracking-[0.26em] text-gold-400">Docs</div>
-        <h1 className="display text-3xl italic text-white">How WebReceipt works</h1>
-        <TubeRail count={12} tone="gold" />
-        <p className="text-night-200">
+      {/* ==================================================================
+          HEADER
+          Docs get the lightest touch in the system: readability first, theme
+          second. Green is confined to labels, rules and code.
+          ================================================================== */}
+      <header>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Kicker tone="phosphor">Docs</Kicker>
+          <SystemRail count={8} tone="phosphor" className="opacity-70" />
+          <SystemStatus label="Schema" value="v1.1.0" tone="phosphor" live={false} />
+        </div>
+        <h1 className="mt-3 text-[28px] font-bold leading-tight text-void-100 sm:text-[34px]">How WebReceipt works</h1>
+        <p className="mt-3 text-[15px] leading-relaxed text-void-200">
           A self-healing consumer evidence engine. It compiles public purchase journeys into one canonical Deal
           Contract, seals every claim with tamper-evident evidence, and verifies extraction against deterministic
           semantic invariants.
         </p>
       </header>
 
-      <Section title="Core concepts" tone="neon">
-        <Concept accent="#ffc23c" name="Deal Contract" body="One canonical economic schema (v1.1.0) compiled from any site: advertised price, checkout breakdown (base, fee items, mandatory fees, taxes, add-ons, discounts, final total), terms, the journey, and the evidence set — sealed with a contract hash." />
-        <Concept accent="#35f39a" name="Evidence" body="Each critical field carries a record: captured text, source URL, DOM path, journey step, collector version, timestamp and a SHA-256 hash. Screenshots are references, not proof — the hash is the proof." />
-        <Concept accent="#2de2e6" name="Contract Integrity Engine" body="Eleven deterministic checks that catch wrong-but-valid extraction — where every field is populated but the numbers don't reconcile. A critical failure marks the contract invalid." />
-        <Concept accent="#b184ff" name="Deal Anomalies" body="Observed, not adjudicated: journey price increases, mandatory non-tax charges and taxes are surfaced as facts with context — never as legal conclusions." />
-        <Concept accent="#ff2e97" name="Promise Diff" body="git diff for commercial promises. Compares two contracts and reports money, text, list and fee changes — e.g. 'Free cancellation' → 'Non-refundable'." />
-        <Concept accent="#ff7418" name="Self-Healing" body="When a redesign breaks extraction, an AI repair is proposed. WebReceipt treats the preview as untrusted: it must compile into the same Deal Contract and pass every critical invariant before it is approved and deployed." />
+      <Section title="Core concepts" tone="matrix">
+        <Concept
+          accent="#33ff66"
+          name="Deal Contract"
+          body="One canonical economic schema (v1.1.0) compiled from any site: advertised price, checkout breakdown (base, fee items, mandatory fees, taxes, add-ons, discounts, final total), terms, the journey, and the evidence set — sealed with a contract hash."
+        />
+        <Concept
+          accent="#2fe3ba"
+          name="Evidence"
+          body="Each critical field carries a record: captured text, source URL, DOM path, journey step, collector version, timestamp and a SHA-256 hash. Screenshots are references, not proof — the hash is the proof."
+        />
+        <Concept
+          accent="#3fbf66"
+          name="Contract Integrity Engine"
+          body="Eleven deterministic checks that catch wrong-but-valid extraction — where every field is populated but the numbers don't reconcile. A critical failure marks the contract invalid."
+        />
+        <Concept
+          accent="#ccbb45"
+          name="Deal Anomalies"
+          body="Observed, not adjudicated: journey price increases, mandatory non-tax charges and taxes are surfaced as facts with context — never as legal conclusions."
+        />
+        <Concept
+          accent="#7bffa0"
+          name="Promise Diff"
+          body="git diff for commercial promises. Compares two contracts and reports money, text, list and fee changes — e.g. 'Free cancellation' → 'Non-refundable'."
+        />
+        <Concept
+          accent="#00b83f"
+          name="Self-Healing"
+          body="When a redesign breaks extraction, an AI repair is proposed. WebReceipt treats the preview as untrusted: it must compile into the same Deal Contract and pass every critical invariant before it is approved and deployed."
+        />
       </Section>
 
-      <Section title="Integrity checks" tone="mint">
-        {/* Eleven tubes on one circuit — any one of them dark invalidates the sign. */}
-        <div className="divide-y divide-white/5 overflow-hidden rounded-[2px] border border-mint-500/25 bg-black/40 shadow-[inset_0_0_34px_-24px_rgba(53,243,154,.9)]">
+      <Section title="Integrity checks" tone="matrix">
+        {/* Eleven checks on one circuit — any critical failure invalidates the contract. */}
+        <div className="divide-y divide-matrix-400/8 overflow-hidden rounded-[2px] border border-matrix-500/25 bg-black/50 shadow-[inset_0_0_34px_-24px_rgba(51,255,102,.9)]">
           {CHECKS.map(([id, desc]) => (
             <div key={id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:gap-4">
-              <code className="shrink-0 font-mono text-xs text-mint-300 [text-shadow:0_0_9px_rgba(53,243,154,.55)] sm:w-52">
-                {id}
-              </code>
-              <span className="text-sm text-night-200">{desc}</span>
+              <code className="shrink-0 font-mono text-[12px] text-matrix-300 sm:w-52">{id}</code>
+              <span className="text-[13.5px] leading-relaxed text-void-200">{desc}</span>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section title="API reference" tone="aqua">
-        <p className="text-sm text-night-200">
-          All routes run on the Node.js runtime and drive the same engine that powers the Console. Bodies are JSON.
+      <Section title="API reference" tone="data">
+        <p className="text-[13.5px] leading-relaxed text-void-200">
+          All routes run on the Node.js runtime and drive the same engine that powers the Console. Bodies are JSON. In
+          this app the collector behind them is the simulator; the Bright Data adapter is exercised by the sponsor
+          harness and the CLI runbook.
         </p>
         <div className="space-y-3">
           {ENDPOINTS.map((e) => {
             const get = e.method === 'GET'
-            const c = get ? '#2de2e6' : '#ffc23c'
+            const c = get ? '#2fe3ba' : '#33ff66'
             return (
               <div
                 key={e.path}
-                className="rounded-[2px] border border-white/10 bg-black/40 p-4"
+                className="rounded-[2px] border border-matrix-400/12 bg-black/50 p-4"
                 style={{ boxShadow: `inset 0 0 30px -22px ${c}` }}
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className="rounded-[1px] border px-2 py-0.5 font-mono text-[10px] font-bold tracking-[0.1em]"
-                    style={{
-                      borderColor: c,
-                      color: c,
-                      background: `${c}18`,
-                      textShadow: `0 0 9px ${c}99`,
-                    }}
+                    style={{ borderColor: c, color: c, background: `${c}18` }}
                   >
                     {e.method}
                   </span>
-                  <code className="font-mono text-sm text-white">{e.path}</code>
-                  <span className="ml-auto font-mono text-[11px] text-night-300">→ {e.returns}</span>
+                  <code className="font-mono text-[13.5px] text-void-100">{e.path}</code>
+                  <span className="ml-auto font-mono text-[11px] text-void-300">→ {e.returns}</span>
                 </div>
-                <p className="mt-2 text-sm text-night-200">{e.desc}</p>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-void-200">{e.desc}</p>
                 {e.body !== '—' && (
-                  <pre className="mt-2 overflow-x-auto rounded-[2px] border border-white/10 bg-black/60 p-3 font-mono text-xs text-night-100">
+                  <pre className="mt-2 overflow-x-auto rounded-[2px] border border-matrix-400/12 bg-black/70 p-3 font-mono text-[12px] text-void-100">
                     {e.body}
                   </pre>
                 )}
@@ -126,50 +160,55 @@ export default function DocsPage() {
         </div>
       </Section>
 
-      <Section title="Run it locally" tone="violet">
-        <pre className="overflow-x-auto rounded-[2px] border border-violet-500/25 bg-black/60 p-4 font-mono text-sm text-night-100 shadow-[inset_0_0_34px_-24px_rgba(177,132,255,.9)]">
+      <Section title="Run it locally" tone="phosphor">
+        <pre className="overflow-x-auto rounded-[2px] border border-matrix-500/25 bg-black/70 p-4 font-mono text-[13px] leading-relaxed text-void-100 shadow-[inset_0_0_34px_-24px_rgba(51,255,102,.9)]">
 {`npm install
 npm run dev        # Next.js console at http://localhost:3000
 npm run verify     # engine checks: schema + unit tests + chaos suite`}
         </pre>
       </Section>
 
-      <DecoPanel tone="gold" tilt={false} className="flex flex-wrap items-center justify-between gap-4 p-6">
+      <MatrixPanel tone="matrix" tilt={false} className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
-          <h3 className="display text-lg italic text-white">Ready to see it run?</h3>
-          <p className="text-sm text-night-200">Walk the full observe → break → heal → diff loop on live data.</p>
+          <h3 className="text-[17px] font-semibold text-void-100">Ready to see it run?</h3>
+          <p className="mt-1 text-[13.5px] text-void-200">
+            Walk the full observe → break → heal → diff loop on live engine data.
+          </p>
         </div>
-        <NeonLink href="/console" tone="gold" size="md" variant="solid" className="shrink-0">
-          Launch Console <ArrowRight size={15} />
-        </NeonLink>
-      </DecoPanel>
+        <SystemLink href="/console" tone="matrix" size="md" variant="solid" className="shrink-0" scan>
+          Launch console <ArrowRight size={15} aria-hidden />
+        </SystemLink>
+      </MatrixPanel>
     </div>
   )
 }
 
-function Section({ title, tone, children }: { title: string; tone: ViceTone; children: React.ReactNode }) {
+function Section({ title, tone, children }: { title: string; tone: MatrixTone; children: React.ReactNode }) {
   return (
     <section className="space-y-4">
       <div className="space-y-2 pb-1">
-        <h2 className="display text-xl italic text-white">{title}</h2>
-        <TubeRail count={8} tone={tone} />
+        <h2 className="flex items-center gap-2 text-[20px] font-semibold text-void-100">
+          <BookOpen size={15} className="text-matrix-400" aria-hidden />
+          {title}
+        </h2>
+        <SystemRail count={8} tone={tone} className="opacity-70" />
       </div>
       {children}
     </section>
   )
 }
 
-/** Each concept gets its own tube colour, so the page reads as a lit directory. */
+/** Each concept keeps its own accent on the left edge, so the page reads as a directory. */
 function Concept({ name, body, accent }: { name: string; body: string; accent: string }) {
   return (
     <div
-      className="rounded-[2px] border-l-2 border-y border-r border-y-white/10 border-r-white/10 bg-black/40 p-4"
+      className="rounded-[2px] border-y border-l-2 border-r border-y-matrix-400/10 border-r-matrix-400/10 bg-black/50 p-4"
       style={{ borderLeftColor: accent, boxShadow: `inset 14px 0 30px -26px ${accent}` }}
     >
-      <h3 className="display mb-1 text-sm italic" style={{ color: accent, textShadow: `0 0 10px ${accent}77` }}>
+      <h3 className="mb-1 font-mono text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>
         {name}
       </h3>
-      <p className="text-sm leading-relaxed text-night-200">{body}</p>
+      <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
     </div>
   )
 }

@@ -1,55 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Kanit:ital,wght@0,300;0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================================================
-   OCEAN DRIVE — a Vice City design system.
+   THE CONSTRUCT — a Matrix design system for WebReceipt.
 
-   Three rules hold the whole thing together:
-     1. Light is emitted, never printed. Accents glow; they don't fill.
-     2. Every panel is a lit facade at dusk: dark glass, chrome trim, neon edge.
-     3. The picture is on a CRT — scanlines, bloom and a little grain on top.
+   Four rules hold the whole thing together:
+
+     1. The screen is off until something needs to be read. True black is the
+        default surface; light is spent, never sprayed.
+     2. One hue, three intensities. Bright phosphor for what is active, mid for
+        structure, dim for everything falling in the background.
+     3. Every state change is a scan. Borders illuminate, a line sweeps, a
+        terminal word appears — then it settles. Nothing pulses forever.
+     4. System information is monospaced. Prose is not.
    ========================================================================== */
 
 :root {
-  --font-display: 'Kanit';
+  --font-display: 'Inter';
 
-  /* Night */
-  --bg: #0a0510;
-  --bg-subtle: #120a1e;
-  --panel: #150c26;
-  --panel-hover: #1e1136;
-  --line: rgba(255, 255, 255, 0.09);
-  --line-strong: rgba(255, 255, 255, 0.2);
-  --text: #f6f3ff;
-  --muted: #a79fc4;
+  /* Void */
+  --bg: #000000;
+  --bg-subtle: #050705;
+  --panel: #080b08;
+  --panel-hover: #0b100b;
+  --line: rgba(51, 255, 102, 0.14);
+  --line-strong: rgba(51, 255, 102, 0.34);
+  --text: #e8ffee;
+  --muted: #a9c9b1;
 
-  /* The strip */
-  --neon: #ff2e97;
-  --neon-deep: #b0055b;
-  --aqua: #2de2e6;
-  --aqua-deep: #026e77;
-  --sunset: #ff7418;
-  --gold: #ffc23c;
-  --mint: #35f39a;
-  --blood: #ff2d5e;
-  --violet: #6a1fd0;
+  /* The three phosphor intensities */
+  --green-bright: #33ff66;
+  --green-mid: #3fbf66;
+  --green-dim: #0b602b;
+  --green-deep: #04240f;
 
-  /* Chrome trim gradient, reused by type and by hardware */
-  --chrome: linear-gradient(180deg, #ffffff 0%, #dcd6f2 26%, #a79fc4 47%, #ffffff 51%, #7d759c 72%, #dcd6f2 100%);
+  /* Data / state */
+  --teal: #2fe3ba;
+  --amber: #ccbb45;
+  --alarm: #ff4d4d;
 
-  --scanline-opacity: 0.055;
-}
+  /* Halo strengths, so glow is tuned in one place rather than per component */
+  --halo-soft: 0 0 18px -8px rgba(51, 255, 102, 0.55);
+  --halo: 0 0 22px -6px rgba(51, 255, 102, 0.6);
+  --halo-hot: 0 0 34px -6px rgba(51, 255, 102, 0.75);
 
-.light {
-  /* Vice City has no daylight mode. Dawn is the closest thing to it. */
-  --bg: #1a1030;
-  --bg-subtle: #241543;
-  --panel: #2a1a4a;
-  --text: #fffaf2;
-  --muted: #cfc4ea;
+  --scanline-opacity: 0.05;
+  --rain-opacity: 0.42;
 }
 
 * {
@@ -71,7 +70,7 @@ body {
   color: var(--text);
   font-family: Inter, system-ui, -apple-system, sans-serif;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -81,36 +80,80 @@ h1,
 h2,
 h3,
 .display {
-  font-family: Kanit, Inter, system-ui, sans-serif;
-  font-weight: 800;
-  letter-spacing: -0.012em;
-  line-height: 1.04;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.021em;
+  line-height: 1.08;
 }
 
-.mono {
-  font-family: 'Fira Code', ui-monospace, monospace;
+/* Headlines are upright and tight. The old italic display face is gone: in a
+   terminal, nothing leans. */
+.display {
+  font-style: normal !important;
 }
 
-/* Wordmark type: an actual bent glass tube. Never below ~20px. */
-.tube {
-  font-family: Monoton, Kanit, cursive;
-  font-weight: 400;
-  letter-spacing: 0.03em;
+.mono,
+code,
+kbd,
+pre {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-feature-settings: 'ss01', 'zero';
+}
+
+/* A system label: the small monospaced caps that name every block. */
+.sys-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
+  color: var(--green-mid);
+}
+
+/* A command line. The `>` is drawn, not typed, so it never gets selected. */
+.sys-prompt::before {
+  content: '>';
+  margin-right: 0.6em;
+  color: var(--green-bright);
+  opacity: 0.75;
+}
+
+/* A blinking block caret for anything that reads as a live terminal. */
+.caret::after {
+  content: '';
+  display: inline-block;
+  width: 0.52em;
+  height: 1em;
+  margin-left: 0.24em;
+  vertical-align: -0.14em;
+  background: var(--green-bright);
+  box-shadow: 0 0 9px rgba(51, 255, 102, 0.7);
+  animation: caretBlink 1.05s steps(1, end) infinite;
+}
+
+@keyframes caretBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 
 /* ============================================================================
-   THE WORDMARK — a periodic-table lockup.
-   Two element tiles carry the capitals (tungsten 74 for the W, 75 for the R)
-   and the lowercase runs between them in the same face. No distress, no
-   texture: clean type, so it stays legible from 16px favicon up to a hero.
-   Every part is sized in `em`, so one font-size scales the whole lockup.
+   THE WORDMARK — a periodic-table lockup, cut down to the essentials.
+   Two element tiles carry the capitals (tungsten 74, rhenium 75) and the
+   lowercase runs between them. Symbol and atomic number only: no mass, no
+   electron shells. Everything is sized in `em`, so one font-size scales the
+   whole lockup from a 16px favicon to a hero.
    ========================================================================== */
 
 .wr-logo {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.04em;
+  gap: 0.05em;
   font-family: Inter, system-ui, sans-serif;
   line-height: 1;
   /* The lockup is a picture of a word; never let it hyphenate or wrap. */
@@ -119,50 +162,237 @@ h3,
   user-select: none;
 }
 
-/* An element tile: thin white rule, flat forest-green face. */
+/* An element tile: hairline phosphor rule, near-black face, faint inner light.
+   `padding-top` reserves a band for the atomic number, and the symbol centres
+   inside what's left. That makes a collision between the number and the letter
+   structurally impossible rather than a matter of tuned offsets — which is what
+   the previous absolute-positioned version was. The number stays out of flow so
+   the tile's baseline still comes from the symbol, and the lockup keeps sitting
+   on the same baseline as the lowercase. */
 .wr-tile {
   position: relative;
   display: inline-grid;
   place-items: center;
   width: 1em;
   height: 1em;
+  padding-top: 0.3em;
   flex: none;
-  border: 0.05em solid #f4f4ee;
-  background: linear-gradient(168deg, #24713a 0%, #1a5b2c 46%, #0f3f1d 100%);
+  border: 0.045em solid rgba(51, 255, 102, 0.72);
+  background: linear-gradient(168deg, rgba(51, 255, 102, 0.14) 0%, rgba(4, 36, 15, 0.9) 62%, #000 100%);
+  box-shadow: inset 0 0 0.5em -0.28em rgba(51, 255, 102, 0.7), 0 0 0.55em -0.3em rgba(51, 255, 102, 0.7);
 }
 
 .wr-tile-symbol {
-  font-size: 0.72em;
+  position: relative;
+  z-index: 1;
+  font-size: 0.62em;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: #eaffef;
+  text-shadow: 0 0 0.36em rgba(51, 255, 102, 0.65);
 }
 
-/* Positioned in % of the tile, not em — em here would resolve against the
-   number's own tiny font-size and collapse to nothing. */
+/* Top-right corner of the reserved band. Offsets are in % of the tile, not em —
+   em here would resolve against the number's own tiny font-size. */
 .wr-tile-number {
   position: absolute;
-  top: 6%;
-  right: 8%;
-  font-size: 0.26em;
-  font-weight: 500;
+  top: 5.5%;
+  right: 7%;
+  font-size: 0.22em;
+  font-weight: 600;
   line-height: 1;
-  color: #eef5ee;
+  color: rgba(123, 255, 160, 0.92);
 }
 
-/* The lowercase between the tiles. Sized so its cap/ascender height reads
-   level with the capitals sitting inside the tiles. */
+/* The lowercase between the tiles, sized so its ascenders read level with the
+   capitals sitting inside the tiles. */
 .wr-word {
   font-size: 0.94em;
   font-weight: 700;
-  letter-spacing: -0.005em;
-  color: #ffffff;
+  letter-spacing: -0.012em;
+  color: #eaffef;
+}
+
+.wr-word-accent {
+  color: var(--green-bright);
+  text-shadow: 0 0 0.5em rgba(51, 255, 102, 0.45);
+}
+
+/* One tile flickers, very occasionally, like a bad ballast. Never both. */
+.wr-flicker {
+  animation: flicker 9s steps(1, end) infinite;
+}
+
+@keyframes flicker {
+  0%,
+  46%,
+  47.6%,
+  49%,
+  71%,
+  72.4%,
+  100% {
+    opacity: 1;
+  }
+  46.8%,
+  48.2%,
+  71.7% {
+    opacity: 0.45;
+  }
+  47% {
+    opacity: 0.8;
+  }
 }
 
 @media (prefers-contrast: high) {
   .wr-tile {
-    background: #0f3f1d;
-    border-color: #ffffff;
+    background: #000;
+    border-color: #33ff66;
+    box-shadow: none;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   THE CRAWLER
+   A patrol track for the digital arachnid that lives beside the wordmark. The
+   pauses are repeated waypoints, the turns are two keyframes 1% apart, and the
+   stretch at 42–57% is it out of sight behind the lockup. One long animation,
+   no JS.
+   -------------------------------------------------------------------------- */
+
+.wr-spider-zone {
+  position: absolute;
+  width: 58px;
+  height: 26px;
+  pointer-events: none;
+}
+
+.wr-spider {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  animation: spiderPatrol 38s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(51, 255, 102, 0.35));
+}
+
+/* Glitch lives on the inner svg so it can't fight the patrol transform. */
+.wr-spider > svg {
+  animation: spiderGlitch 13s steps(1, end) infinite;
+}
+
+@keyframes spiderPatrol {
+  0% {
+    transform: translate(2px, 13px) rotate(0deg);
+    opacity: 1;
+  }
+  9% {
+    transform: translate(2px, 1px) rotate(0deg);
+  }
+  13% {
+    transform: translate(2px, 1px) rotate(0deg);
+  } /* stops */
+  14.5% {
+    transform: translate(3px, 1px) rotate(94deg);
+  } /* pivots */
+  25% {
+    transform: translate(39px, 1px) rotate(94deg);
+  }
+  29% {
+    transform: translate(39px, 1px) rotate(94deg);
+  } /* stops */
+  30.5% {
+    transform: translate(39px, 2px) rotate(182deg);
+  }
+  39% {
+    transform: translate(39px, 14px) rotate(182deg);
+    opacity: 1;
+  }
+  43% {
+    transform: translate(34px, 14px) rotate(182deg);
+    opacity: 0;
+  } /* behind the lockup */
+  55% {
+    transform: translate(8px, 7px) rotate(22deg);
+    opacity: 0;
+  }
+  58% {
+    transform: translate(8px, 7px) rotate(22deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(24px, 15px) rotate(72deg);
+  }
+  75% {
+    transform: translate(24px, 15px) rotate(72deg);
+  } /* stops */
+  87% {
+    transform: translate(45px, 7px) rotate(-28deg);
+  }
+  93% {
+    transform: translate(45px, 7px) rotate(-28deg);
+  } /* stops */
+  100% {
+    transform: translate(2px, 13px) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* One stride, split across two leg sets so the gait alternates. */
+.wr-spider-legs-a {
+  animation: spiderStride 0.44s ease-in-out infinite alternate;
+  transform-origin: 12px 12px;
+}
+
+.wr-spider-legs-b {
+  animation: spiderStride 0.44s ease-in-out infinite alternate-reverse;
+  transform-origin: 12px 12px;
+}
+
+@keyframes spiderStride {
+  from {
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    transform: translateY(-0.7px) scaleY(0.94);
+  }
+}
+
+.wr-spider-eye {
+  animation: spiderBlink 6.5s steps(1, end) infinite;
+}
+
+@keyframes spiderBlink {
+  0%,
+  91%,
+  100% {
+    opacity: 1;
+  }
+  92%,
+  95% {
+    opacity: 0.25;
+  }
+}
+
+/* A single hard skip, twice a minute. Any more and it reads as broken. */
+@keyframes spiderGlitch {
+  0%,
+  84%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+  85% {
+    transform: translateX(2px) skewX(-14deg);
+    opacity: 0.45;
+  }
+  86% {
+    transform: translateX(-2px);
+    opacity: 0.9;
+  }
+  87% {
+    transform: none;
+    opacity: 1;
   }
 }
 
@@ -172,289 +402,614 @@ h3,
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0510;
+  background: #000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ff2e97 0%, #b0055b 100%);
-  border-radius: 999px;
-  border: 2px solid #0a0510;
+  background: linear-gradient(180deg, rgba(51, 255, 102, 0.5) 0%, rgba(11, 96, 43, 0.8) 100%);
+  border-radius: 0;
+  border: 3px solid #000;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2de2e6 0%, #026e77 100%);
+  background: linear-gradient(180deg, rgba(51, 255, 102, 0.85) 0%, rgba(51, 255, 102, 0.4) 100%);
 }
 
 /* ============================================================================
-   THE CITY — the fixed backdrop every page sits in front of.
-   A dusk sky, the ocean glow at the horizon, and a neon grid running out to it.
+   THE ENVIRONMENT — fixed layers behind every page.
+
+     L1  true black
+     L2  code rain          (canvas, MatrixRain)
+     L3  perspective grid + digital dust
+     L4  scan sweep + scanlines + vignette   (above content, non-interactive)
+     L5  the interface
    ========================================================================== */
 
-.vice-body::before {
+/* L1 + a very faint green fog pooling at the bottom of the frame. */
+.construct-body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: -3;
   pointer-events: none;
   background:
-    /* horizon bloom */
-    radial-gradient(120% 62% at 50% 104%, rgba(255, 194, 60, 0.36) 0%, rgba(255, 116, 24, 0.22) 22%, transparent 58%),
-    /* flamingo haze, left */ radial-gradient(70% 50% at 8% 78%, rgba(255, 46, 151, 0.24) 0%, transparent 62%),
-    /* pool light, right */ radial-gradient(64% 46% at 96% 62%, rgba(45, 226, 230, 0.18) 0%, transparent 60%),
-    /* dusk sky */ linear-gradient(180deg, #0a0510 0%, #170a2e 32%, #2c0b52 58%, #55106b 78%, #8d1668 92%, #b9265c 100%);
+    radial-gradient(120% 58% at 50% 104%, rgba(51, 255, 102, 0.09) 0%, rgba(11, 96, 43, 0.05) 34%, transparent 66%),
+    radial-gradient(60% 44% at 12% 8%, rgba(51, 255, 102, 0.045) 0%, transparent 62%),
+    #000;
 }
 
-/* Perspective grid running to the vanishing point. Two layers: verticals that
-   converge, horizontals that compress. Pure CSS, pinned to the bottom third. */
-.vice-body::after {
-  content: '';
+/* L3 — a floor grid running to the vanishing point, drifting slowly toward the
+   viewer. Two repeating gradients and one transform; no JS, no layout cost. */
+.construct-grid {
   position: fixed;
   inset: auto 0 0 0;
-  height: 46vh;
+  height: 42vh;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.3;
+  background-image: repeating-linear-gradient(90deg, rgba(51, 255, 102, 0.22) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, rgba(51, 255, 102, 0.16) 0 1px, transparent 1px 64px);
+  background-size: 72px 64px;
+  transform: perspective(320px) rotateX(70deg);
+  transform-origin: bottom center;
+  animation: gridDrift 26s linear infinite;
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.42) 44%, transparent 86%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.42) 44%, transparent 86%);
+}
+
+@keyframes gridDrift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 640px;
+  }
+}
+
+/* L3 — digital dust. Six static radial dots on a tile, floated very slowly.
+   Cheaper than any particle system and reads the same at this opacity. */
+.construct-dust {
+  position: fixed;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
   opacity: 0.5;
-  background-image: repeating-linear-gradient(
-      90deg,
-      rgba(45, 226, 230, 0.32) 0 1px,
-      transparent 1px 74px
-    ),
-    repeating-linear-gradient(0deg, rgba(255, 46, 151, 0.26) 0 1px, transparent 1px 58px);
-  transform: perspective(340px) rotateX(66deg);
-  transform-origin: bottom center;
-  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.55) 42%, transparent 88%);
-  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.55) 42%, transparent 88%);
+  background-image: radial-gradient(1px 1px at 18% 24%, rgba(123, 255, 160, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 12%, rgba(51, 255, 102, 0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 44% 68%, rgba(51, 255, 102, 0.3) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 54%, rgba(123, 255, 160, 0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 82%, rgba(51, 255, 102, 0.3) 50%, transparent 51%),
+    radial-gradient(1px 1px at 60% 92%, rgba(123, 255, 160, 0.28) 50%, transparent 51%);
+  background-size: 340px 340px;
+  animation: dustDrift 34s linear infinite;
 }
 
-/* The CRT it's all being watched on. Scanlines + a slow rolling refresh bar. */
+@keyframes dustDrift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 -340px;
+  }
+}
+
+/* L4 — the surveillance layer. Scanlines, one slow sweep, and a vignette so
+   the corners fall off like a monitor being filmed. Never interactive. */
 .crt-overlay {
   position: fixed;
   inset: 0;
   z-index: 9998;
   pointer-events: none;
-  background-image: repeating-linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.42) 0 1px,
-    transparent 1px 3px
-  );
+  background-image: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0 1px, transparent 1px 3px);
   opacity: var(--scanline-opacity);
-  mix-blend-mode: multiply;
 }
 
 .crt-overlay::after {
   content: '';
   position: absolute;
   inset-inline: 0;
-  height: 32vh;
-  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-  opacity: 0.05;
-  animation: scan 7s linear infinite;
+  height: 26vh;
+  background: linear-gradient(180deg, transparent, rgba(51, 255, 102, 0.5), transparent);
+  opacity: 0.055;
+  animation: scanSweep 9s linear infinite;
 }
 
-/* Vignette so the corners fall off like a tube TV. */
 .crt-vignette {
   position: fixed;
   inset: 0;
   z-index: 9997;
   pointer-events: none;
-  background: radial-gradient(120% 100% at 50% 50%, transparent 52%, rgba(6, 2, 14, 0.72) 100%);
+  background: radial-gradient(122% 100% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.86) 100%);
+}
+
+@keyframes scanSweep {
+  0% {
+    transform: translateY(-110%);
+  }
+  100% {
+    transform: translateY(110%);
+  }
 }
 
 /* ============================================================================
-   SURFACES — lit Art Deco facades
+   SURFACES — dark glass panels bolted into the void.
+   Accent colour arrives through --accent so one class serves every state.
    ========================================================================== */
 
-.deco-panel {
+.panel {
   position: relative;
-  border-radius: 3px;
-  background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.07) 0%,
-      rgba(255, 255, 255, 0.018) 34%,
-      rgba(10, 5, 16, 0.5) 100%
-    ),
-    rgba(21, 12, 38, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.55),
-    0 24px 50px -30px rgba(0, 0, 0, 1);
-  backdrop-filter: blur(7px);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(51, 255, 102, 0.035) 0%, rgba(0, 0, 0, 0.55) 46%, rgba(0, 0, 0, 0.72) 100%),
+    rgba(6, 9, 6, 0.9);
+  border: 1px solid rgba(51, 255, 102, 0.16);
+  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.09), inset 0 -1px 0 rgba(0, 0, 0, 0.7),
+    0 20px 44px -28px rgba(0, 0, 0, 1);
+  backdrop-filter: blur(6px);
 }
 
-/* The neon strip along a facade's parapet. Colour comes from --deco-accent. */
+/* A hairline of light along the top edge — the panel's power rail. */
+.panel-rail::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px auto -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent, #33ff66) 20%,
+    var(--accent, #33ff66) 80%,
+    transparent
+  );
+  opacity: 0.62;
+  box-shadow: 0 0 10px -2px var(--accent, #33ff66);
+}
+
+/* Corner registration marks. Two L-brackets, drawn with gradients so there are
+   no extra DOM nodes. Reads as a targeting frame, not decoration. */
+.panel-marks::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: linear-gradient(var(--accent, #33ff66) 0 100%), linear-gradient(var(--accent, #33ff66) 0 100%),
+    linear-gradient(var(--accent, #33ff66) 0 100%), linear-gradient(var(--accent, #33ff66) 0 100%);
+  background-size: 1px 9px, 9px 1px, 1px 9px, 9px 1px;
+  background-position: left top, left top, right bottom, right bottom;
+  background-repeat: no-repeat;
+}
+
+.panel-lift {
+  transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.panel-lift:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent, #33ff66) 42%, transparent);
+  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.14), 0 28px 52px -30px rgba(0, 0, 0, 1),
+    0 0 44px -26px var(--accent, #33ff66);
+}
+
+/* A terminal window: black, framed, with its own title bar. */
+.terminal {
+  position: relative;
+  border-radius: 2px;
+  border: 1px solid rgba(51, 255, 102, 0.2);
+  background: rgba(0, 0, 0, 0.82);
+  box-shadow: inset 0 0 40px -26px rgba(51, 255, 102, 0.8), 0 18px 40px -26px rgba(0, 0, 0, 1);
+  overflow: hidden;
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid rgba(51, 255, 102, 0.14);
+  background: linear-gradient(180deg, rgba(51, 255, 102, 0.07), transparent);
+}
+
+/* Phosphor lines inside a terminal body. One gradient, no animation. */
+.terminal-phosphor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image: repeating-linear-gradient(0deg, rgba(51, 255, 102, 0.4) 0 1px, transparent 1px 3px);
+}
+
+/* ============================================================================
+   THE SCAN SYSTEM — one implementation, used by cards, buttons and panels.
+
+   `.scan-host` marks a positioned element that can be scanned.
+   `.scan-line` is the sweeping line; it runs once when `data-scan="run"`.
+   `[data-scan="run"]` on the host illuminates its border for the duration.
+   ========================================================================== */
+
+.scan-host {
+  position: relative;
+  isolation: isolate;
+}
+
+.scan-line {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 38%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(180deg, transparent, rgba(51, 255, 102, 0.14) 62%, rgba(51, 255, 102, 0.72) 100%);
+  box-shadow: 0 0 22px -2px rgba(51, 255, 102, 0.55);
+}
+
+[data-scan='run'] > .scan-line,
+.scan-host:hover > .scan-line-hover {
+  opacity: 1;
+  animation: scanSweep 0.62s cubic-bezier(0.4, 0, 0.2, 1) 1;
+}
+
+.scan-host:hover > .scan-line-hover {
+  animation-duration: 0.9s;
+  opacity: 0.7;
+}
+
+/* Border illumination while a scan is running. */
+[data-scan='run'] {
+  border-color: rgba(51, 255, 102, 0.85) !important;
+  box-shadow: inset 0 0 30px -18px rgba(51, 255, 102, 0.9), 0 0 30px -12px rgba(51, 255, 102, 0.6) !important;
+}
+
+/* The terminal word that appears mid-scan: SCANNING → VERIFYING → GRANTED. */
+.scan-readout {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7bffa0;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.94));
+  text-shadow: 0 0 10px rgba(51, 255, 102, 0.7);
+  animation: fadeInUp 0.16s ease forwards;
+}
+
+/* Digital noise, shown only while scanning. A tiled SVG so it costs one paint. */
+.scan-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.075;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+}
+
+/* ============================================================================
+   CONTROLS — a button is a key on a terminal, not a lit sign.
+   ========================================================================== */
+
+.sys-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--btn-ink, #e8ffee);
+  background: var(--btn-face, rgba(51, 255, 102, 0.07));
+  border: 1px solid var(--btn-edge, rgba(51, 255, 102, 0.42));
+  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.1), 0 0 0 0 var(--btn-edge, rgba(51, 255, 102, 0.42));
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.24s ease, color 0.2s ease,
+    transform 0.12s cubic-bezier(0.3, 1.3, 0.5, 1);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Hover lights the edge and sweeps one thin line across the face. */
+.sys-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 38%, rgba(51, 255, 102, 0.22) 50%, transparent 62%);
+  transform: translateX(-130%);
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sys-btn:hover {
+  color: #f2fff5;
+  border-color: var(--btn-edge-hot, rgba(51, 255, 102, 0.95));
+  background: var(--btn-face-hot, rgba(51, 255, 102, 0.14));
+  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.18), 0 0 24px -8px var(--btn-edge-hot, rgba(51, 255, 102, 0.85));
+}
+
+.sys-btn:hover::after {
+  transform: translateX(130%);
+}
+
+.sys-btn:active,
+.sys-btn[data-pressed='true'] {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.sys-btn:disabled {
+  opacity: 0.38;
+  filter: grayscale(0.55);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.sys-btn:disabled::after {
+  display: none;
+}
+
+/* Solid variant — the key is fully powered. Used once per screen, at most. */
+.sys-btn-solid {
+  color: var(--btn-solid-ink, #001a08);
+  background: var(--btn-solid, linear-gradient(180deg, #7bffa0 0%, #33ff66 52%, #00b83f 100%));
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 0 26px -10px rgba(51, 255, 102, 0.9);
+}
+
+.sys-btn-solid:hover {
+  color: #001a08;
+  background: linear-gradient(180deg, #a9ffc0 0%, #4dff77 52%, #00d148 100%);
+  box-shadow: 0 0 34px -8px rgba(51, 255, 102, 1);
+}
+
+/* Ghost variant — no fill, hairline edge. Secondary actions. */
+.sys-btn-ghost {
+  background: transparent;
+  border-color: rgba(51, 255, 102, 0.24);
+  color: #a9c9b1;
+}
+
+.sys-btn-ghost:hover {
+  background: rgba(51, 255, 102, 0.07);
+  color: #e8ffee;
+}
+
+/* ============================================================================
+   TYPE TREATMENTS — restrained. Two, and they are not used together.
+   ========================================================================== */
+
+/* Phosphor type: a bright core with one tight halo. Not three. */
+.phosphor-text {
+  color: #eaffef;
+  text-shadow: 0 0 12px rgba(51, 255, 102, 0.55), 0 0 34px rgba(51, 255, 102, 0.28);
+}
+
+.phosphor-text-bright {
+  color: var(--green-bright);
+  text-shadow: 0 0 14px rgba(51, 255, 102, 0.6), 0 0 40px rgba(51, 255, 102, 0.3);
+}
+
+/* Code-fill: the headline is filled with a vertical fall of light. */
+.code-text {
+  background: linear-gradient(180deg, #f2fff5 0%, #7bffa0 52%, #00b83f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 26px rgba(51, 255, 102, 0.28));
+}
+
+/* Legacy aliases from the previous theme, remapped so no call site breaks. */
+.neon-text,
+.chrome-text {
+  color: #eaffef;
+  text-shadow: 0 0 12px rgba(51, 255, 102, 0.5), 0 0 34px rgba(51, 255, 102, 0.24);
+}
+
+.sunset-text {
+  background: linear-gradient(180deg, #f2fff5 0%, #7bffa0 52%, #00b83f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1.2px rgba(51, 255, 102, 0.7);
+}
+
+/* ============================================================================
+   RULES, RAILS, METERS
+   ========================================================================== */
+
+.sys-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(51, 255, 102, 0.55) 22%, rgba(51, 255, 102, 0.55) 78%, transparent);
+}
+
+.neon-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(51, 255, 102, 0.6) 20%, rgba(51, 255, 102, 0.6) 80%, transparent);
+  box-shadow: 0 0 10px -3px rgba(51, 255, 102, 0.6);
+}
+
+.chrome-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(51, 255, 102, 0.28), transparent);
+}
+
+/* A data rail: N segments that fill left to right. Progress, or a divider. */
+.hud-meter {
+  height: 6px;
+  border-radius: 0;
+  background: rgba(51, 255, 102, 0.08);
+  border: 1px solid rgba(51, 255, 102, 0.18);
+  overflow: hidden;
+}
+
+.hud-meter > span {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--meter, #33ff66) 0 4px,
+    color-mix(in srgb, var(--meter, #33ff66) 40%, transparent) 4px 6px
+  );
+  box-shadow: 0 0 12px -2px var(--meter, #33ff66);
+  transition: width 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+/* A live status dot. Steady when nominal; it does not throb for attention. */
+.status-dot {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dot, #33ff66);
+  box-shadow: 0 0 8px var(--dot, #33ff66);
+}
+
+.status-dot-live::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  border: 1px solid var(--dot, #33ff66);
+  opacity: 0;
+  animation: dotPing 2.6s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+}
+
+@keyframes dotPing {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   LEGACY UTILITY REMAP
+   The product consoles were written against a glass/deco vocabulary. Rather
+   than rewrite every call site, those classes become Construct surfaces.
+   ========================================================================== */
+
+.deco-panel,
+.glass-panel,
+.glass-card {
+  position: relative;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(51, 255, 102, 0.03) 0%, rgba(0, 0, 0, 0.55) 46%, rgba(0, 0, 0, 0.72) 100%),
+    rgba(6, 9, 6, 0.88);
+  border: 1px solid rgba(51, 255, 102, 0.15);
+  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.7),
+    0 20px 44px -28px rgba(0, 0, 0, 1);
+  backdrop-filter: blur(6px);
+}
+
 .deco-panel::before {
   content: '';
   position: absolute;
   inset: -1px -1px auto -1px;
-  height: 2px;
-  border-radius: 3px 3px 0 0;
-  background: linear-gradient(90deg, transparent, var(--deco-accent, #ff2e97) 22%, var(--deco-accent, #ff2e97) 78%, transparent);
-  box-shadow: 0 0 12px -1px var(--deco-accent, #ff2e97), 0 0 30px -6px var(--deco-accent, #ff2e97);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--deco-accent, #33ff66) 20%,
+    var(--deco-accent, #33ff66) 80%,
+    transparent
+  );
+  opacity: 0.6;
+  box-shadow: 0 0 10px -2px var(--deco-accent, #33ff66);
 }
 
-/* Deco corner ticks — three stepped rules, bottom-right, like a hotel awning. */
 .deco-corner::after {
   content: '';
   position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 26px;
-  height: 12px;
+  inset: 6px;
   pointer-events: none;
-  opacity: 0.5;
-  background-image: linear-gradient(90deg, var(--deco-accent, #ff2e97) 0 100%),
-    linear-gradient(90deg, var(--deco-accent, #ff2e97) 0 100%),
-    linear-gradient(90deg, var(--deco-accent, #ff2e97) 0 100%);
-  background-size: 26px 2px, 19px 2px, 12px 2px;
-  background-position: right 0, right 5px, right 10px;
+  opacity: 0.34;
+  background-image: linear-gradient(var(--deco-accent, #33ff66) 0 100%),
+    linear-gradient(var(--deco-accent, #33ff66) 0 100%), linear-gradient(var(--deco-accent, #33ff66) 0 100%),
+    linear-gradient(var(--deco-accent, #33ff66) 0 100%);
+  background-size: 1px 9px, 9px 1px, 1px 9px, 9px 1px;
+  background-position: left top, left top, right bottom, right bottom;
   background-repeat: no-repeat;
 }
 
-.deco-lift {
-  transition: transform 0.32s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.32s ease, border-color 0.32s ease;
+.deco-lift,
+.glass-card-hover {
+  transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.deco-lift:hover {
-  transform: translateY(-5px);
-  border-color: color-mix(in srgb, var(--deco-accent, #ff2e97) 45%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 34px 60px -32px rgba(0, 0, 0, 1),
-    0 0 52px -22px var(--deco-accent, #ff2e97);
+.deco-lift:hover,
+.glass-card-hover:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--deco-accent, #33ff66) 42%, transparent);
+  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.14), 0 28px 52px -30px rgba(0, 0, 0, 1),
+    0 0 44px -26px var(--deco-accent, #33ff66);
 }
-
-/* ============================================================================
-   NEON HARDWARE — buttons are lit signs bolted to chrome
-   ========================================================================== */
 
 .neon-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   border-radius: 2px;
-  font-family: Kanit, Inter, sans-serif;
-  font-weight: 700;
-  font-style: italic;
-  letter-spacing: 0.045em;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--btn-ink, #fff);
-  background: var(--btn-face, linear-gradient(180deg, rgba(255, 46, 151, 0.24), rgba(255, 46, 151, 0.05)));
-  border: 1px solid var(--btn-tube, #ff2e97);
-  text-shadow: 0 0 10px var(--btn-glow, rgba(255, 46, 151, 0.75));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -8px 20px -10px var(--btn-tube, #ff2e97),
-    0 0 14px -2px var(--btn-glow, rgba(255, 46, 151, 0.6)), 0 12px 26px -16px rgba(0, 0, 0, 0.95);
-  transition: transform 0.14s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.22s ease, filter 0.22s ease;
-  overflow: hidden;
-}
-
-/* A sheen that sweeps the face like a passing headlight. */
-.neon-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, 0.28) 50%, transparent 66%);
-  transform: translateX(-120%);
-  transition: transform 0.6s ease;
+  color: #e8ffee;
+  background: rgba(51, 255, 102, 0.07);
+  border: 1px solid rgba(51, 255, 102, 0.42);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.24s ease;
 }
 
 .neon-btn:hover {
-  filter: brightness(1.12) saturate(1.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -10px 24px -10px var(--btn-tube, #ff2e97),
-    0 0 26px -2px var(--btn-glow, rgba(255, 46, 151, 0.85)), 0 16px 32px -18px rgba(0, 0, 0, 0.95);
+  border-color: rgba(51, 255, 102, 0.95);
+  background: rgba(51, 255, 102, 0.14);
+  box-shadow: 0 0 24px -8px rgba(51, 255, 102, 0.85);
 }
 
-.neon-btn:hover::after {
-  transform: translateX(120%);
-}
-
-.neon-btn:active,
-.neon-btn[data-pressed='true'] {
-  transform: translateY(2px) scale(0.985);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 10px -3px var(--btn-glow, rgba(255, 46, 151, 0.5));
-}
-
-.neon-btn:disabled {
-  filter: grayscale(0.7) brightness(0.6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  cursor: not-allowed;
-}
-
-/* Solid variant — the sign is fully lit rather than outlined. */
 .neon-btn-solid {
-  color: var(--btn-ink, #0a0510);
-  text-shadow: none;
-  background: var(--btn-solid, linear-gradient(180deg, #ff6bb5 0%, #ff2e97 52%, #c40c74 100%));
+  color: #001a08;
+  background: linear-gradient(180deg, #7bffa0 0%, #33ff66 52%, #00b83f 100%);
+  border-color: transparent;
+  font-weight: 600;
 }
 
-/* ============================================================================
-   TYPE TREATMENTS
-   ========================================================================== */
-
-/* Bent-tube type: a bright core with two coloured halos around it. */
-.neon-text {
-  color: #fff6fb;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.9), 0 0 12px var(--tube, #ff2e97), 0 0 28px var(--tube, #ff2e97),
-    0 0 62px var(--tube-far, rgba(255, 46, 151, 0.65));
+.glow-stud,
+.glow-lime,
+.glow-azure {
+  box-shadow: 0 0 0 1px rgba(51, 255, 102, 0.3), 0 0 38px -16px rgba(51, 255, 102, 0.6);
 }
 
-.neon-text-aqua {
-  --tube: #2de2e6;
-  --tube-far: rgba(45, 226, 230, 0.6);
-}
-
-.neon-text-gold {
-  --tube: #ffc23c;
-  --tube-far: rgba(255, 194, 60, 0.55);
-}
-
-/* Chrome-and-sunset lettering, the way it sits on a 1986 box cover. */
-.chrome-text {
-  background: var(--chrome);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.22));
-}
-
-.sunset-text {
-  background: linear-gradient(180deg, #fff3c4 0%, #ffc23c 26%, #ff7418 58%, #ff2e97 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 6px 30px rgba(255, 116, 24, 0.4));
-}
-
-/* Outlined display type — the "VICE" treatment. */
-.outline-text {
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(255, 46, 151, 0.85);
-  text-shadow: 0 0 22px rgba(255, 46, 151, 0.45);
-}
-
-/* ============================================================================
-   RULES, TUBES, HUD
-   ========================================================================== */
-
-.neon-rule {
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, #ff2e97 16%, #ffc23c 50%, #2de2e6 84%, transparent);
-  box-shadow: 0 0 14px -2px rgba(255, 46, 151, 0.7), 0 0 26px -6px rgba(45, 226, 230, 0.5);
-}
-
-/* Chrome hairline used to separate HUD blocks. */
-.chrome-rule {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-}
-
-/* Banded sun — the single most Vice City object there is. Also works as a
-   loading indicator: the bars crawl upward. */
+/* The banded sun is gone. Anything still asking for one gets a code disc: a
+   ring of phosphor with a scan crawling through it. */
 .sun-disc {
-  border-radius: 999px;
-  background: linear-gradient(180deg, #fff3c4 0%, #ffc23c 34%, #ff7418 68%, #ff2e97 100%);
-  box-shadow: 0 0 44px -6px rgba(255, 145, 40, 0.8), 0 0 120px -20px rgba(255, 46, 151, 0.7);
   position: relative;
+  border-radius: 999px;
+  border: 1px solid rgba(51, 255, 102, 0.5);
+  background: radial-gradient(circle at 50% 42%, rgba(51, 255, 102, 0.22), rgba(0, 0, 0, 0.9) 68%);
+  box-shadow: inset 0 0 26px -12px rgba(51, 255, 102, 0.9), 0 0 30px -14px rgba(51, 255, 102, 0.7);
   overflow: hidden;
 }
 
@@ -462,95 +1017,28 @@ h3,
   content: '';
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(180deg, rgba(10, 5, 16, 0.92) 0 4px, transparent 4px 12px);
-  background-size: 100% 64px;
-  animation: sunBars 9s linear infinite;
-  mask-image: linear-gradient(to top, #000 0%, #000 46%, transparent 74%);
-  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 46%, transparent 74%);
-}
-
-/* HUD meter — the health/armour bar, repurposed for engine stats. */
-.hud-meter {
-  height: 8px;
-  border-radius: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  overflow: hidden;
-}
-
-.hud-meter > span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--meter, #35f39a), color-mix(in srgb, var(--meter, #35f39a) 55%, #fff));
-  box-shadow: 0 0 12px -1px var(--meter, #35f39a);
-  transition: width 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+  background-image: repeating-linear-gradient(0deg, rgba(51, 255, 102, 0.5) 0 1px, transparent 1px 5px);
+  opacity: 0.5;
+  animation: dustDrift 6s linear infinite;
 }
 
 /* ============================================================================
-   LEGACY UTILITY REMAP
-   The product consoles were written against a glass vocabulary. Rather than
-   rewrite every call site, glass becomes lit Deco glass.
-   ========================================================================== */
-
-.glass-panel,
-.glass-card {
-  position: relative;
-  border-radius: 3px;
-  background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.06) 0%,
-      rgba(255, 255, 255, 0.015) 34%,
-      rgba(10, 5, 16, 0.48) 100%
-    ),
-    rgba(21, 12, 38, 0.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), inset 0 -1px 0 rgba(0, 0, 0, 0.5),
-    0 22px 46px -28px rgba(0, 0, 0, 1);
-  backdrop-filter: blur(7px);
-}
-
-.glass-card-hover {
-  transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.3s ease;
-}
-
-.glass-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 30px 56px -30px rgba(0, 0, 0, 1),
-    0 0 46px -22px rgba(255, 46, 151, 0.7);
-}
-
-.glow-stud {
-  box-shadow: 0 0 0 1px rgba(255, 194, 60, 0.35), 0 0 42px -14px rgba(255, 194, 60, 0.7);
-}
-
-.glow-lime {
-  box-shadow: 0 0 0 1px rgba(53, 243, 154, 0.35), 0 0 42px -14px rgba(53, 243, 154, 0.7);
-}
-
-.glow-azure {
-  box-shadow: 0 0 0 1px rgba(45, 226, 230, 0.35), 0 0 42px -14px rgba(45, 226, 230, 0.7);
-}
-
-/* ============================================================================
-   3D / PERSPECTIVE HELPERS
+   DEPTH
    ========================================================================== */
 
 .scene-3d {
-  perspective: 1200px;
+  perspective: 1400px;
   perspective-origin: 50% 40%;
 }
 
-.card-3d {
-  transform-style: preserve-3d;
-  transition: transform 0.45s cubic-bezier(0.2, 1.1, 0.3, 1);
-}
-
+.card-3d,
 .tilt-3d {
   transform-style: preserve-3d;
-  transition: transform 0.4s cubic-bezier(0.2, 1.2, 0.4, 1);
+  transition: transform 0.4s cubic-bezier(0.2, 1.1, 0.3, 1);
 }
 
 .tilt-3d:hover {
-  transform: rotateX(5deg) rotateY(-7deg) translateZ(22px);
+  transform: rotateX(3deg) rotateY(-4deg) translateZ(14px);
 }
 
 /* ============================================================================
@@ -560,11 +1048,20 @@ h3,
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -583,55 +1080,40 @@ h3,
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
 }
 
-@keyframes scan {
-  0% {
-    transform: translateY(-110%);
-  }
-  100% {
-    transform: translateY(110%);
-  }
-}
-
-@keyframes sunBars {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 0 -64px;
-  }
-}
-
-@keyframes neonFlicker {
+@keyframes phosphorPulse {
   0%,
-  41%,
-  43.5%,
-  45%,
-  61%,
-  63%,
   100% {
-    opacity: 1;
-  }
-  42%,
-  44%,
-  62% {
-    opacity: 0.34;
-  }
-  42.5% {
     opacity: 0.72;
   }
+  50% {
+    opacity: 1;
+  }
 }
 
-@keyframes glowPulse {
-  0%,
-  100% {
-    filter: brightness(1) saturate(1);
+/* A short, hard glitch. Two frames of offset, then it's over. Used once, on
+   arrival — never on a loop. */
+@keyframes glitchIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-3px) skewX(6deg);
+    filter: blur(2px);
   }
-  50% {
-    filter: brightness(1.3) saturate(1.22);
+  22% {
+    opacity: 1;
+    transform: translateX(2px) skewX(-4deg);
+  }
+  44% {
+    transform: translateX(-1px) skewX(2deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
 
@@ -639,34 +1121,39 @@ h3,
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-pulse-glow {
-  animation: glowPulse 3s infinite ease-in-out;
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-glitch-in {
+  animation: glitchIn 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-pulse-glow,
+.animate-border-glow {
+  animation: phosphorPulse 3.4s infinite ease-in-out;
 }
 
 .animate-tube-flicker {
-  animation: neonFlicker 6s steps(1, end) infinite;
+  animation: flicker 9s steps(1, end) infinite;
 }
 
 .animate-float {
-  animation: floatSlow 5s infinite ease-in-out;
+  animation: floatSlow 6s infinite ease-in-out;
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(90deg, rgba(51, 255, 102, 0) 0%, rgba(51, 255, 102, 0.16) 50%, rgba(51, 255, 102, 0) 100%);
   background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+  animation: shimmer 2.2s infinite;
 }
 
-.animate-border-glow {
-  animation: glowPulse 4s infinite ease-in-out;
-}
-
-/* Scroll reveal: content rises out of the haze, slightly out of focus first. */
+/* Scroll reveal: content resolves out of the code rather than sliding in. */
 .reveal {
   opacity: 0;
-  transform: translate3d(0, 34px, 0);
-  filter: blur(6px);
-  transition: opacity 0.55s ease, transform 0.7s cubic-bezier(0.2, 1, 0.3, 1), filter 0.55s ease;
+  transform: translate3d(0, 22px, 0);
+  filter: blur(4px);
+  transition: opacity 0.5s ease, transform 0.62s cubic-bezier(0.2, 1, 0.3, 1), filter 0.5s ease;
   transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -686,10 +1173,31 @@ h3,
 }
 
 *:focus-visible {
-  outline: 2px solid var(--aqua);
-  outline-offset: 3px;
+  outline: 2px solid var(--green-bright);
+  outline-offset: 2px;
   border-radius: 2px;
-  box-shadow: 0 0 16px -2px var(--aqua);
+  box-shadow: 0 0 14px -2px rgba(51, 255, 102, 0.8);
+}
+
+/* Skip link — first thing in the tab order, invisible until focused. */
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 10000;
+  transform: translate(-50%, -140%);
+  padding: 0.6rem 1.1rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #001a08;
+  background: var(--green-bright);
+  transition: transform 0.18s ease;
+}
+
+.skip-link:focus {
+  transform: translate(-50%, 0);
 }
 
 .btn-hover {
@@ -697,19 +1205,12 @@ h3,
 }
 
 .btn-hover:hover {
-  transform: scale(1.04);
+  transform: translateY(-1px);
 }
 
-.btn-hover:active {
-  transform: scale(0.98);
-}
-
-.input-focus {
-  transition: all 0.2s ease;
-}
-
+.input-focus,
 .progress-bar {
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.24s ease;
 }
 
 .tooltip {
@@ -722,12 +1223,13 @@ h3,
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: #150c26;
+  background: #050705;
   color: var(--text);
-  border: 1px solid rgba(255, 46, 151, 0.4);
+  border: 1px solid rgba(51, 255, 102, 0.4);
   padding: 4px 8px;
   border-radius: 2px;
-  font-size: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -739,18 +1241,9 @@ h3,
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #150c26 25%, #2a1745 50%, #150c26 75%);
+  background: linear-gradient(90deg, rgba(51, 255, 102, 0.04) 25%, rgba(51, 255, 102, 0.12) 50%, rgba(51, 255, 102, 0.04) 75%);
   background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-}
-
-@keyframes skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  animation: shimmer 1.6s infinite;
 }
 
 @keyframes success-check {
@@ -774,24 +1267,24 @@ h3,
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-5px);
+    transform: translateX(-4px);
   }
   75% {
-    transform: translateX(5px);
+    transform: translateX(4px);
   }
 }
 
 .error-shake {
-  animation: shake 0.3s ease;
+  animation: shake 0.28s ease;
 }
 
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2.5rem !important;
+    font-size: 2.4rem !important;
   }
 
   .section-title {
-    font-size: 2rem !important;
+    font-size: 1.9rem !important;
   }
 
   .touch-target {
@@ -799,25 +1292,46 @@ h3,
     min-width: 48px;
   }
 
-  .vice-body::after {
-    height: 34vh;
+  /* The environment thins out on phones: less grid, no dust, fewer paints. */
+  .construct-grid {
+    height: 30vh;
+    opacity: 0.2;
+  }
+
+  .construct-dust {
+    display: none;
+  }
+
+  :root {
+    --rain-opacity: 0.3;
   }
 }
 
 @media (prefers-contrast: high) {
   :root {
-    --line: #ffffff;
-    --line-strong: #ffffff;
-    --muted: #ffffff;
+    --line: #33ff66;
+    --line-strong: #33ff66;
+    --muted: #e8ffee;
     --scanline-opacity: 0;
   }
 
-  .neon-text {
+  .phosphor-text,
+  .phosphor-text-bright,
+  .neon-text,
+  .chrome-text {
     text-shadow: none;
     color: #ffffff;
   }
+
+  .construct-grid,
+  .construct-dust,
+  .crt-vignette {
+    display: none;
+  }
 }
 
+/* Reduced motion strips every sweep, drift and flicker. The system still reads
+   as a terminal; it just stops moving. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -825,6 +1339,7 @@ h3,
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 
   .reveal {
@@ -833,7 +1348,15 @@ h3,
     filter: none;
   }
 
-  .crt-overlay::after {
+  .crt-overlay::after,
+  .construct-dust,
+  .scan-line,
+  .wr-spider-zone,
+  .caret::after {
     display: none;
+  }
+
+  .construct-grid {
+    animation: none;
   }
 }

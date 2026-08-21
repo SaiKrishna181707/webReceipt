@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Play, Zap, Wrench, GitCompare, RotateCcw, Loader2, Link2 } from 'lucide-react'
+import { Play, Zap, Wrench, GitCompare, RotateCcw, Loader2, Link2, Check, Terminal } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { ObserveResult, DiffResult, Evidence, WebReceiptEvent, JourneyStep } from '@/lib/types'
 import { JourneyReplay } from '@/components/product/journey-replay'
@@ -13,7 +13,7 @@ import { HealConsole } from '@/components/product/heal-console'
 import { PromiseDiff } from '@/components/product/promise-diff'
 import { EventLog } from '@/components/product/event-log'
 import { EvidenceDrawer } from '@/components/product/evidence-drawer'
-import { NeonButton, DecoPanel } from '@/components/vice/vice-ui'
+import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
 
 const DEMO_URL = 'https://demo.webreceipt.dev/hotel/ocean-house'
 const MUTATION = 'wrong-valid-total'
@@ -103,43 +103,75 @@ export default function ConsolePage() {
 
   const finalState = busy === 'heal' ? 'healing' : phase === 'broken' ? 'failed' : 'ok'
 
+  /** What the console reports about itself, driven by real state — not decoration. */
+  const statusValue =
+    busy ? 'Executing' : phase === 'broken' ? 'Integrity failure' : phase === 'idle' ? 'Awaiting command' : 'Contract sealed'
+  const statusTone: MatrixTone = phase === 'broken' && !busy ? 'alarm' : busy ? 'warn' : 'matrix'
+
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
-      {/* Header */}
-      <header className="space-y-2">
-        <div className="font-mono text-[11px] uppercase tracking-[0.26em] text-gold-400">Live Console</div>
-        <h1 className="display text-3xl italic text-white">Proof of Promise, end to end</h1>
-        <p className="max-w-2xl text-night-200">
+    <div className="mx-auto max-w-7xl space-y-7 px-4 py-10 sm:px-6 lg:px-8">
+      {/* ==================================================================
+          HEADER
+          ================================================================== */}
+      <header>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Kicker tone="matrix">Console</Kicker>
+          <SystemRail count={5} className="opacity-70" />
+          <SystemStatus label="State" value={statusValue} tone={statusTone} />
+        </div>
+        <h1 className="mt-3 font-mono text-[22px] font-semibold uppercase tracking-[0.04em] text-void-100 sm:text-[26px]">
+          <span className="sys-prompt">Proof of promise, end to end</span>
+        </h1>
+        <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-void-200">
           Observe a public purchase journey, compile a tamper-evident Deal Contract, break the extraction with a
           simulated redesign, heal it with a verified repair, then diff the promise over time.
         </p>
+        <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-void-400">
+          Running against the simulated collector
+        </p>
       </header>
 
-      {/* URL bar */}
-      <div className="deco-panel flex flex-wrap items-center gap-3 p-4" style={{ ['--deco-accent' as string]: '#2de2e6' }}>
-        <div className="flex min-w-[240px] flex-1 items-center gap-2 rounded-[2px] border border-aqua-400/25 bg-black/50 px-3 py-2.5 shadow-[inset_0_0_20px_-12px_rgba(45,226,230,.9)]">
-          <Link2 size={15} className="shrink-0 text-aqua-400" />
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            spellCheck={false}
-            className="flex-1 bg-transparent font-mono text-sm text-night-100 outline-none placeholder:text-night-400"
-            placeholder="https://…"
-          />
+      {/* ==================================================================
+          COMMAND LINE
+          ================================================================== */}
+      <div className="terminal">
+        <div className="terminal-bar">
+          <Terminal size={12} className="text-matrix-400" aria-hidden />
+          <span className="sys-label flex-1">target</span>
         </div>
-        <NeonButton onClick={reset} disabled={!!busy} tone="chrome" size="md">
-          {busy === 'reset' ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />} Reset
-        </NeonButton>
+        <div className="flex flex-wrap items-center gap-3 p-4">
+          <label className="flex min-w-[240px] flex-1 items-center gap-2 rounded-[2px] border border-data-400/25 bg-black/60 px-3 py-2.5 focus-within:border-data-400/70">
+            <Link2 size={15} className="shrink-0 text-data-400" aria-hidden />
+            <span className="sr-only">Target URL</span>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              spellCheck={false}
+              className="flex-1 bg-transparent font-mono text-[13px] text-void-100 outline-none placeholder:text-void-400"
+              placeholder="https://…"
+            />
+          </label>
+          <SystemButton onClick={reset} disabled={!!busy} tone="void" size="md">
+            {busy === 'reset' ? (
+              <Loader2 size={14} className="animate-spin" aria-hidden />
+            ) : (
+              <RotateCcw size={14} aria-hidden />
+            )}{' '}
+            Reset
+          </SystemButton>
+        </div>
       </div>
 
-      {/* Guided steps */}
+      {/* ==================================================================
+          COMMAND KEYS
+          ================================================================== */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ActionButton
           n={1}
           label="Observe journey"
           hint="Compile Deal Contract + evidence"
           icon={Play}
-          tone="gold"
+          tone="phosphor"
           onClick={observe}
           busy={busy === 'observe'}
           done={phase !== 'idle'}
@@ -150,7 +182,7 @@ export default function ConsolePage() {
           label="Simulate redesign"
           hint="Inject wrong-but-valid total"
           icon={Zap}
-          tone="blood"
+          tone="alarm"
           onClick={breakIt}
           busy={busy === 'break'}
           done={phase === 'broken' || phase === 'healed'}
@@ -158,10 +190,10 @@ export default function ConsolePage() {
         />
         <ActionButton
           n={3}
-          label="Heal with Bright Data"
-          hint="Verify preview, then deploy"
+          label="Heal the extraction"
+          hint="Verify the preview, then deploy"
           icon={Wrench}
-          tone="mint"
+          tone="matrix"
           onClick={heal}
           busy={busy === 'heal'}
           done={phase === 'healed'}
@@ -172,7 +204,7 @@ export default function ConsolePage() {
           label="Promise Diff"
           hint="Diff the promise over time"
           icon={GitCompare}
-          tone="aqua"
+          tone="data"
           onClick={runDiff}
           busy={busy === 'diff'}
           done={!!diff}
@@ -180,12 +212,14 @@ export default function ConsolePage() {
         />
       </div>
 
-      {/* Results */}
+      {/* ==================================================================
+          RESULTS
+          ================================================================== */}
       {!result ? (
         <EmptyState onStart={observe} busy={!!busy} />
       ) : (
-        <div className="grid xl:grid-cols-3 gap-6 items-start">
-          <div className="xl:col-span-2 space-y-6">
+        <div className="grid items-start gap-6 xl:grid-cols-3">
+          <div className="space-y-6 xl:col-span-2">
             <JourneyReplay
               journey={result.contract.journey}
               currency={result.contract.checkout.finalTotal.currency}
@@ -198,7 +232,7 @@ export default function ConsolePage() {
             {diff && <PromiseDiff diff={diff} />}
           </div>
 
-          <aside className="xl:col-span-1 space-y-6 xl:sticky xl:top-20">
+          <aside className="space-y-6 xl:col-span-1 xl:sticky xl:top-20">
             <IntegrityPanel integrity={result.integrity} />
             <EventLog events={events} />
           </aside>
@@ -210,14 +244,11 @@ export default function ConsolePage() {
   )
 }
 
-/** Each step is its own little marquee: dark until it fires, then the tube holds. */
-const TONES = {
-  gold: { accent: '#ffc23c', text: 'text-gold-300' },
-  blood: { accent: '#ff2d5e', text: 'text-blood-300' },
-  mint: { accent: '#35f39a', text: 'text-mint-300' },
-  aqua: { accent: '#2de2e6', text: 'text-aqua-300' },
-} as const
-
+/**
+ * A command key. Unlit until it has run; the indicator fills and turns to a
+ * check once it has. State comes from the real phase, so the interface can't
+ * claim a step succeeded when it didn't.
+ */
 function ActionButton({
   n,
   label,
@@ -233,58 +264,69 @@ function ActionButton({
   label: string
   hint: string
   icon: typeof Play
-  tone: keyof typeof TONES
+  tone: MatrixTone
   onClick: () => void
   busy: boolean
   done: boolean
   disabled: boolean
 }) {
-  const t = TONES[tone]
+  const accent = matrixTones[tone].line
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      aria-pressed={done}
       style={{
-        ['--deco-accent' as string]: t.accent,
-        borderColor: done ? t.accent : undefined,
-        boxShadow: done ? `0 0 26px -14px ${t.accent}, inset 0 1px 0 rgba(255,255,255,.1)` : undefined,
+        ['--accent' as string]: accent,
+        ['--deco-accent' as string]: accent,
+        borderColor: done ? accent : undefined,
+        boxShadow: done ? `0 0 26px -16px ${accent}, inset 0 1px 0 rgba(51,255,102,.12)` : undefined,
       }}
-      className="deco-panel deco-lift group p-4 text-left disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+      className="panel panel-rail panel-lift group p-4 text-left disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
     >
       <div className="mb-3 flex items-center justify-between">
-        <span className={`font-mono text-[10px] font-bold uppercase tracking-[0.2em] ${t.text}`}>Step {n}</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: accent }}>
+          Step {n}
+        </span>
         <span
           className="grid h-8 w-8 place-items-center rounded-[2px] border transition-all duration-500"
           style={{
-            borderColor: t.accent,
-            color: done ? '#0a0510' : t.accent,
-            background: done ? t.accent : 'rgba(0,0,0,.45)',
-            boxShadow: done ? `0 0 18px -4px ${t.accent}` : `inset 0 0 16px -8px ${t.accent}`,
+            borderColor: accent,
+            color: done ? '#000' : accent,
+            background: done ? accent : 'rgba(0,0,0,.55)',
+            boxShadow: done ? `0 0 18px -6px ${accent}` : `inset 0 0 16px -9px ${accent}`,
           }}
         >
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <Icon size={15} />}
+          {busy ? (
+            <Loader2 size={15} className="animate-spin" aria-hidden />
+          ) : done ? (
+            <Check size={15} aria-hidden />
+          ) : (
+            <Icon size={15} aria-hidden />
+          )}
         </span>
       </div>
-      <div className="display text-sm italic text-white">{label}</div>
-      <div className="mt-0.5 text-xs text-night-300">{hint}</div>
+      <div className="font-mono text-[12.5px] uppercase tracking-[0.08em] text-void-100">{label}</div>
+      <div className="mt-1 text-[12px] text-void-300">{hint}</div>
     </button>
   )
 }
 
 function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
   return (
-    <DecoPanel tone="gold" tilt={false} className="p-12 text-center">
-      <div className="sun-disc mx-auto mb-5 grid h-14 w-14 place-items-center text-[#2b0716]">
-        <Play size={22} />
+    <MatrixPanel tone="matrix" className="p-12 text-center">
+      <div className="sun-disc mx-auto mb-5 grid h-14 w-14 place-items-center text-matrix-300">
+        <Play size={20} aria-hidden />
       </div>
-      <h3 className="display text-lg italic text-white">Start the demo</h3>
-      <p className="mx-auto mb-6 mt-1.5 max-w-md text-sm text-night-200">
-        Run <span className="font-mono text-gold-300">Observe journey</span> to compile the first Deal Contract with
+      <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Awaiting command</h3>
+      <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
+        Run <span className="font-mono text-matrix-300">Observe journey</span> to compile the first Deal Contract with
         tamper-evident evidence for every claim.
       </p>
-      <NeonButton onClick={onStart} disabled={busy} tone="gold" size="lg" variant="solid">
-        {busy ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />} Observe journey
-      </NeonButton>
-    </DecoPanel>
+      <SystemButton onClick={onStart} disabled={busy} tone="matrix" size="lg" variant="solid">
+        {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />} Observe
+        journey
+      </SystemButton>
+    </MatrixPanel>
   )
 }

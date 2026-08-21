@@ -3,6 +3,7 @@
 import { Wrench, Check, X, ShieldCheck, Sparkles, Rocket, Hash } from 'lucide-react'
 import type { RepairResult } from '@/lib/types'
 import { shortHash } from '@/lib/api'
+import { matrixTones } from '@/components/matrix/matrix-ui'
 
 interface HealConsoleProps {
   repair: RepairResult
@@ -10,6 +11,10 @@ interface HealConsoleProps {
 }
 
 type StepState = 'done' | 'rejected' | 'pending'
+
+const DONE = matrixTones.matrix.line
+const REJECTED = matrixTones.alarm.line
+const GATE = matrixTones.warn.line
 
 export function HealConsole({ repair, healed }: HealConsoleProps) {
   const preview = repair.previewIntegrity
@@ -25,7 +30,9 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
     {
       icon: Sparkles,
       title: 'Repair proposal received',
-      detail: `Bright Data AI Flow returned a candidate collector (${repair.proposalStatus}).`,
+      // Kept adapter-neutral on purpose: in this app the collector behind the
+      // flow is the simulator, so the step must not claim a cloud AI run.
+      detail: `The repair flow returned a candidate collector (${repair.proposalStatus}).`,
       state: repair.requested ? 'done' : 'pending',
     },
     {
@@ -56,38 +63,32 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
     },
   ]
 
+  const accent = healed ? DONE : GATE
+
   return (
     <section
-      className="overflow-hidden rounded-[2px] border bg-black/45 backdrop-blur-sm"
+      className="panel panel-rail overflow-hidden"
       style={{
-        borderColor: healed ? 'rgba(53,243,154,.35)' : 'rgba(255,116,24,.35)',
-        boxShadow: healed
-          ? 'inset 0 0 44px -28px rgba(53,243,154,.95)'
-          : 'inset 0 0 44px -28px rgba(255,116,24,.95)',
+        ['--accent' as string]: accent,
+        borderColor: `${accent}59`,
+        boxShadow: `inset 0 0 44px -28px ${accent}`,
       }}
     >
       <div
-        className="border-b border-white/10 px-6 py-4"
-        style={{ background: `linear-gradient(180deg, ${healed ? 'rgba(53,243,154,.09)' : 'rgba(255,116,24,.09)'}, transparent)` }}
+        className="border-b border-matrix-400/12 px-6 py-4"
+        style={{ background: `linear-gradient(180deg, ${accent}17, transparent)` }}
       >
-        <div className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-night-300">Self-Healing Flow</div>
-        <h3
-          className="display text-base italic"
-          style={
-            healed
-              ? { color: '#7dffb0', textShadow: '0 0 12px rgba(53,243,154,.55)' }
-              : { color: '#ffbb6b', textShadow: '0 0 12px rgba(255,116,24,.55)' }
-          }
-        >
+        <div className="sys-label">Self-Healing Flow</div>
+        <h3 className="mt-0.5 font-mono text-[13px] font-semibold uppercase tracking-[0.08em]" style={{ color: accent }}>
           {healed ? 'Recovered with verified repair' : 'Verification gate — untrusted preview'}
         </h3>
       </div>
 
-      {/* The repair, told as a run of bulbs down the side of the sign */}
+      {/* The repair, told as a run of lamps down one rail. */}
       <ol className="space-y-0 p-6">
         {steps.map((s, i) => {
           const Icon = s.icon
-          const tube = s.state === 'done' ? '#35f39a' : s.state === 'rejected' ? '#ff2d5e' : null
+          const tube = s.state === 'done' ? DONE : s.state === 'rejected' ? REJECTED : null
           return (
             <li key={i} className="flex gap-4">
               <div className="flex flex-col items-center">
@@ -102,24 +103,26 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
                           boxShadow: `0 0 18px -6px ${tube}, inset 0 0 16px -8px ${tube}`,
                         }
                       : {
-                          borderColor: 'rgba(255,255,255,.12)',
-                          color: '#7d759c',
-                          background: 'rgba(255,255,255,.04)',
+                          borderColor: 'rgba(169,201,177,.16)',
+                          color: '#6d8a75',
+                          background: 'rgba(169,201,177,.04)',
                         }
                   }
                 >
-                  <Icon size={16} />
+                  <Icon size={16} aria-hidden />
                 </span>
                 {i < steps.length - 1 && (
                   <span
                     className="my-1 w-px flex-1"
-                    style={{ background: tube ? `${tube}59` : 'rgba(255,255,255,.1)' }}
+                    style={{ background: tube ? `${tube}59` : 'rgba(169,201,177,.12)' }}
                   />
                 )}
               </div>
-              <div className={`pb-6 ${i === steps.length - 1 ? 'pb-0' : ''}`}>
-                <div className={`text-sm font-semibold ${tube ? 'text-white' : 'text-night-300'}`}>{s.title}</div>
-                <p className="mt-0.5 text-xs leading-relaxed text-night-300">{s.detail}</p>
+              <div className={i === steps.length - 1 ? 'pb-0' : 'pb-6'}>
+                <div className={`text-[13.5px] font-semibold ${tube ? 'text-void-100' : 'text-void-300'}`}>
+                  {s.title}
+                </div>
+                <p className="mt-0.5 text-[12.5px] leading-relaxed text-void-300">{s.detail}</p>
               </div>
             </li>
           )
@@ -128,9 +131,9 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
 
       {repair.previewContractHash && (
         <div className="-mt-1 px-6 pb-5">
-          <div className="flex items-center gap-2 rounded-[2px] border border-white/10 bg-black/50 px-3 py-2 font-mono text-[11px] text-night-300">
-            <Hash size={12} /> preview contract hash:{' '}
-            <span className="text-night-100">{shortHash(repair.previewContractHash)}</span>
+          <div className="flex items-center gap-2 rounded-[2px] border border-matrix-400/12 bg-black/60 px-3 py-2 font-mono text-[11px] text-void-300">
+            <Hash size={12} aria-hidden /> preview contract hash:{' '}
+            <span className="text-void-100">{shortHash(repair.previewContractHash)}</span>
           </div>
         </div>
       )}
