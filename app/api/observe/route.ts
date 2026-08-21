@@ -1,12 +1,10 @@
 import { getService } from '@/lib/server/service'
-import { brightDataStatus, getBrightDataService, withBrightDataLock } from '@/lib/server/brightdata'
+import { brightDataStatus, getBrightDataService, VERIFIED_BRIGHT_DATA_TARGET, withBrightDataLock } from '@/lib/server/brightdata'
 import { runSafely, readBody } from '@/lib/server/handler'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
-
-const VERIFIED_PUBLIC_TARGET = 'https://web-receipt-tawny.vercel.app/fixture/hotel'
 
 function enabled(name: string): boolean {
   return /^(1|true|yes)$/i.test(String(process.env[name] || '').trim())
@@ -38,7 +36,7 @@ function shouldUseBrightData(targetUrl?: string): boolean {
   if (enabled('WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE')) return true
 
   const configuredTarget = String(process.env.BRIGHT_DATA_TARGET_URL || '').trim()
-  const allowedTarget = normalizeUrl(configuredTarget || VERIFIED_PUBLIC_TARGET)
+  const allowedTarget = normalizeUrl(configuredTarget || VERIFIED_BRIGHT_DATA_TARGET)
   return Boolean(allowedTarget && normalizedTarget === allowedTarget)
 }
 
