@@ -1,0 +1,19 @@
+{
+  "collector_id": "c_mt3ha1iv1jgm8eg813",
+  "name": "webreceipt-proof-of-promise",
+  "status": "done",
+  "completed_steps": [
+    "prepare_intent_analyzer",
+    "planner",
+    "collector_mainatiner",
+    "output_schema_generator",
+    "code_generator",
+    "input_schema_generator",
+    "preview_runner",
+    "preview_picker"
+  ],
+  "view_url": "https://brightdata.com/cp/scrapers/c_mt3ha1iv1jgm8eg813",
+  "created_at": "2026-08-21T21:45:18.391Z",
+  "source": "Bright Data CLI scraper create output supplied by the participant",
+  "secrets_included": false
+}
