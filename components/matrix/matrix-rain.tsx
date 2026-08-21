@@ -53,8 +53,8 @@ export function MatrixRain({
       ctx.textBaseline = 'top'
 
       rows = Math.ceil(height / fontSize)
-      // Sparse streams distributed across the entire viewport.
-      const count = Math.max(1, Math.ceil((width / fontSize) * 0.11))
+      // Sparse streams distributed across the entire viewport, increased by 15%.
+      const count = Math.max(1, Math.ceil((width / fontSize) * 0.1265))
       columns = Array.from({ length: count }, () => ({
         x: Math.random() * Math.max(0, width - fontSize),
         y: -Math.random() * rows,
