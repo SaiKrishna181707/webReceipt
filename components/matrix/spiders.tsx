@@ -12,7 +12,7 @@ type Spider = {
   pauseUntil: number
 }
 
-const COUNT = 6
+const COUNT = 10
 
 function randomSpider(w: number, h: number): Spider {
   return {
@@ -97,7 +97,6 @@ export function Spiders() {
         }
       `}</style>
 
-      {/* Subtle spider webs behind the content. */}
       <svg className="absolute inset-0 h-full w-full opacity-[0.16]" viewBox="0 0 1600 900" preserveAspectRatio="none">
         <g fill="none" stroke="#33ff66" strokeWidth="1">
           <g transform="translate(45 45)">
