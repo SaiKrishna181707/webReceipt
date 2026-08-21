@@ -19,10 +19,20 @@
 - Verified order total: INR 10,147
 - Raw token-free evidence: `evidence/02-run-v1.json`
 
-## Controlled semantic drift
+## V2 resilient run
 
 - The same `/fixture/hotel` URL was switched from fixture V1 to fixture V2 in commit `97c736535fc548ef5e5872a429c37112f5ff49e8`.
-- The same Collector ID must be used for the failing/post-change run and the subsequent heal.
+- The same Collector ID still extracted the correct INR 10,147 total after the V2 semantic/layout drift.
+- This is retained as resilience evidence rather than mislabeled as a failure.
+- Raw token-free evidence: `evidence/03-run-after-change.json`.
+
+## V3 interaction break
+
+- The same public URL was changed again so the true total is only rendered after a new `Review final amount` interaction.
+- The same Collector ID `c_mt3ha1iv1jgm8eg813` failed before healing with `parse_error` / `Parse error: value must be finite number`.
+- Bright Data response ID: `d2t1787349538226r45el6nl3rrg`.
+- Raw token-free failure evidence: `evidence/04-run-v3-before-heal.json`.
+- Next proof step: run `bdata scraper heal` against the same Collector ID and same URL, review the preview, approve only if the Deal Contract invariants pass, then rerun the same collector.
 
 ## Security
 
