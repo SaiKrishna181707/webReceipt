@@ -6,8 +6,9 @@ This file is the short operator/agent guide for reproducing the repository witho
 
 - Do not invent a Bright Data Collector ID. A production ID must be a real `c_*` value returned by Bright Data.
 - Do not commit Bright Data API tokens, operator secrets, session cookies, or unmasked credential-bearing output.
-- Do not describe the Next.js `/console` flow as a real Bright Data cloud run. In the current source tree, the Next route handlers use `SimulatorCollector`.
-- The real Bright Data adapter is exercised by the sponsor harness (`npm run start:brightdata` or the provided `Dockerfile`) and the CLI workflow in `brightdata/CLI_RUNBOOK.md`.
+- Do not describe the Next.js `/console` flow as a real Bright Data cloud run. The product UI intentionally remains backed by `SimulatorCollector` so the visual demo is deterministic.
+- The deployed Next.js server now has a separate protected live Bright Data surface at `/api/brightdata/health`, `/api/brightdata/observe`, and `/api/brightdata/heal`. These routes reuse the real `BrightDataCollector`, Deal Contract compiler, integrity gate, and receipt store without changing the frontend.
+- The standalone sponsor harness (`npm run start:brightdata` or the provided `Dockerfile`) remains the controlled public fixture used for the complete break/reset/self-heal proof in `brightdata/CLI_RUNBOOK.md`.
 - Preserve the existing product UI and runtime behavior unless a task explicitly authorizes changing them.
 
 ## Local setup
@@ -33,23 +34,34 @@ The semantic-failure sample is expected to fail standalone verification:
 npm run verify:receipt -- examples/semantic-failure.json
 ```
 
-## Bright Data sponsor harness
+## Bright Data live setup
 
 Set the real participant-owned credentials in the environment, never in git:
 
 ```text
 BRIGHT_DATA_API_TOKEN=...
 BRIGHT_DATA_COLLECTOR_ID=c_...
+BRIGHT_DATA_TARGET_URL=https://PUBLIC_TARGET
 WEBRECEIPT_OPERATOR_TOKEN=...
 ```
 
-Then run:
+With those values configured on the Next.js deployment, a trusted operator or coding agent can call:
+
+```text
+GET  /api/brightdata/health
+POST /api/brightdata/observe
+POST /api/brightdata/heal
+```
+
+The two POST routes require `X-WebReceipt-Operator` when `WEBRECEIPT_OPERATOR_TOKEN` is configured. The live surface remains locked by default if a Collector ID/token exist but no operator token has been set.
+
+For the controlled self-healing demonstration, run the sponsor harness:
 
 ```bash
 npm run start:brightdata
 ```
 
-This server exposes the live Bright Data adapter plus the controlled `/fixture/hotel`, `/api/fixture/break`, and `/api/fixture/reset` endpoints used by the sponsor demo. The Dockerfile launches the same server.
+This server exposes the same live Bright Data adapter plus `/fixture/hotel`, `/api/fixture/break`, and `/api/fixture/reset`. The Dockerfile launches the same server.
 
 ## Production Collector ID status
 
