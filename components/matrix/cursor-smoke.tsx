@@ -6,19 +6,20 @@ type SmokePuff = {
   id: number
   x: number
   y: number
-  size: number
+  width: number
+  height: number
   delay: number
   drift: number
+  rotation: number
 }
 
 export function CursorSmoke() {
   const [active, setActive] = useState(false)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
   const [puffs, setPuffs] = useState<SmokePuff[]>([])
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const idRef = useRef(0)
-  const positionRef = useRef(position)
+  const positionRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -36,16 +37,18 @@ export function CursorSmoke() {
       const { x, y } = positionRef.current
       const puff: SmokePuff = {
         id: idRef.current++,
-        x: x + (Math.random() - 0.5) * 12,
-        y: y + 2 + Math.random() * 8,
-        size: 26 + Math.random() * 42,
-        delay: Math.random() * 120,
-        drift: (Math.random() - 0.5) * 55,
+        x: x + (Math.random() - 0.5) * 8,
+        y: y + 4,
+        width: 16 + Math.random() * 22,
+        height: 38 + Math.random() * 48,
+        delay: Math.random() * 100,
+        drift: (Math.random() - 0.5) * 70,
+        rotation: (Math.random() - 0.5) * 18,
       }
-      setPuffs((current) => [...current.slice(-11), puff])
+      setPuffs((current) => [...current.slice(-13), puff])
       window.setTimeout(() => {
         setPuffs((current) => current.filter((item) => item.id !== puff.id))
-      }, 3600)
+      }, 3800)
     }
 
     const startIdle = () => {
@@ -53,13 +56,12 @@ export function CursorSmoke() {
       idleTimer.current = setTimeout(() => {
         setActive(true)
         emit()
-        spawnTimer.current = setInterval(emit, 300)
+        spawnTimer.current = setInterval(emit, 280)
       }, 3000)
     }
 
     const onPointerMove = (event: PointerEvent) => {
       positionRef.current = { x: event.clientX, y: event.clientY }
-      setPosition(positionRef.current)
       clearTimers()
       startIdle()
     }
@@ -82,31 +84,32 @@ export function CursorSmoke() {
         @keyframes wr-smoke-rise {
           0% {
             opacity: 0;
-            transform: translate3d(-50%, -5%, 0) scale(0.3) rotate(0deg);
-            filter: blur(6px);
+            transform: translate3d(-50%, 0, 0) scaleX(0.55) scaleY(0.45) rotate(var(--rotation));
+            filter: blur(7px);
           }
-          12% {
-            opacity: 0.18;
+          18% {
+            opacity: 0.42;
           }
-          42% {
-            opacity: 0.12;
+          45% {
+            opacity: 0.27;
           }
           100% {
             opacity: 0;
-            transform: translate3d(calc(-50% + var(--drift)), -125px, 0) scale(2.15) rotate(24deg);
-            filter: blur(16px);
+            transform: translate3d(calc(-50% + var(--drift)), -145px, 0) scaleX(1.8) scaleY(2.5) rotate(calc(var(--rotation) + 22deg));
+            filter: blur(18px);
           }
         }
         .wr-smoke-puff {
           position: fixed;
           left: var(--x);
           top: var(--y);
-          width: var(--size);
-          height: var(--size);
-          border-radius: 9999px;
-          background: radial-gradient(circle, rgba(205, 220, 208, 0.20) 0%, rgba(128, 151, 134, 0.13) 32%, rgba(91, 116, 98, 0.07) 52%, transparent 76%);
-          box-shadow: 0 0 28px rgba(145, 170, 151, 0.12);
-          animation: wr-smoke-rise 3.25s ease-out forwards;
+          width: var(--width);
+          height: var(--height);
+          border-radius: 48% 52% 62% 38% / 55% 45% 55% 45%;
+          background:
+            radial-gradient(ellipse at 42% 72%, rgba(50, 255, 115, 0.30) 0%, rgba(35, 210, 90, 0.22) 30%, rgba(25, 145, 68, 0.12) 55%, transparent 78%);
+          mix-blend-mode: screen;
+          animation: wr-smoke-rise 3.6s ease-out forwards;
           animation-delay: var(--delay);
           will-change: transform, opacity, filter;
         }
@@ -119,9 +122,11 @@ export function CursorSmoke() {
             {
               '--x': `${puff.x}px`,
               '--y': `${puff.y}px`,
-              '--size': `${puff.size}px`,
+              '--width': `${puff.width}px`,
+              '--height': `${puff.height}px`,
               '--delay': `${puff.delay}ms`,
               '--drift': `${puff.drift}px`,
+              '--rotation': `${puff.rotation}deg`,
             } as React.CSSProperties
           }
         />
