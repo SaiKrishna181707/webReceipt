@@ -36,7 +36,12 @@ function ElementTile({ symbol, number }: { symbol: string; number: number }) {
   return (
     <span className="wr-tile" style={{ fontSize: '1.45em' }} aria-hidden>
       <span className="wr-tile-symbol">{symbol}</span>
-      <span className="wr-tile-number">{number}</span>
+      <span
+        className="wr-tile-number"
+        style={{ fontSize: '0.17em', top: '7%', right: '8%' }}
+      >
+        {number}
+      </span>
     </span>
   )
 }
