@@ -76,9 +76,9 @@ export function MatrixRain({
       ctx.textBaseline = 'top'
 
       rows = Math.ceil(height / fontSize)
-      const count = Math.ceil(width / fontSize)
+      // Reduce the number of falling streams by 30% so the page content stays clear.
+      const count = Math.ceil((width / fontSize) * 0.7)
       columns = Array.from({ length: count }, () => ({
-        // Stagger the first fall so the screen doesn't start as one flat wave.
         y: -Math.random() * rows,
         speed: 0.32 + Math.random() * 0.7,
         length: 8 + Math.random() * 26,
@@ -90,9 +90,7 @@ export function MatrixRain({
       ctx.fillRect(0, 0, width, height)
     }
 
-    /** One step of the rain: fade what's there, then stamp the new heads. */
     const draw = () => {
-      // The trail. Lower alpha = longer tails; this is the only decay mechanism.
       ctx.fillStyle = 'rgba(0,0,0,0.085)'
       ctx.fillRect(0, 0, width, height)
 
@@ -102,23 +100,20 @@ export function MatrixRain({
         const y = Math.floor(col.y) * fontSize
 
         if (col.y >= 0 && y < height) {
-          // The glyph two rows back, dimmed — gives the tail its gradient
-          // without keeping any per-glyph history.
-          ctx.fillStyle = 'rgba(0,184,63,0.55)'
+          // Dimmer tail so the foreground typography remains easy to read.
+          ctx.fillStyle = 'rgba(0,150,48,0.32)'
           ctx.fillText(glyph(), x, y - fontSize * 2)
 
-          // The head is the bright one, and the only one that gets a halo.
-          ctx.shadowColor = 'rgba(51,255,102,0.85)'
-          ctx.shadowBlur = 8
-          ctx.fillStyle = '#c9ffd8'
+          // Softer head with a smaller halo than before.
+          ctx.shadowColor = 'rgba(51,255,102,0.45)'
+          ctx.shadowBlur = 5
+          ctx.fillStyle = '#9be8ad'
           ctx.fillText(col.head, x, y)
           ctx.shadowBlur = 0
         }
 
         col.y += col.speed
         col.ticks++
-        // Hold each head glyph for a few ticks — constantly rerolling reads as
-        // noise rather than falling code.
         if (col.ticks % 3 === 0) col.head = glyph()
 
         if (col.y - col.length > rows) {
@@ -131,7 +126,6 @@ export function MatrixRain({
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame)
-      // ~20fps. The rain is stepped in the films too; smoothness buys nothing.
       if (now - last < 50) return
       last = now
       draw()
@@ -161,8 +155,6 @@ export function MatrixRain({
 
     layout()
     if (reduced) {
-      // Reduced motion still gets code on screen — a handful of static passes
-      // so the environment exists. It simply never moves again.
       for (let i = 0; i < 16; i++) draw()
     } else {
       start()
