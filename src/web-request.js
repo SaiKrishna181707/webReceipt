@@ -52,9 +52,12 @@ export async function readWebJson(req, { maxBytes = DEFAULT_MAX_JSON_BYTES } = {
 
   let parsed;
   try {
-    parsed = JSON.parse(new TextDecoder().decode(merged));
+    // Fatal UTF-8 decoding prevents invalid byte sequences from being silently
+    // rewritten with U+FFFD before JSON parsing.
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(merged);
+    parsed = JSON.parse(decoded);
   } catch {
-    throw new WebRequestError(400, 'Request body must be valid JSON.', 'invalid_json');
+    throw new WebRequestError(400, 'Request body must be valid UTF-8 JSON.', 'invalid_json');
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new WebRequestError(400, 'Request body must be a JSON object.', 'invalid_json');
