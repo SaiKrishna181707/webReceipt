@@ -22,7 +22,7 @@ export function MatrixBackground() {
             'linear-gradient(to bottom, rgba(0,0,0,.55) 0%, #000 18%, #000 78%, rgba(0,0,0,.45) 100%)',
         }}
       >
-        <MatrixRain fontSize={16} opacity={0.416} />
+        <MatrixRain fontSize={16} opacity={0.30} />
       </div>
 
       <div className="construct-grid" />
