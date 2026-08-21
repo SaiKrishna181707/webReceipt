@@ -9,9 +9,9 @@ export const maxDuration = 300
 // fail, request Bright Data Self-Healing. The orchestrator verifies the untrusted
 // preview before approving/saving the repair and then re-runs the same Collector ID.
 export async function POST(req: Request) {
-  const body = await readBody(req)
   return runSafely(async () => {
     requireBrightDataOperator(req)
+    const body = await readBody(req)
     const targetUrl = resolveBrightDataTarget(body)
     const service = await getBrightDataService()
 
