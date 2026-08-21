@@ -10,13 +10,13 @@ GitHub Actions runs on **Node 20 and Node 22** and executes:
 
 ```text
 npm ci
-npm audit --omit=dev              # reported for review; see Dependency audit
+npm audit --omit=dev --audit-level=critical
 npm run verify                    # package validation + tests + chaos suite
 npm run build                     # production Next.js build/type check
 npm run smoke:next                # boots built app and probes production API routes
 ```
 
-The stress branch currently contains **72 deterministic Node tests**. They cover the existing engine plus the real generated Bright Data output shape and Next.js request-boundary regressions found during this audit.
+The final stress suite contains **76 deterministic Node tests**. They cover the existing engine plus the real generated Bright Data output shape, real pre-contract `parse_error` recovery, provenance/currency guards, Vercel-safe state selection, and bounded Next.js request parsing.
 
 The deterministic Chaos Checkout suite continues to recover **7/7** scenarios:
 
@@ -83,6 +83,8 @@ integrity         valid
 
 The normalizer does not invent screenshots or DOM selectors. When the generated collector only provides structured fields, WebReceipt records transparent structured-output provenance with `screenshotRef`/`domPath` left null.
 
+The server-known requested target and configured Collector ID remain authoritative: returned collector metadata cannot redirect provenance to another URL or spoof collector identity. Inconsistent currencies fail closed; an unambiguous rupee-symbol-only result can safely infer INR.
+
 ## Collector-failure self-healing issue found and fixed
 
 A real V3 Bright Data failure produced a `parse_error` **before a Deal Contract could be compiled**. The older server orchestration only initiated healing after a compiled contract failed semantic integrity.
@@ -115,22 +117,26 @@ fresh same-collector run
 post-heal integrity must be valid
 ```
 
-If auto-heal is disabled, a collector `parse_error` fails clearly instead of manufacturing a receipt.
+If auto-heal is disabled, a collector `parse_error` fails clearly instead of manufacturing a receipt. Production heal prompts are intentionally concise and meaning-focused, matching the prompt style that succeeded in the genuine Bright Data self-heal run.
 
-## Next.js production request-boundary issue found and fixed
+## Next.js production request-boundary issues found and fixed
 
 The previous Next.js request helper swallowed malformed JSON and returned `{}`. That could turn a malformed request into an unintended default-target operation. It also had no explicit body-size cap.
 
-The production API now:
+The first built-production smoke test then found a second systemic issue: all six JSON POST routes were parsing the request body **before** entering `runSafely`, so parser errors bypassed the application's stable error mapper and Next.js returned HTTP 500 even though unit tests passed.
 
+Both layers are fixed. The production API now:
+
+- parses JSON inside the route error boundary on `/api/observe`, `/api/heal`, `/api/diff`, `/api/stress`, `/api/brightdata/observe`, and `/api/brightdata/heal`;
+- authorizes protected Bright Data routes before parsing their bodies;
 - accepts empty bodies only where route defaults legitimately allow them;
 - requires non-empty JSON bodies to be JSON objects;
-- returns **400 / `invalid_json`** for malformed JSON, arrays or primitives;
+- returns **400 / `invalid_json`** for malformed JSON, arrays, primitives, or invalid UTF-8;
 - enforces a **256 KiB** streaming request limit;
 - returns **413 / `body_too_large`** when exceeded;
 - sanitizes unexpected production 500 messages.
 
-The built `.next` application is smoke-tested for these exact responses rather than relying only on unit tests.
+The built `.next` application is smoke-tested for these exact responses rather than relying only on unit tests. The configured-mode smoke starts production with dummy server-only Bright Data/operator tokens, verifies the real Collector ID fallback and `brightdata-ready` health state, verifies the simulator remains healthy, verifies operator 401 behavior, and verifies authorized malformed live requests fail before any upstream Bright Data call.
 
 ## Existing resilience/security checks retained
 
@@ -161,16 +167,19 @@ This does not affect the independently committed Bright Data evidence or the cor
 
 `npm audit --omit=dev` currently reports high-severity advisories through the installed Next.js 14 line and its bundled PostCSS. npm's automated remediation requires a breaking Next.js major upgrade.
 
-The audit was reviewed rather than hidden. The repository does **not** use the application features named by the principal current advisories checked during this pass:
+The audit was reviewed rather than hidden. CI prints these advisories and fails if a **critical** production advisory is present. The repository does **not** use the application features named by the principal current advisories checked during this pass:
 
 - no Server Actions / `use server`;
 - no `next/image` Image Optimizer usage;
 - no `rewrites()`/dynamic external hostname rules;
 - no middleware/proxy layer;
 - no CSP nonce / `beforeInteractive` pattern;
+- no `use cache` feature;
 - WebReceipt's server-side Bright Data requests use `fetch(url, options)`, not the vulnerable cache-confusion pattern involving a `Request` object plus a different init.
 
 A forced Next 14 → 15/16 migration immediately before judging was therefore not performed. The production audit remains visible in CI and a framework major-version upgrade should be the first post-hackathon maintenance task.
+
+Recharts 2.x also emits a maintenance/deprecation warning. A breaking visualization-library migration is likewise deferred because no production failure is present and changing UI dependencies would violate the pre-submission risk budget.
 
 ## Submission status
 
