@@ -1,0 +1,24 @@
+{
+  "collector_id": "c_mt3ha1iv1jgm8eg813",
+  "response_id": "d2t1787348958838riur12r0gllg",
+  "target_url": "https://web-receipt-tawny.vercel.app/fixture/hotel",
+  "result": [
+    {
+      "advertised_price": {"value": 8499, "currency": "INR", "symbol": "₹"},
+      "base_price": {"value": 8499, "currency": "INR", "symbol": "₹"},
+      "property_fee": {"value": 499, "currency": "INR", "symbol": "₹"},
+      "service_fee": {"value": 349, "currency": "INR", "symbol": "₹"},
+      "tax": {"value": 800, "currency": "INR", "symbol": "₹"},
+      "order_total": {"value": 10147, "currency": "INR", "symbol": "₹"},
+      "cancellation_terms": "Cancellation: Free cancellation until 21 Aug",
+      "refundability": "Refundability: Refundable",
+      "payment_timing": "Payment: Pay now",
+      "inclusions": "Includes: Breakfast",
+      "offer_name": "Ocean House · Deluxe Room",
+      "journey_state": "Step 1 of 2 · Offer",
+      "input": {"url": "https://web-receipt-tawny.vercel.app/fixture/hotel"}
+    }
+  ],
+  "source": "Bright Data CLI scraper run output supplied by the participant",
+  "secrets_included": false
+}
