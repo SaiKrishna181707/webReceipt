@@ -45,12 +45,19 @@ test('real generated collector flat V1 output compiles into a valid Deal Contrac
   assert.equal(integrity.failures.length, 0);
 });
 
-test('normalizer preserves already-canonical Scraper Studio output', () => {
+test('normalizer preserves canonical data but server-known target and collector identity win', () => {
   const canonical = {
-    subject: 'Canonical', targetUrl: TARGET, offer: {}, checkout: {}, terms: {},
+    subject: 'Canonical',
+    targetUrl: 'https://untrusted-output.example/path',
+    collectorId: 'c_spoofed',
+    offer: {}, checkout: {}, terms: {},
   };
-  const normalized = normalizeBrightDataRecord(canonical, { collectorId: 'c_demo' });
+  const normalized = normalizeBrightDataRecord(canonical, {
+    targetUrl: TARGET,
+    collectorId: 'c_demo',
+  });
   assert.equal(normalized.subject, 'Canonical');
+  assert.equal(normalized.targetUrl, TARGET);
   assert.equal(normalized.collectorId, 'c_demo');
 });
 
@@ -66,4 +73,31 @@ test('flat output with a missing required monetary field fails closed', () => {
   const row = realFlatV1();
   delete row.order_total;
   assert.throws(() => normalizeBrightDataRecord(row, { targetUrl: TARGET }), /invalid order_total/i);
+});
+
+test('flat output cannot redirect provenance to a URL different from the requested target', () => {
+  const row = realFlatV1();
+  row.input.url = 'https://attacker.example/other';
+  assert.throws(
+    () => normalizeBrightDataRecord(row, { targetUrl: TARGET, collectorId: 'c_demo' }),
+    /input URL does not match the requested target/i,
+  );
+});
+
+test('flat output with inconsistent currencies fails closed instead of normalizing away the contradiction', () => {
+  const row = realFlatV1();
+  row.tax.currency = 'USD';
+  assert.throws(
+    () => normalizeBrightDataRecord(row, { targetUrl: TARGET, collectorId: 'c_demo' }),
+    /inconsistent currencies.*INR.*USD|inconsistent currencies.*USD.*INR/i,
+  );
+});
+
+test('flat output can infer INR from the unambiguous rupee symbol when currency fields are absent', () => {
+  const row = realFlatV1();
+  for (const key of ['advertised_price', 'base_price', 'property_fee', 'service_fee', 'tax', 'order_total']) {
+    delete row[key].currency;
+  }
+  const observation = normalizeBrightDataRecord(row, { targetUrl: TARGET, collectorId: 'c_demo' });
+  assert.equal(observation.currency, 'INR');
 });
