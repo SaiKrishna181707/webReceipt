@@ -13,6 +13,7 @@ import { HealConsole } from '@/components/product/heal-console'
 import { PromiseDiff } from '@/components/product/promise-diff'
 import { EventLog } from '@/components/product/event-log'
 import { EvidenceDrawer } from '@/components/product/evidence-drawer'
+import { NeonButton, DecoPanel } from '@/components/vice/vice-ui'
 
 const DEMO_URL = 'https://demo.webreceipt.dev/hotel/ocean-house'
 const MUTATION = 'wrong-valid-total'
@@ -106,43 +107,39 @@ export default function ConsolePage() {
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       {/* Header */}
       <header className="space-y-2">
-        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-stud-400">Live Console</div>
-        <h1 className="text-3xl font-bold text-white">Proof of Promise, end to end</h1>
-        <p className="text-plate-200 max-w-2xl">
+        <div className="font-mono text-[11px] uppercase tracking-[0.26em] text-gold-400">Live Console</div>
+        <h1 className="display text-3xl italic text-white">Proof of Promise, end to end</h1>
+        <p className="max-w-2xl text-night-200">
           Observe a public purchase journey, compile a tamper-evident Deal Contract, break the extraction with a
           simulated redesign, heal it with a verified repair, then diff the promise over time.
         </p>
       </header>
 
       {/* URL bar */}
-      <div className="glass-card rounded-[8px] border border-white/10 p-4 flex items-center gap-3 flex-wrap">
-        <div className="flex-1 min-w-[240px] flex items-center gap-2 bg-black/40 border border-white/10 rounded-[6px] px-3 py-2.5">
-          <Link2 size={15} className="text-plate-300 shrink-0" />
+      <div className="deco-panel flex flex-wrap items-center gap-3 p-4" style={{ ['--deco-accent' as string]: '#2de2e6' }}>
+        <div className="flex min-w-[240px] flex-1 items-center gap-2 rounded-[2px] border border-aqua-400/25 bg-black/50 px-3 py-2.5 shadow-[inset_0_0_20px_-12px_rgba(45,226,230,.9)]">
+          <Link2 size={15} className="shrink-0 text-aqua-400" />
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             spellCheck={false}
-            className="flex-1 bg-transparent outline-none text-sm font-mono text-plate-100 placeholder:text-plate-400"
+            className="flex-1 bg-transparent font-mono text-sm text-night-100 outline-none placeholder:text-night-400"
             placeholder="https://…"
           />
         </div>
-        <button
-          onClick={reset}
-          disabled={!!busy}
-          className="inline-flex items-center gap-1.5 text-sm text-plate-200 hover:text-white border border-white/10 hover:border-white/20 rounded-[6px] px-3 py-2.5 transition-colors disabled:opacity-50"
-        >
+        <NeonButton onClick={reset} disabled={!!busy} tone="chrome" size="md">
           {busy === 'reset' ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />} Reset
-        </button>
+        </NeonButton>
       </div>
 
       {/* Guided steps */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ActionButton
           n={1}
           label="Observe journey"
           hint="Compile Deal Contract + evidence"
           icon={Play}
-          tone="stud"
+          tone="gold"
           onClick={observe}
           busy={busy === 'observe'}
           done={phase !== 'idle'}
@@ -153,7 +150,7 @@ export default function ConsolePage() {
           label="Simulate redesign"
           hint="Inject wrong-but-valid total"
           icon={Zap}
-          tone="rose"
+          tone="blood"
           onClick={breakIt}
           busy={busy === 'break'}
           done={phase === 'broken' || phase === 'healed'}
@@ -164,7 +161,7 @@ export default function ConsolePage() {
           label="Heal with Bright Data"
           hint="Verify preview, then deploy"
           icon={Wrench}
-          tone="lime"
+          tone="mint"
           onClick={heal}
           busy={busy === 'heal'}
           done={phase === 'healed'}
@@ -175,7 +172,7 @@ export default function ConsolePage() {
           label="Promise Diff"
           hint="Diff the promise over time"
           icon={GitCompare}
-          tone="azure"
+          tone="aqua"
           onClick={runDiff}
           busy={busy === 'diff'}
           done={!!diff}
@@ -213,12 +210,13 @@ export default function ConsolePage() {
   )
 }
 
-const TONES: Record<string, { on: string; ring: string; text: string }> = {
-  stud: { on: 'bg-brick-600 hover:bg-brick-500', ring: 'border-stud-500/40', text: 'text-stud-400' },
-  rose: { on: 'bg-rose-600 hover:bg-rose-500', ring: 'border-rose-500/40', text: 'text-rose-400' },
-  lime: { on: 'bg-lime-600 hover:bg-lime-500', ring: 'border-lime-500/40', text: 'text-lime-400' },
-  azure: { on: 'bg-azure-600 hover:bg-azure-500', ring: 'border-azure-500/40', text: 'text-azure-400' },
-}
+/** Each step is its own little marquee: dark until it fires, then the tube holds. */
+const TONES = {
+  gold: { accent: '#ffc23c', text: 'text-gold-300' },
+  blood: { accent: '#ff2d5e', text: 'text-blood-300' },
+  mint: { accent: '#35f39a', text: 'text-mint-300' },
+  aqua: { accent: '#2de2e6', text: 'text-aqua-300' },
+} as const
 
 function ActionButton({
   n,
@@ -246,40 +244,47 @@ function ActionButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`group text-left rounded-[8px] border p-4 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-        done ? `bg-white/[0.04] ${t.ring}` : 'bg-white/[0.02] border-white/10 hover:border-white/20'
-      }`}
+      style={{
+        ['--deco-accent' as string]: t.accent,
+        borderColor: done ? t.accent : undefined,
+        boxShadow: done ? `0 0 26px -14px ${t.accent}, inset 0 1px 0 rgba(255,255,255,.1)` : undefined,
+      }}
+      className="deco-panel deco-lift group p-4 text-left disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className={`text-[10px] font-mono font-bold ${t.text}`}>STEP {n}</span>
-        <span className={`w-8 h-8 rounded-[6px] flex items-center justify-center ${done ? t.on : 'bg-white/5'} text-white`}>
+      <div className="mb-3 flex items-center justify-between">
+        <span className={`font-mono text-[10px] font-bold uppercase tracking-[0.2em] ${t.text}`}>Step {n}</span>
+        <span
+          className="grid h-8 w-8 place-items-center rounded-[2px] border transition-all duration-500"
+          style={{
+            borderColor: t.accent,
+            color: done ? '#0a0510' : t.accent,
+            background: done ? t.accent : 'rgba(0,0,0,.45)',
+            boxShadow: done ? `0 0 18px -4px ${t.accent}` : `inset 0 0 16px -8px ${t.accent}`,
+          }}
+        >
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Icon size={15} />}
         </span>
       </div>
-      <div className="text-sm font-semibold text-white">{label}</div>
-      <div className="text-xs text-plate-300 mt-0.5">{hint}</div>
+      <div className="display text-sm italic text-white">{label}</div>
+      <div className="mt-0.5 text-xs text-night-300">{hint}</div>
     </button>
   )
 }
 
 function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
   return (
-    <div className="glass-card rounded-[8px] border border-dashed border-white/15 p-12 text-center">
-      <div className="w-14 h-14 rounded-[8px] bg-stud-500/10 border border-stud-500/30 text-stud-400 flex items-center justify-center mx-auto mb-4">
+    <DecoPanel tone="gold" tilt={false} className="p-12 text-center">
+      <div className="sun-disc mx-auto mb-5 grid h-14 w-14 place-items-center text-[#2b0716]">
         <Play size={22} />
       </div>
-      <h3 className="text-lg font-bold text-white">Start the demo</h3>
-      <p className="text-plate-200 text-sm mt-1 mb-5 max-w-md mx-auto">
-        Run <span className="font-mono text-stud-200">Observe journey</span> to compile the first Deal Contract with
+      <h3 className="display text-lg italic text-white">Start the demo</h3>
+      <p className="mx-auto mb-6 mt-1.5 max-w-md text-sm text-night-200">
+        Run <span className="font-mono text-gold-300">Observe journey</span> to compile the first Deal Contract with
         tamper-evident evidence for every claim.
       </p>
-      <button
-        onClick={onStart}
-        disabled={busy}
-        className="inline-flex items-center gap-2 rounded-[6px] bg-brick-600 hover:bg-brick-500 text-white text-sm font-medium px-5 py-3 transition-colors disabled:opacity-50"
-      >
+      <NeonButton onClick={onStart} disabled={busy} tone="gold" size="lg" variant="solid">
         {busy ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />} Observe journey
-      </button>
-    </div>
+      </NeonButton>
+    </DecoPanel>
   )
 }

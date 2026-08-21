@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import HeroBrickScene from './hero-brick-scene'
-import PipelineBrickScene from './pipeline-brick-scene'
+import HeroViceScene from './hero-vice-scene'
+import BoulevardScene from './boulevard-scene'
 
 /* ============================================================================
    CANVAS STAGE
@@ -12,7 +12,7 @@ import PipelineBrickScene from './pipeline-brick-scene'
    render loop alive off-screen.
    ========================================================================== */
 
-export type SceneName = 'hero' | 'pipeline'
+export type SceneName = 'hero' | 'boulevard'
 
 /**
  * Tracks how far the element travels through the viewport, 0 → 1.
@@ -46,7 +46,7 @@ function useSectionProgress(target: React.RefObject<HTMLElement>) {
   return progress
 }
 
-export default function BrickStageInner({ scene, className = '' }: { scene: SceneName; className?: string }) {
+export default function ViceStageInner({ scene, className = '' }: { scene: SceneName; className?: string }) {
   const host = useRef<HTMLDivElement>(null)
   const progress = useSectionProgress(host)
   const [visible, setVisible] = useState(true)
@@ -71,14 +71,18 @@ export default function BrickStageInner({ scene, className = '' }: { scene: Scen
   return (
     <div ref={host} className={className} style={{ touchAction: 'pan-y' }}>
       <Canvas
-        // A reduced-motion visitor still gets the model — it simply stops moving.
+        // A reduced-motion visitor still gets the city — it simply stops moving.
         frameloop={still ? 'demand' : visible ? 'always' : 'never'}
         shadows="soft"
         dpr={[1, 1.75]}
         gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
-        camera={{ position: scene === 'hero' ? [10, 7.2, 9] : [0, 6.4, 17.5], fov: scene === 'hero' ? 36 : 34 }}
+        camera={{
+          position: scene === 'hero' ? [0, 5.4, 15.4] : [0, 3.1, 4],
+          fov: scene === 'hero' ? 38 : 46,
+          far: 400,
+        }}
       >
-        {scene === 'hero' ? <HeroBrickScene /> : <PipelineBrickScene progress={progress} />}
+        {scene === 'hero' ? <HeroViceScene /> : <BoulevardScene progress={progress} />}
       </Canvas>
     </div>
   )

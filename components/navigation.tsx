@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ArrowRight } from 'lucide-react'
-import { BrickLink } from '@/components/lego/brick-ui'
+import { NeonLink, NeonButton } from '@/components/vice/vice-ui'
+import { WebReceiptLogo } from '@/components/brand/webreceipt-logo'
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -14,7 +15,7 @@ const navItems = [
   { label: 'Docs', href: '/docs' },
 ]
 
-/** The top bar is a single dark 16x1 brick with studs along its underside. */
+/** The top bar is the underside of a hotel awning: dark glass, chrome, tube. */
 export function Navigation() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -23,27 +24,18 @@ export function Navigation() {
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href)
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/60 bg-plate-800/92 shadow-[inset_0_2px_0_rgba(255,255,255,.09),0_5px_0_-1px_rgba(0,0,0,.6),0_14px_28px_-14px_rgba(0,0,0,.9)] backdrop-blur-md">
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-night-900/85 shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_18px_36px_-24px_rgba(0,0,0,1)] backdrop-blur-md">
+      {/* Neon tube along the bottom edge of the awning */}
+      <div className="pointer-events-none absolute inset-x-0 -bottom-px h-[2px] bg-neon-rule opacity-80 shadow-[0_0_14px_-2px_rgba(255,46,151,.9)]" />
+
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-10">
-            <Link className="group flex items-center gap-2.5" href="/">
-              {/* 2x2 brick logo mark */}
-              <span
-                className="relative grid h-9 w-9 grid-cols-2 gap-[2px] rounded-[5px] p-[3px]"
-                style={{
-                  background: 'linear-gradient(180deg,#ff5a63 0%,#e3000b 46%,#b40009 100%)',
-                  boxShadow: 'inset 0 2px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.3), 0 3px 0 -1px #7c0006',
-                }}
-              >
-                {[0, 1, 2, 3].map((i) => (
-                  <span
-                    key={i}
-                    className="rounded-full bg-white/45 shadow-[inset_0_-1px_0_rgba(0,0,0,.35)] transition-transform duration-300 group-hover:scale-110"
-                  />
-                ))}
-              </span>
-              <span className="display text-xl leading-none text-white">WebReceipt</span>
+            <Link className="group flex items-center" href="/" aria-label="WebReceipt home">
+              <WebReceiptLogo
+                size={20}
+                className="transition-transform duration-300 group-hover:-translate-y-[1px]"
+              />
             </Link>
 
             <div className="hidden items-center gap-7 md:flex">
@@ -51,14 +43,16 @@ export function Navigation() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative font-mono text-[13px] tracking-wide transition-colors ${
-                    isActive(item.href) ? 'text-stud-400' : 'text-plate-200 hover:text-white'
+                  className={`relative font-mono text-[13px] uppercase tracking-[0.12em] transition-colors ${
+                    isActive(item.href)
+                      ? 'text-gold-300 [text-shadow:0_0_12px_rgba(255,194,60,.8)]'
+                      : 'text-night-200 hover:text-white'
                   }`}
                 >
                   {item.label}
-                  {/* Active tab gets a stud underneath */}
+                  {/* Active tab lights a tube underneath */}
                   {isActive(item.href) && (
-                    <span className="absolute -bottom-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-stud-400 shadow-[0_0_8px_rgba(246,197,0,.9)]" />
+                    <span className="absolute -bottom-2 left-0 h-[2px] w-full rounded-full bg-gold-400 shadow-[0_0_10px_rgba(255,194,60,.95)]" />
                   )}
                 </Link>
               ))}
@@ -66,22 +60,19 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-3">
-            <BrickLink href="/console" tone="red" size="sm" studs={false} className="hidden md:inline-flex">
+            <NeonLink href="/console" tone="neon" size="sm" className="hidden md:inline-flex">
               Launch Console <ArrowRight size={14} />
-            </BrickLink>
-            <button
+            </NeonLink>
+            <NeonButton
               type="button"
               onClick={() => setOpen(!open)}
               aria-label="Toggle menu"
-              className="brick-btn size-10 md:hidden"
-              style={{
-                background: 'linear-gradient(180deg,#55574f 0%,#3a3c36 46%,#26271f 100%)',
-                color: '#f6f7f3',
-                ['--brick-btn-edge' as string]: '#111208',
-              }}
+              tone="chrome"
+              size="sm"
+              className="w-10 !px-0 md:hidden"
             >
               {open ? <X size={18} /> : <Menu size={18} />}
-            </button>
+            </NeonButton>
           </div>
         </div>
 
@@ -92,16 +83,16 @@ export function Navigation() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`py-1 font-mono text-sm tracking-wide transition-colors ${
-                  isActive(item.href) ? 'text-stud-400' : 'text-plate-200 hover:text-white'
+                className={`py-1 font-mono text-sm uppercase tracking-[0.12em] transition-colors ${
+                  isActive(item.href) ? 'text-gold-300' : 'text-night-200 hover:text-white'
                 }`}
               >
                 {item.label}
               </Link>
             ))}
-            <BrickLink href="/console" tone="red" size="md" studs={false} className="w-full">
+            <NeonLink href="/console" tone="neon" size="md" className="w-full">
               Launch Console <ArrowRight size={14} />
-            </BrickLink>
+            </NeonLink>
           </div>
         </div>
       </div>

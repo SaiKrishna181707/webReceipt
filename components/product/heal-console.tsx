@@ -57,35 +57,69 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
   ]
 
   return (
-    <section className="glass-card rounded-[8px] border border-white/10 overflow-hidden">
-      <div className={`px-6 py-4 border-b border-white/10 ${healed ? 'bg-lime-500/[0.06]' : 'bg-amber-500/[0.06]'}`}>
-        <div className="text-[10px] font-mono uppercase tracking-wider text-plate-300 font-bold">Self-Healing Flow</div>
-        <h3 className="font-bold text-white">
+    <section
+      className="overflow-hidden rounded-[2px] border bg-black/45 backdrop-blur-sm"
+      style={{
+        borderColor: healed ? 'rgba(53,243,154,.35)' : 'rgba(255,116,24,.35)',
+        boxShadow: healed
+          ? 'inset 0 0 44px -28px rgba(53,243,154,.95)'
+          : 'inset 0 0 44px -28px rgba(255,116,24,.95)',
+      }}
+    >
+      <div
+        className="border-b border-white/10 px-6 py-4"
+        style={{ background: `linear-gradient(180deg, ${healed ? 'rgba(53,243,154,.09)' : 'rgba(255,116,24,.09)'}, transparent)` }}
+      >
+        <div className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-night-300">Self-Healing Flow</div>
+        <h3
+          className="display text-base italic"
+          style={
+            healed
+              ? { color: '#7dffb0', textShadow: '0 0 12px rgba(53,243,154,.55)' }
+              : { color: '#ffbb6b', textShadow: '0 0 12px rgba(255,116,24,.55)' }
+          }
+        >
           {healed ? 'Recovered with verified repair' : 'Verification gate — untrusted preview'}
         </h3>
       </div>
 
-      <ol className="p-6 space-y-0">
+      {/* The repair, told as a run of bulbs down the side of the sign */}
+      <ol className="space-y-0 p-6">
         {steps.map((s, i) => {
           const Icon = s.icon
-          const color = s.state === 'done' ? 'lime' : s.state === 'rejected' ? 'rose' : 'gray'
-          const dot =
-            color === 'lime'
-              ? 'bg-lime-500/20 text-lime-400 border-lime-500/40'
-              : color === 'rose'
-                ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                : 'bg-white/5 text-plate-400 border-white/10'
+          const tube = s.state === 'done' ? '#35f39a' : s.state === 'rejected' ? '#ff2d5e' : null
           return (
             <li key={i} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <span className={`w-9 h-9 rounded-full border flex items-center justify-center ${dot}`}>
+                <span
+                  className="grid h-9 w-9 place-items-center rounded-full border"
+                  style={
+                    tube
+                      ? {
+                          borderColor: tube,
+                          color: tube,
+                          background: `${tube}1f`,
+                          boxShadow: `0 0 18px -6px ${tube}, inset 0 0 16px -8px ${tube}`,
+                        }
+                      : {
+                          borderColor: 'rgba(255,255,255,.12)',
+                          color: '#7d759c',
+                          background: 'rgba(255,255,255,.04)',
+                        }
+                  }
+                >
                   <Icon size={16} />
                 </span>
-                {i < steps.length - 1 && <span className="w-px flex-1 my-1 bg-white/10" />}
+                {i < steps.length - 1 && (
+                  <span
+                    className="my-1 w-px flex-1"
+                    style={{ background: tube ? `${tube}59` : 'rgba(255,255,255,.1)' }}
+                  />
+                )}
               </div>
               <div className={`pb-6 ${i === steps.length - 1 ? 'pb-0' : ''}`}>
-                <div className={`text-sm font-semibold ${color === 'gray' ? 'text-plate-300' : 'text-white'}`}>{s.title}</div>
-                <p className="text-xs text-plate-300 mt-0.5 leading-relaxed">{s.detail}</p>
+                <div className={`text-sm font-semibold ${tube ? 'text-white' : 'text-night-300'}`}>{s.title}</div>
+                <p className="mt-0.5 text-xs leading-relaxed text-night-300">{s.detail}</p>
               </div>
             </li>
           )
@@ -93,9 +127,10 @@ export function HealConsole({ repair, healed }: HealConsoleProps) {
       </ol>
 
       {repair.previewContractHash && (
-        <div className="px-6 pb-5 -mt-1">
-          <div className="flex items-center gap-2 text-[11px] font-mono text-plate-300 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
-            <Hash size={12} /> preview contract hash: <span className="text-plate-100">{shortHash(repair.previewContractHash)}</span>
+        <div className="-mt-1 px-6 pb-5">
+          <div className="flex items-center gap-2 rounded-[2px] border border-white/10 bg-black/50 px-3 py-2 font-mono text-[11px] text-night-300">
+            <Hash size={12} /> preview contract hash:{' '}
+            <span className="text-night-100">{shortHash(repair.previewContractHash)}</span>
           </div>
         </div>
       )}

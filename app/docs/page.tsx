@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { NeonLink, DecoPanel, TubeRail, type ViceTone } from '@/components/vice/vice-ui'
 
 const CHECKS: [string, string][] = [
   ['total_arithmetic', 'base + mandatoryFees + taxes + optionalAddons − discounts equals finalTotal'],
@@ -51,99 +51,125 @@ const ENDPOINTS: { method: string; path: string; body: string; returns: string; 
 export default function DocsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-14 px-4 py-10 sm:px-6 lg:px-8">
-      <header className="space-y-2">
-        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-stud-400">Docs</div>
-        <h1 className="text-3xl font-bold text-white">How WebReceipt works</h1>
-        <p className="text-plate-200">
+      <header className="space-y-3">
+        <div className="font-mono text-[11px] uppercase tracking-[0.26em] text-gold-400">Docs</div>
+        <h1 className="display text-3xl italic text-white">How WebReceipt works</h1>
+        <TubeRail count={12} tone="gold" />
+        <p className="text-night-200">
           A self-healing consumer evidence engine. It compiles public purchase journeys into one canonical Deal
           Contract, seals every claim with tamper-evident evidence, and verifies extraction against deterministic
           semantic invariants.
         </p>
       </header>
 
-      <Section title="Core concepts">
-        <Concept name="Deal Contract" body="One canonical economic schema (v1.1.0) compiled from any site: advertised price, checkout breakdown (base, fee items, mandatory fees, taxes, add-ons, discounts, final total), terms, the journey, and the evidence set — sealed with a contract hash." />
-        <Concept name="Evidence" body="Each critical field carries a record: captured text, source URL, DOM path, journey step, collector version, timestamp and a SHA-256 hash. Screenshots are references, not proof — the hash is the proof." />
-        <Concept name="Contract Integrity Engine" body="Eleven deterministic checks that catch wrong-but-valid extraction — where every field is populated but the numbers don't reconcile. A critical failure marks the contract invalid." />
-        <Concept name="Deal Anomalies" body="Observed, not adjudicated: journey price increases, mandatory non-tax charges and taxes are surfaced as facts with context — never as legal conclusions." />
-        <Concept name="Promise Diff" body="git diff for commercial promises. Compares two contracts and reports money, text, list and fee changes — e.g. 'Free cancellation' → 'Non-refundable'." />
-        <Concept name="Self-Healing" body="When a redesign breaks extraction, an AI repair is proposed. WebReceipt treats the preview as untrusted: it must compile into the same Deal Contract and pass every critical invariant before it is approved and deployed." />
+      <Section title="Core concepts" tone="neon">
+        <Concept accent="#ffc23c" name="Deal Contract" body="One canonical economic schema (v1.1.0) compiled from any site: advertised price, checkout breakdown (base, fee items, mandatory fees, taxes, add-ons, discounts, final total), terms, the journey, and the evidence set — sealed with a contract hash." />
+        <Concept accent="#35f39a" name="Evidence" body="Each critical field carries a record: captured text, source URL, DOM path, journey step, collector version, timestamp and a SHA-256 hash. Screenshots are references, not proof — the hash is the proof." />
+        <Concept accent="#2de2e6" name="Contract Integrity Engine" body="Eleven deterministic checks that catch wrong-but-valid extraction — where every field is populated but the numbers don't reconcile. A critical failure marks the contract invalid." />
+        <Concept accent="#b184ff" name="Deal Anomalies" body="Observed, not adjudicated: journey price increases, mandatory non-tax charges and taxes are surfaced as facts with context — never as legal conclusions." />
+        <Concept accent="#ff2e97" name="Promise Diff" body="git diff for commercial promises. Compares two contracts and reports money, text, list and fee changes — e.g. 'Free cancellation' → 'Non-refundable'." />
+        <Concept accent="#ff7418" name="Self-Healing" body="When a redesign breaks extraction, an AI repair is proposed. WebReceipt treats the preview as untrusted: it must compile into the same Deal Contract and pass every critical invariant before it is approved and deployed." />
       </Section>
 
-      <Section title="Integrity checks">
-        <div className="rounded-[8px] border border-white/10 overflow-hidden divide-y divide-white/5">
+      <Section title="Integrity checks" tone="mint">
+        {/* Eleven tubes on one circuit — any one of them dark invalidates the sign. */}
+        <div className="divide-y divide-white/5 overflow-hidden rounded-[2px] border border-mint-500/25 bg-black/40 shadow-[inset_0_0_34px_-24px_rgba(53,243,154,.9)]">
           {CHECKS.map(([id, desc]) => (
-            <div key={id} className="flex flex-col sm:flex-row gap-1 sm:gap-4 px-4 py-3">
-              <code className="text-xs font-mono text-lime-300 sm:w-52 shrink-0">{id}</code>
-              <span className="text-sm text-plate-200">{desc}</span>
+            <div key={id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:gap-4">
+              <code className="shrink-0 font-mono text-xs text-mint-300 [text-shadow:0_0_9px_rgba(53,243,154,.55)] sm:w-52">
+                {id}
+              </code>
+              <span className="text-sm text-night-200">{desc}</span>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section title="API reference">
-        <p className="text-plate-200 text-sm">
+      <Section title="API reference" tone="aqua">
+        <p className="text-sm text-night-200">
           All routes run on the Node.js runtime and drive the same engine that powers the Console. Bodies are JSON.
         </p>
         <div className="space-y-3">
-          {ENDPOINTS.map((e) => (
-            <div key={e.path} className="rounded-[8px] border border-white/10 bg-white/[0.02] p-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${e.method === 'GET' ? 'bg-azure-500/15 text-azure-300' : 'bg-stud-500/15 text-stud-200'}`}>
-                  {e.method}
-                </span>
-                <code className="text-sm font-mono text-white">{e.path}</code>
-                <span className="text-[11px] font-mono text-plate-300 ml-auto">→ {e.returns}</span>
+          {ENDPOINTS.map((e) => {
+            const get = e.method === 'GET'
+            const c = get ? '#2de2e6' : '#ffc23c'
+            return (
+              <div
+                key={e.path}
+                className="rounded-[2px] border border-white/10 bg-black/40 p-4"
+                style={{ boxShadow: `inset 0 0 30px -22px ${c}` }}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="rounded-[1px] border px-2 py-0.5 font-mono text-[10px] font-bold tracking-[0.1em]"
+                    style={{
+                      borderColor: c,
+                      color: c,
+                      background: `${c}18`,
+                      textShadow: `0 0 9px ${c}99`,
+                    }}
+                  >
+                    {e.method}
+                  </span>
+                  <code className="font-mono text-sm text-white">{e.path}</code>
+                  <span className="ml-auto font-mono text-[11px] text-night-300">→ {e.returns}</span>
+                </div>
+                <p className="mt-2 text-sm text-night-200">{e.desc}</p>
+                {e.body !== '—' && (
+                  <pre className="mt-2 overflow-x-auto rounded-[2px] border border-white/10 bg-black/60 p-3 font-mono text-xs text-night-100">
+                    {e.body}
+                  </pre>
+                )}
               </div>
-              <p className="text-sm text-plate-200 mt-2">{e.desc}</p>
-              {e.body !== '—' && (
-                <pre className="mt-2 bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-plate-100 overflow-x-auto">
-                  {e.body}
-                </pre>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       </Section>
 
-      <Section title="Run it locally">
-        <pre className="bg-black/50 border border-white/10 rounded-[6px] p-4 text-sm font-mono text-plate-100 overflow-x-auto">
+      <Section title="Run it locally" tone="violet">
+        <pre className="overflow-x-auto rounded-[2px] border border-violet-500/25 bg-black/60 p-4 font-mono text-sm text-night-100 shadow-[inset_0_0_34px_-24px_rgba(177,132,255,.9)]">
 {`npm install
 npm run dev        # Next.js console at http://localhost:3000
 npm run verify     # engine checks: schema + unit tests + chaos suite`}
         </pre>
       </Section>
 
-      <div className="rounded-[8px] border border-stud-500/30 bg-stud-500/[0.06] p-6 flex items-center justify-between gap-4 flex-wrap">
+      <DecoPanel tone="gold" tilt={false} className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
-          <h3 className="text-white font-semibold">Ready to see it run?</h3>
-          <p className="text-plate-200 text-sm">Walk the full observe → break → heal → diff loop on live data.</p>
+          <h3 className="display text-lg italic text-white">Ready to see it run?</h3>
+          <p className="text-sm text-night-200">Walk the full observe → break → heal → diff loop on live data.</p>
         </div>
-        <Link
-          href="/console"
-          className="inline-flex items-center gap-2 rounded-[6px] bg-brick-600 hover:bg-brick-500 text-white font-medium px-5 py-2.5 transition-colors shrink-0"
-        >
+        <NeonLink href="/console" tone="gold" size="md" variant="solid" className="shrink-0">
           Launch Console <ArrowRight size={15} />
-        </Link>
-      </div>
+        </NeonLink>
+      </DecoPanel>
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, tone, children }: { title: string; tone: ViceTone; children: React.ReactNode }) {
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-bold text-white border-b border-white/10 pb-2">{title}</h2>
+      <div className="space-y-2 pb-1">
+        <h2 className="display text-xl italic text-white">{title}</h2>
+        <TubeRail count={8} tone={tone} />
+      </div>
       {children}
     </section>
   )
 }
 
-function Concept({ name, body }: { name: string; body: string }) {
+/** Each concept gets its own tube colour, so the page reads as a lit directory. */
+function Concept({ name, body, accent }: { name: string; body: string; accent: string }) {
   return (
-    <div className="rounded-[6px] border border-white/10 bg-white/[0.02] p-4">
-      <h3 className="text-white font-semibold text-sm mb-1">{name}</h3>
-      <p className="text-sm text-plate-200 leading-relaxed">{body}</p>
+    <div
+      className="rounded-[2px] border-l-2 border-y border-r border-y-white/10 border-r-white/10 bg-black/40 p-4"
+      style={{ borderLeftColor: accent, boxShadow: `inset 14px 0 30px -26px ${accent}` }}
+    >
+      <h3 className="display mb-1 text-sm italic" style={{ color: accent, textShadow: `0 0 10px ${accent}77` }}>
+        {name}
+      </h3>
+      <p className="text-sm leading-relaxed text-night-200">{body}</p>
     </div>
   )
 }

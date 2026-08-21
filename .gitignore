@@ -14,3 +14,6 @@ venv/
 
 # Local Claude Code tooling config (permissions, dev-server launch)
 .claude/
+
+# TypeScript incremental build cache
+*.tsbuildinfo

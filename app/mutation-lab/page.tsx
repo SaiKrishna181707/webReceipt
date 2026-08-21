@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { FlaskConical, Play, Loader2, Check, X, ShieldCheck, Activity } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { StressRun, StressResult } from '@/lib/types'
+import { NeonButton, DecoPanel, TubeRail } from '@/components/vice/vice-ui'
 
 const MUTATIONS: { id: string; label: string; blurb: string; breaks: boolean }[] = [
   { id: 'css-rename', label: 'CSS class rename', blurb: 'Selectors renamed, values unchanged', breaks: false },
@@ -45,73 +46,96 @@ export default function MutationLabPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
-      <header className="space-y-2">
-        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-rose-400">Mutation Lab</div>
-        <h1 className="text-3xl font-bold text-white">Chaos Checkout</h1>
-        <p className="text-plate-200 max-w-2xl">
+      <header className="space-y-3">
+        <div className="font-mono text-[11px] uppercase tracking-[0.26em] text-blood-400">Mutation Lab</div>
+        <h1 className="display text-3xl italic text-white">Chaos Checkout</h1>
+        <TubeRail count={10} tone="blood" />
+        <p className="max-w-2xl text-night-200">
           Fire structural and semantic mutations at the collector and watch the Contract Integrity Engine. A robust
           extractor should survive cosmetic changes; the mutations that alter the economics must be caught, verified,
           and healed — never silently accepted.
         </p>
       </header>
 
-      {/* Mutation selection */}
-      <div className="glass-card rounded-[8px] border border-white/10 p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h2 className="text-sm font-mono uppercase tracking-wider text-plate-200 flex items-center gap-2">
-            <FlaskConical size={15} /> Mutations ({selected.length}/{MUTATIONS.length})
+      {/* Mutation selection — the switchboard */}
+      <DecoPanel tone="blood" tilt={false} className="p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.22em] text-night-200">
+            <FlaskConical size={15} className="text-blood-400" /> Mutations ({selected.length}/{MUTATIONS.length})
           </h2>
-          <button
-            onClick={runSuite}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-[6px] bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium px-5 py-2.5 transition-colors disabled:opacity-50"
-          >
+          <NeonButton onClick={runSuite} disabled={busy} tone="blood" size="md" variant="solid">
             {busy ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />} Run Chaos Suite
-          </button>
+          </NeonButton>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {MUTATIONS.map((m) => {
             const on = selected.includes(m.id)
+            const tube = m.breaks ? '#ff2d5e' : '#35f39a'
             return (
               <button
                 key={m.id}
                 onClick={() => toggle(m.id)}
-                className={`text-left rounded-[6px] border p-3 transition-all ${
-                  on ? 'bg-white/[0.05] border-white/20' : 'bg-white/[0.01] border-white/10 opacity-60'
+                aria-pressed={on}
+                style={{
+                  borderColor: on ? tube : 'rgba(255,255,255,.1)',
+                  boxShadow: on ? `inset 0 0 22px -14px ${tube}, 0 0 16px -10px ${tube}` : undefined,
+                }}
+                className={`rounded-[2px] border bg-black/40 p-3 text-left transition-all ${
+                  on ? '' : 'opacity-55 hover:opacity-85'
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium text-white">{m.label}</span>
+                  {/* A tube either strikes or it doesn't. */}
                   <span
-                    className={`w-4 h-4 rounded border flex items-center justify-center ${
-                      on ? 'bg-stud-500 border-stud-500' : 'border-white/20'
-                    }`}
+                    className="grid h-4 w-4 shrink-0 place-items-center rounded-[1px] border transition-all"
+                    style={{
+                      borderColor: on ? tube : 'rgba(255,255,255,.22)',
+                      background: on ? tube : 'transparent',
+                      boxShadow: on ? `0 0 12px -2px ${tube}` : undefined,
+                    }}
                   >
-                    {on && <Check size={11} className="text-white" />}
+                    {on && <Check size={11} className="text-[#0a0510]" />}
                   </span>
                 </div>
-                <div className="text-xs text-plate-300 mt-1 flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${m.breaks ? 'bg-rose-500' : 'bg-lime-500'}`} />
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-night-300">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ background: tube, boxShadow: `0 0 8px ${tube}` }}
+                  />
                   {m.blurb}
                 </div>
               </button>
             )
           })}
         </div>
-      </div>
+      </DecoPanel>
 
       {/* Results */}
       {run && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Stat label="Resilience" value={`${resilience}%`} tone="lime" icon={ShieldCheck} />
-            <Stat label="Detected failures" value={`${run.detected}/${run.total}`} tone="rose" icon={Activity} />
-            <Stat label="Previews verified" value={`${run.previewVerified}`} tone="azure" icon={Check} />
-            <Stat label="Duration" value={`${run.durationMs} ms`} tone="stud" icon={Activity} />
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Stat label="Resilience" value={`${resilience}%`} tone="mint" icon={ShieldCheck} meter={resilience} />
+            <Stat
+              label="Detected failures"
+              value={`${run.detected}/${run.total}`}
+              tone="blood"
+              icon={Activity}
+              meter={Math.round((run.detected / Math.max(1, run.total)) * 100)}
+            />
+            <Stat
+              label="Previews verified"
+              value={`${run.previewVerified}`}
+              tone="aqua"
+              icon={Check}
+              meter={Math.round((run.previewVerified / Math.max(1, run.total)) * 100)}
+            />
+            <Stat label="Duration" value={`${run.durationMs} ms`} tone="gold" icon={Activity} />
           </div>
 
-          <div className="glass-card rounded-[8px] border border-white/10 overflow-hidden">
-            <div className="px-6 py-4 border-b border-white/10 text-sm font-mono uppercase tracking-wider text-plate-200">
+          <DecoPanel tone="aqua" tilt={false} corner={false} className="overflow-hidden">
+            <div className="border-b border-white/10 px-6 py-4 font-mono text-[12px] uppercase tracking-[0.22em] text-night-200">
               Per-mutation outcome
             </div>
             <ul className="divide-y divide-white/5">
@@ -119,7 +143,7 @@ export default function MutationLabPage() {
                 <ResultRow key={r.mutation} result={r} />
               ))}
             </ul>
-          </div>
+          </DecoPanel>
         </div>
       )}
     </div>
@@ -127,19 +151,43 @@ export default function MutationLabPage() {
 }
 
 const TONE: Record<string, string> = {
-  lime: 'text-lime-400 border-lime-500/30 bg-lime-500/[0.06]',
-  rose: 'text-rose-400 border-rose-500/30 bg-rose-500/[0.06]',
-  azure: 'text-azure-400 border-azure-500/30 bg-azure-500/[0.06]',
-  stud: 'text-stud-400 border-stud-500/30 bg-stud-500/[0.06]',
+  mint: '#35f39a',
+  blood: '#ff2d5e',
+  aqua: '#2de2e6',
+  gold: '#ffc23c',
 }
 
-function Stat({ label, value, tone, icon: Icon }: { label: string; value: string; tone: string; icon: typeof Check }) {
+function Stat({
+  label,
+  value,
+  tone,
+  icon: Icon,
+  meter,
+}: {
+  label: string
+  value: string
+  tone: keyof typeof TONE | string
+  icon: typeof Check
+  meter?: number
+}) {
+  const c = TONE[tone] ?? TONE.gold
   return (
-    <div className={`rounded-[8px] border p-4 ${TONE[tone]}`}>
-      <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider opacity-80">
+    <div
+      className="rounded-[2px] border bg-black/45 p-4"
+      style={{ borderColor: `${c}55`, boxShadow: `inset 0 0 26px -18px ${c}` }}
+    >
+      <div
+        className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+        style={{ color: c, textShadow: `0 0 10px ${c}88` }}
+      >
         <Icon size={12} /> {label}
       </div>
-      <div className="text-2xl font-bold font-mono text-white mt-1">{value}</div>
+      <div className="display mt-1 text-2xl italic text-white">{value}</div>
+      {meter !== undefined && (
+        <div className="hud-meter mt-3" style={{ ['--meter' as string]: c }}>
+          <span style={{ width: `${Math.max(0, Math.min(100, meter))}%` }} />
+        </div>
+      )}
     </div>
   )
 }
@@ -150,29 +198,41 @@ function labelFor(id: string) {
 
 function ResultRow({ result }: { result: StressResult }) {
   const status = result.initiallyValid
-    ? { text: 'Survived', cls: 'text-lime-400 bg-lime-500/10 border-lime-500/30', icon: Check }
+    ? { text: 'Survived', c: '#35f39a', icon: Check }
     : result.healed
-      ? { text: 'Detected → Healed', cls: 'text-lime-400 bg-lime-500/10 border-lime-500/30', icon: ShieldCheck }
+      ? { text: 'Detected → Healed', c: '#35f39a', icon: ShieldCheck }
       : result.rejected
-        ? { text: 'Detected → Rejected', cls: 'text-rose-400 bg-rose-500/10 border-rose-500/30', icon: X }
-        : { text: 'Detected → Unresolved', cls: 'text-rose-400 bg-rose-500/10 border-rose-500/30', icon: X }
+        ? { text: 'Detected → Rejected', c: '#ff2d5e', icon: X }
+        : { text: 'Detected → Unresolved', c: '#ff2d5e', icon: X }
   const Icon = status.icon
 
   return (
-    <li className="px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <li className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
       <div className="min-w-0">
         <div className="text-sm font-medium text-white">{labelFor(result.mutation)}</div>
         {result.failedChecks.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
             {result.failedChecks.map((c) => (
-              <span key={c} className="text-[10px] font-mono text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded px-1.5 py-0.5">
+              <span
+                key={c}
+                className="rounded-[1px] border border-blood-500/30 bg-blood-500/10 px-1.5 py-0.5 font-mono text-[10px] text-blood-300"
+              >
                 {c}
               </span>
             ))}
           </div>
         )}
       </div>
-      <span className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-medium border rounded-full px-3 py-1 ${status.cls}`}>
+      <span
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-[2px] border px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em]"
+        style={{
+          borderColor: status.c,
+          color: status.c,
+          background: `${status.c}14`,
+          boxShadow: `0 0 16px -8px ${status.c}`,
+          textShadow: `0 0 10px ${status.c}88`,
+        }}
+      >
         <Icon size={12} /> {status.text}
       </span>
     </li>

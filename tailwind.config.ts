@@ -1,9 +1,104 @@
 import type { Config } from 'tailwindcss'
 
 /**
- * Brick Lab palette — sampled from real LEGO ABS colour names so the whole
- * interface reads as one moulded set rather than a generic dark dashboard.
+ * OCEAN DRIVE palette — a 1986 Miami sunset.
+ *
+ * Two hues carry the whole interface: flamingo neon (#ff2e97) and pool aqua
+ * (#2de2e6), thrown against a violet night sky that burns orange at the
+ * horizon. Everything else is either the sun (gold), the palms (mint), or
+ * chrome.
+ *
+ * The legacy `plate/stud/brick/azure/lime/tangerine` scales are kept as
+ * aliases so no surface can fall back to an off-theme default while the
+ * codebase migrates to the neon names.
  */
+
+const NEON = {
+  200: '#ffc0e2',
+  300: '#ff8ecb',
+  400: '#ff5cb0',
+  500: '#ff2e97',
+  600: '#e60c78',
+  700: '#b0055b',
+  800: '#750039',
+}
+
+const AQUA = {
+  200: '#a8fbff',
+  300: '#6ff2f7',
+  400: '#2de2e6',
+  500: '#00c4cc',
+  600: '#009aa3',
+  700: '#026e77',
+  800: '#02474e',
+}
+
+const SUNSET = {
+  200: '#ffd9a8',
+  300: '#ffbb6b',
+  400: '#ff9a3c',
+  500: '#ff7418',
+  600: '#e05605',
+  700: '#a83f06',
+  800: '#6e2a06',
+}
+
+const GOLD = {
+  200: '#ffe8b0',
+  300: '#ffd166',
+  400: '#ffc23c',
+  500: '#ffab1a',
+  600: '#e08600',
+  700: '#a86200',
+  800: '#6e4000',
+}
+
+/** Mint — the "valid / healed" green, pulled off a 1986 pool tile. */
+const MINT = {
+  200: '#b6ffd8',
+  300: '#7dffb0',
+  400: '#35f39a',
+  500: '#06d67d',
+  600: '#04ab63',
+  700: '#047947',
+  800: '#03532f',
+}
+
+/** Scarface red — failures, broken tubes, integrity alarms. */
+const BLOOD = {
+  200: '#ffc4d0',
+  300: '#ff8fa9',
+  400: '#ff5476',
+  500: '#ff2d5e',
+  600: '#e00b41',
+  700: '#a80430',
+  800: '#6e0220',
+}
+
+/** Violet — the dusk sky and every deep panel shadow. */
+const VIOLET = {
+  200: '#d5b8ff',
+  300: '#b184ff',
+  400: '#8b4dff',
+  500: '#6a1fd0',
+  600: '#4c14a0',
+  700: '#340c72',
+  800: '#200747',
+}
+
+/** Chrome → night: text at the top, backgrounds at the bottom. */
+const NIGHT = {
+  100: '#f6f3ff',
+  200: '#dcd6f2',
+  300: '#a79fc4',
+  400: '#7d759c',
+  500: '#544d75',
+  600: '#2a1745',
+  700: '#1b1030',
+  800: '#120a1e',
+  900: '#0a0510',
+}
+
 const config: Config = {
   darkMode: ['class'],
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
@@ -14,89 +109,61 @@ const config: Config = {
         foreground: 'var(--text)',
         border: 'var(--line)',
 
-        // Bright Red — the primary action brick
-        brick: {
-          200: '#ff9a9f',
-          300: '#ff6b72',
-          400: '#ff3b45',
-          500: '#e3000b',
-          600: '#c4000a',
-          700: '#9c0008',
-          800: '#750006',
-        },
-        // Bright Yellow — labels, kickers, the "new set" energy
-        stud: {
-          200: '#ffe98a',
-          300: '#ffdf52',
-          400: '#ffd21e',
-          500: '#f6c500',
-          600: '#d4a600',
-          700: '#a37f00',
-          800: '#7a5f00',
-        },
-        // Bright Blue
-        azure: {
-          200: '#8fc4ff',
-          300: '#54a5ff',
-          400: '#1f88ff',
-          500: '#0057a8',
-          600: '#004a8f',
-          700: '#003a70',
-          800: '#002b53',
-        },
-        // Bright Green
-        lime: {
-          200: '#8ce8a4',
-          300: '#4bd971',
-          400: '#22c24d',
-          500: '#00852b',
-          600: '#017024',
-          700: '#01571c',
-          800: '#014015',
-        },
-        // Bright Orange — warnings, mutations
-        tangerine: {
-          200: '#ffc48f',
-          300: '#ffa85c',
-          400: '#ff8a2b',
-          500: '#ff6a13',
-          600: '#e2530a',
-          700: '#b13e06',
-          800: '#822c04',
-        },
-        // Medium / Dark Stone Grey — the plate the set is built on
-        plate: {
-          100: '#e8e9e4',
-          200: '#c8cac2',
-          300: '#9ba09a',
-          400: '#6c6e68',
-          500: '#4a4c48',
-          600: '#33352f',
-          700: '#232420',
-          800: '#171814',
-          900: '#0d0e0b',
-        },
+        neon: NEON,
+        aqua: AQUA,
+        sunset: SUNSET,
+        gold: GOLD,
+        mint: MINT,
+        blood: BLOOD,
+        violet: VIOLET,
+        vice: VIOLET,
+        night: NIGHT,
+
+        // ---- legacy aliases, remapped onto the sunset ------------------
+        brick: NEON,
+        stud: GOLD,
+        azure: AQUA,
+        lime: MINT,
+        tangerine: SUNSET,
+        plate: NIGHT,
+        rose: BLOOD,
+        amber: GOLD,
       },
       fontFamily: {
-        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        // Kanit carries the headlines: geometric, tropical, and it has a real
+        // italic — which is where all the 80s speed comes from.
+        display: ['var(--font-display)', 'Kanit', 'system-ui', 'sans-serif'],
+        // Monoton is a neon tube. Wordmarks only, never body copy.
+        neon: ['Monoton', 'var(--font-display)', 'cursive'],
+        mono: ['"Fira Code"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        // Moulded-plastic bevel: hot top edge, dark bottom edge, cast shadow
-        brick: 'inset 0 2px 0 rgba(255,255,255,.34), inset 0 -3px 0 rgba(0,0,0,.42), 0 6px 0 -1px rgba(0,0,0,.45), 0 14px 26px -10px rgba(0,0,0,.75)',
-        'brick-sm':
-          'inset 0 1px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.4), 0 3px 0 -1px rgba(0,0,0,.45), 0 8px 16px -8px rgba(0,0,0,.7)',
-        'brick-lg':
-          'inset 0 3px 0 rgba(255,255,255,.38), inset 0 -5px 0 rgba(0,0,0,.45), 0 10px 0 -2px rgba(0,0,0,.5), 0 28px 50px -18px rgba(0,0,0,.85)',
-        'brick-pressed':
-          'inset 0 2px 0 rgba(255,255,255,.2), inset 0 -1px 0 rgba(0,0,0,.4), 0 1px 0 -1px rgba(0,0,0,.45)',
+        neon: '0 0 0 1px rgba(255,46,151,.5), 0 0 18px -2px rgba(255,46,151,.55), 0 0 60px -14px rgba(255,46,151,.5)',
+        'neon-sm': '0 0 0 1px rgba(255,46,151,.45), 0 0 10px -1px rgba(255,46,151,.5)',
+        aqua: '0 0 0 1px rgba(45,226,230,.5), 0 0 18px -2px rgba(45,226,230,.55), 0 0 60px -14px rgba(45,226,230,.45)',
+        gold: '0 0 0 1px rgba(255,194,60,.5), 0 0 18px -2px rgba(255,194,60,.5), 0 0 56px -14px rgba(255,194,60,.4)',
+        // Chrome trim: a hot top edge, a dark underside, and a long dusk shadow
+        chrome:
+          'inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.6), 0 12px 30px -14px rgba(0,0,0,.95)',
+        deco: '0 1px 0 rgba(255,255,255,.07) inset, 0 24px 50px -28px rgba(0,0,0,1), 0 0 46px -26px rgba(255,46,151,.7)',
+      },
+      backgroundImage: {
+        'sunset-sky':
+          'linear-gradient(180deg,#0a0510 0%,#200747 24%,#4c14a0 44%,#c2247f 66%,#ff5476 78%,#ff9a3c 88%,#ffc23c 100%)',
+        chrome:
+          'linear-gradient(180deg,#ffffff 0%,#dcd6f2 26%,#a79fc4 48%,#f6f3ff 52%,#7d759c 74%,#dcd6f2 100%)',
+        'neon-rule': 'linear-gradient(90deg,transparent,#ff2e97 18%,#ffc23c 50%,#2de2e6 82%,transparent)',
       },
       animation: {
         marquee: 'marquee var(--duration, 40s) linear infinite',
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
-        'brick-drop': 'brickDrop 0.7s cubic-bezier(.2,1.5,.4,1) backwards',
-        'brick-bob': 'brickBob 5s ease-in-out infinite',
-        'stud-spin': 'studSpin 18s linear infinite',
-        'clutch-pulse': 'clutchPulse 2.4s ease-in-out infinite',
+        flicker: 'flicker 6s steps(1, end) infinite',
+        'neon-pulse': 'neonPulse 3.2s ease-in-out infinite',
+        sway: 'sway 7s ease-in-out infinite',
+        'sun-bars': 'sunBars 9s linear infinite',
+        scan: 'scan 7s linear infinite',
+        'drive-by': 'driveBy 9s linear infinite',
+        float: 'floatSlow 5s ease-in-out infinite',
       },
       keyframes: {
         marquee: {
@@ -107,22 +174,36 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        brickDrop: {
-          '0%': { opacity: '0', transform: 'translate3d(0,-140px,0) rotateX(38deg) scale(.86)' },
-          '60%': { opacity: '1' },
-          '100%': { opacity: '1', transform: 'translate3d(0,0,0) rotateX(0) scale(1)' },
+        // A tube that never quite settles — the ballast is going.
+        flicker: {
+          '0%, 41%, 43.5%, 45%, 61%, 63%, 100%': { opacity: '1' },
+          '42%, 44%, 62%': { opacity: '.34' },
+          '42.5%': { opacity: '.7' },
         },
-        brickBob: {
-          '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
-          '50%': { transform: 'translateY(-9px) rotate(-1.2deg)' },
+        neonPulse: {
+          '0%, 100%': { filter: 'brightness(1) saturate(1)' },
+          '50%': { filter: 'brightness(1.28) saturate(1.2)' },
         },
-        studSpin: {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+        sway: {
+          '0%, 100%': { transform: 'rotate(-1.6deg)' },
+          '50%': { transform: 'rotate(1.6deg)' },
         },
-        clutchPulse: {
-          '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 0 rgba(246,197,0,0))' },
-          '50%': { opacity: '.72', filter: 'drop-shadow(0 0 14px rgba(246,197,0,.55))' },
+        sunBars: {
+          '0%': { backgroundPosition: '0 0' },
+          '100%': { backgroundPosition: '0 -64px' },
+        },
+        scan: {
+          '0%': { transform: 'translateY(-110%)' },
+          '100%': { transform: 'translateY(110%)' },
+        },
+        driveBy: {
+          '0%': { transform: 'translateX(-12%)', opacity: '0' },
+          '8%, 92%': { opacity: '1' },
+          '100%': { transform: 'translateX(112%)', opacity: '0' },
+        },
+        floatSlow: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
         },
       },
     },

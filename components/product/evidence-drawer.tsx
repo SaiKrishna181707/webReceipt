@@ -18,6 +18,9 @@ const FIELD_LABELS: Record<string, string> = {
   'terms.cancellation': 'Cancellation policy',
 }
 
+/* Evidence is the safe-deposit box of the whole product, so the drawer is the
+   only surface that stops the boulevard: full black, one mint tube around it. */
+
 export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
   if (!evidence) return null
 
@@ -27,40 +30,44 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
-      <button aria-label="Close evidence" onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative w-full sm:max-w-3xl bg-[#0b0e17] border-t sm:border border-lime-500/30 sm:rounded-[8px] shadow-2xl max-h-[88vh] overflow-y-auto animate-fade-in-up">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+      <button aria-label="Close evidence" onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className="relative max-h-[88vh] w-full animate-fade-in-up overflow-y-auto border-t border-mint-400/45 bg-night-900 shadow-[0_0_70px_-20px_rgba(53,243,154,.55),inset_0_0_60px_-40px_rgba(53,243,154,.9)] sm:max-w-3xl sm:rounded-[2px] sm:border">
         {/* Header */}
-        <div className="sticky top-0 bg-[#0b0e17] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-night-900/95 px-6 py-4 backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-[6px] bg-lime-500/15 text-lime-400 border border-lime-500/30">
+            <div className="rounded-[2px] border border-mint-400 bg-mint-500/10 p-2 text-mint-400 shadow-[inset_0_0_18px_-8px_#35f39a,0_0_18px_-8px_#35f39a]">
               <Hash size={18} />
             </div>
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-lime-400 font-bold">
+              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-mint-400">
                 Tamper-evident evidence
               </div>
-              <h3 className="text-white font-bold">{FIELD_LABELS[evidence.field] ?? evidence.field}</h3>
+              <h3 className="display text-base italic text-white">{FIELD_LABELS[evidence.field] ?? evidence.field}</h3>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-plate-200 hover:text-white hover:bg-white/10 transition-colors">
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-[2px] border border-white/12 p-2 text-night-200 transition-colors hover:border-white/30 hover:text-white"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="space-y-5 p-6">
           {/* Captured text */}
           <div>
-            <div className="text-[11px] font-mono uppercase tracking-wider text-plate-300 mb-2 flex items-center gap-1.5">
+            <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-night-300">
               <Code2 size={12} /> Captured text
             </div>
-            <pre className="bg-black/50 border border-white/10 rounded-[6px] p-4 text-sm font-mono text-azure-200 whitespace-pre-wrap break-words">
+            <pre className="whitespace-pre-wrap break-words rounded-[2px] border border-aqua-500/25 bg-black/60 p-4 font-mono text-sm text-aqua-200 shadow-[inset_0_0_30px_-22px_rgba(45,226,230,.9)]">
               {evidence.capturedText}
             </pre>
           </div>
 
           {/* Provenance grid */}
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
             <Meta icon={<MapPin size={13} />} label="Source URL" value={evidence.sourceUrl} mono onCopy={() => copy(evidence.sourceUrl, 'Source URL')} />
             <Meta icon={<Code2 size={13} />} label="DOM path" value={evidence.domPath ?? '—'} mono />
             <Meta icon={<GitBranch size={13} />} label="Journey step" value={evidence.journeyStep != null ? `Step ${evidence.journeyStep}` : '—'} />
@@ -69,17 +76,22 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
             <Meta icon={<GitBranch size={13} />} label="Collector version" value={evidence.collectorVersion} mono />
           </div>
 
-          {/* SHA-256 */}
-          <div className="bg-black/40 border border-white/10 rounded-[6px] p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-plate-300 flex items-center gap-1.5">
+          {/* SHA-256 — the seal */}
+          <div className="rounded-[2px] border border-mint-500/30 bg-black/55 p-4 shadow-[inset_0_0_34px_-24px_rgba(53,243,154,.9)]">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-night-300">
                 <Hash size={12} /> SHA-256 evidence hash
               </span>
-              <button onClick={() => copy(evidence.hash, 'Hash')} className="text-plate-200 hover:text-white flex items-center gap-1 text-xs">
+              <button
+                onClick={() => copy(evidence.hash, 'Hash')}
+                className="flex items-center gap-1 font-mono text-xs uppercase tracking-[0.14em] text-night-200 transition-colors hover:text-mint-300"
+              >
                 <Copy size={12} /> Copy
               </button>
             </div>
-            <p className="font-mono text-xs text-lime-300 break-all">{evidence.hash}</p>
+            <p className="break-all font-mono text-xs text-mint-300 [text-shadow:0_0_9px_rgba(53,243,154,.5)]">
+              {evidence.hash}
+            </p>
           </div>
         </div>
       </div>
@@ -101,16 +113,16 @@ function Meta({
   onCopy?: () => void
 }) {
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-[6px] p-3">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-plate-300 mb-1 flex items-center gap-1.5">
+    <div className="rounded-[2px] border border-white/10 bg-white/[0.03] p-3">
+      <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-night-300">
         {icon} {label}
         {onCopy && (
-          <button onClick={onCopy} className="ml-auto text-plate-300 hover:text-white">
+          <button onClick={onCopy} aria-label={`Copy ${label}`} className="ml-auto text-night-300 hover:text-white">
             <Copy size={11} />
           </button>
         )}
       </div>
-      <div className={`text-plate-100 break-all ${mono ? 'font-mono text-xs' : 'text-sm'}`}>{value}</div>
+      <div className={`break-all text-night-100 ${mono ? 'font-mono text-xs' : 'text-sm'}`}>{value}</div>
     </div>
   )
 }
