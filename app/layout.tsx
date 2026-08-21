@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
 import { MatrixBackground } from '@/components/matrix/matrix-background'
 import { Spiders } from '@/components/matrix/spiders'
+import { CursorSmoke } from '@/components/matrix/cursor-smoke'
 import { BootIntro } from '@/components/matrix/boot-intro'
 import { SystemFooter } from '@/components/matrix/system-footer'
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <MatrixBackground />
         <Spiders />
+        <CursorSmoke />
         <Navigation />
 
         <main id="main" className="relative z-10 min-h-screen pt-16">
