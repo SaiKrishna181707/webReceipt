@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { evaluateIntegrity } from '../domain/integrity.js';
@@ -31,9 +32,31 @@ const normalizeState = (value) => ({
   stressRuns: Array.isArray(value?.stressRuns) ? value.stressRuns : []
 });
 
+function isInside(directory, file) {
+  const relative = path.relative(directory, file);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+export function resolveStateFile(env = process.env) {
+  const configured = String(env.WEBRECEIPT_STATE_FILE || '').trim();
+  const onVercel = env.VERCEL === '1' || Boolean(env.VERCEL_ENV);
+
+  if (onVercel) {
+    // Vercel Functions do not provide durable writable project storage. Use the
+    // platform's writable temp directory so observations succeed instead of
+    // failing with EROFS/ENOENT. State is intentionally best-effort/ephemeral
+    // until a durable database is configured in a future product deployment.
+    const tmp = os.tmpdir();
+    if (configured && path.isAbsolute(configured) && isInside(tmp, configured)) return configured;
+    return path.join(tmp, 'webreceipt-state.json');
+  }
+
+  return path.resolve(configured || 'data/state.json');
+}
+
 export class JsonStore {
-  constructor(file = path.resolve(process.env.WEBRECEIPT_STATE_FILE || 'data/state.json')) {
-    this.file = file;
+  constructor(file = resolveStateFile()) {
+    this.file = path.resolve(file);
     this.state = emptyState();
     this.writeQueue = Promise.resolve();
   }
