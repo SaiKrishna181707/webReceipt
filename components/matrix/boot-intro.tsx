@@ -36,7 +36,7 @@ export function BootIntro() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
         exit()
       }
@@ -54,8 +54,8 @@ export function BootIntro() {
       className={`fixed inset-0 z-[9999] cursor-pointer bg-black transition-all ${leaving ? 'pointer-events-none -translate-y-6 opacity-0' : 'opacity-100'}`}
       style={{ transitionDuration: reduced ? '0ms' : '460ms', transitionTimingFunction: EASE }}
     >
-      <div className="relative mx-auto flex h-full max-w-[1500px] flex-col items-center px-6 py-12 md:flex-row md:px-0 md:py-0">
-        <div className="relative h-full w-full shrink-0 md:w-[58%]">
+      <div className="relative mx-auto h-full max-w-[1500px] px-6 md:px-0">
+        <div className="absolute inset-y-0 left-0 w-full md:w-[58%]">
           <img
             src={portraitSrc}
             alt="Michael Scofield intro portrait"
@@ -63,26 +63,26 @@ export function BootIntro() {
             className="h-full w-full bg-black object-contain object-left-bottom"
             style={{ objectPosition: 'left bottom', filter: 'brightness(.92) contrast(1.06)' }}
           />
-          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-black to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
           {!reduced && <div className="absolute inset-x-0 top-0 h-px animate-scan bg-matrix/70" aria-hidden="true" />}
         </div>
 
-        <div className="flex w-full flex-1 items-end pb-10 md:items-center md:pb-0 md:pr-12">
-          <div className="flex w-full items-center justify-between gap-6">
-            <span className="text-xs uppercase tracking-[0.32em] text-void-300">Click anywhere to enter</span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                exit()
-              }}
-              className="rounded-md border border-void-500 px-4 py-2 text-xs uppercase tracking-[0.28em] text-void-200 transition-colors duration-150 hover:border-matrix hover:text-matrix"
-            >
-              Skip
-            </button>
+        <div className="pointer-events-none absolute left-[38%] top-1/2 w-[min(38rem,48vw)] -translate-y-1/2 md:left-[34%] md:w-[34rem]">
+          <div className="relative rounded-lg border border-matrix/80 bg-black/85 px-7 py-5 shadow-[0_0_28px_rgba(51,255,102,0.16)]">
+            <span className="absolute -left-3 top-1/2 h-5 w-5 -translate-y-1/2 rotate-45 border-b border-l border-matrix/80 bg-black/85" aria-hidden="true" />
+            <p className="relative font-mono text-base leading-8 text-matrix-300 md:text-lg">
+              Every problem has a solution.
+              <br />
+              You just have to be smart enough
+              <br />
+              to find it
+            </p>
           </div>
         </div>
+
+        <span className="absolute bottom-8 right-8 text-[11px] uppercase tracking-[0.32em] text-matrix-300/80 md:bottom-10 md:right-12">
+          Click anywhere to enter
+        </span>
       </div>
       <div className="crt-scanlines pointer-events-none absolute inset-0 opacity-[0.14]" />
     </div>
