@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
+import { readWebJson, WebRequestError } from '@/src/web-request.js'
 
 // Mirrors the error classification in src/server.js so the Next API surface
 // returns the same stable {error, code} shapes and HTTP statuses.
 function classify(error: unknown): { status: number; code: string; message: string } {
   const message = String((error as { message?: string })?.message || 'Unexpected error')
+  if (error instanceof WebRequestError)
+    return { status: error.status, code: error.code, message }
   if (/valid URL|Only http|Credential-bearing|publicly reachable|login\/private|public anonymous|Target hostname|Target must|requires targetUrl/i.test(message))
     return { status: 400, code: 'invalid_target', message }
   if (/Operator authorization required/i.test(message)) return { status: 401, code: 'operator_required', message }
@@ -17,7 +20,11 @@ function classify(error: unknown): { status: number; code: string; message: stri
     return { status: 503, code: 'brightdata_not_configured', message }
   if (/Bright Data .*timed out/i.test(message)) return { status: 504, code: 'brightdata_timeout', message }
   if (/^Bright Data /i.test(message)) return { status: 502, code: 'brightdata_upstream', message }
-  return { status: 500, code: 'internal_error', message }
+  return {
+    status: 500,
+    code: 'internal_error',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error.' : message,
+  }
 }
 
 /** Wrap a route handler body, returning JSON on success or a classified error. */
@@ -31,10 +38,5 @@ export async function runSafely<T>(fn: () => Promise<T>) {
 }
 
 export async function readBody(req: Request): Promise<Record<string, unknown>> {
-  try {
-    const text = await req.text()
-    return text ? JSON.parse(text) : {}
-  } catch {
-    return {}
-  }
+  return readWebJson(req) as Promise<Record<string, unknown>>
 }
