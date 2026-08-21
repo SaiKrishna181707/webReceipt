@@ -21,7 +21,7 @@ function randomSpider(w: number, h: number): Spider {
     angle: Math.random() * Math.PI * 2,
     turn: 0,
     speed: 14 + Math.random() * 26,
-    scale: 0.55 + Math.random() * 0.7,
+    scale: (0.55 + Math.random() * 0.7) * 1.2,
     pauseUntil: 0,
   }
 }
