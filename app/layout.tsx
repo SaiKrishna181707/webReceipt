@@ -4,7 +4,6 @@ import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
 import { MatrixBackground } from '@/components/matrix/matrix-background'
 import { BootIntro } from '@/components/matrix/boot-intro'
-import { GuideCharacter } from '@/components/matrix/guide-character'
 import { SystemFooter } from '@/components/matrix/system-footer'
 
 export const metadata: Metadata = {
@@ -39,7 +38,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="crt-overlay" aria-hidden />
         <div className="crt-vignette" aria-hidden />
 
-        <GuideCharacter />
         <BootIntro />
 
         <Toaster
