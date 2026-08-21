@@ -92,7 +92,7 @@ export async function getBrightDataService() {
     const store = await getStore()
     const collector = new BrightDataCollector({
       token: env('BRIGHT_DATA_API_TOKEN'),
-      collectorId: status.collectorId,
+      collectorId: status.collectorId ?? undefined,
     })
     const service = new WebReceiptService({ collector, store })
     globalRef.__webreceiptBrightData = { collector, service }
