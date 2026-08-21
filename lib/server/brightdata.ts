@@ -3,6 +3,12 @@ import { BrightDataCollector } from '@/src/integrations/brightdata.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
+// Public/non-secret metadata. Keeping the verified collector in code means the
+// production deployment only needs the Bright Data API token to activate the
+// proven scraper. Environment variables can still override these for rotation.
+export const VERIFIED_BRIGHT_DATA_COLLECTOR_ID = 'c_mt3ha1iv1jgm8eg813'
+export const VERIFIED_BRIGHT_DATA_TARGET = 'https://web-receipt-tawny.vercel.app/fixture/hotel'
+
 type BrightDataStatus = {
   configured: boolean
   collectorId: string | null
@@ -31,6 +37,12 @@ function validCollectorId(value: string): boolean {
   return /^c_[A-Za-z0-9_-]+$/.test(value) && !/^c_x+$/i.test(value)
 }
 
+function configuredCollectorId(): string {
+  // An explicit non-empty value wins even when malformed so a typo fails closed
+  // instead of silently switching to a different collector.
+  return env('BRIGHT_DATA_COLLECTOR_ID') || VERIFIED_BRIGHT_DATA_COLLECTOR_ID
+}
+
 function safeEqual(leftValue: string | null, rightValue: string): boolean {
   const left = Buffer.from(String(leftValue || ''))
   const right = Buffer.from(rightValue)
@@ -39,7 +51,7 @@ function safeEqual(leftValue: string | null, rightValue: string): boolean {
 
 export function brightDataStatus(): BrightDataStatus {
   const token = env('BRIGHT_DATA_API_TOKEN')
-  const collectorId = env('BRIGHT_DATA_COLLECTOR_ID')
+  const collectorId = configuredCollectorId()
   const operatorToken = env('WEBRECEIPT_OPERATOR_TOKEN')
   const allowUnprotectedLive = /^(1|true|yes)$/i.test(env('WEBRECEIPT_ALLOW_UNPROTECTED_LIVE'))
   const configured = Boolean(token && validCollectorId(collectorId))
@@ -77,10 +89,7 @@ export function requireBrightDataOperator(req: Request): void {
 
 export function resolveBrightDataTarget(body: Record<string, unknown>): string {
   const bodyTarget = typeof body.targetUrl === 'string' ? body.targetUrl.trim() : ''
-  const targetUrl = bodyTarget || env('BRIGHT_DATA_TARGET_URL')
-  if (!targetUrl) {
-    throw new Error('Bright Data live mode requires targetUrl in the request body or BRIGHT_DATA_TARGET_URL in the deployment environment.')
-  }
+  const targetUrl = bodyTarget || env('BRIGHT_DATA_TARGET_URL') || VERIFIED_BRIGHT_DATA_TARGET
   return targetUrl
 }
 
