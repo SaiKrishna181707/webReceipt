@@ -14,7 +14,7 @@ function classify(error: unknown): { status: number; code: string; message: stri
   // the stable contract between the request reader and route handler.
   if ([400, 413].includes(status) && ['invalid_json', 'body_too_large'].includes(code))
     return { status, code, message }
-  if (/Request body must be valid JSON|Request body must be a JSON object/i.test(message))
+  if (/Request body must be valid(?: UTF-8)? JSON|Request body must be a JSON object/i.test(message))
     return { status: 400, code: 'invalid_json', message }
   if (/Request body exceeds \d+ bytes/i.test(message))
     return { status: 413, code: 'body_too_large', message }
