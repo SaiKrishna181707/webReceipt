@@ -21,7 +21,7 @@ function randomSpider(w: number, h: number): Spider {
     angle: Math.random() * Math.PI * 2,
     turn: 0,
     speed: 14 + Math.random() * 26,
-    scale: (0.55 + Math.random() * 0.7) * 1.2,
+    scale: (0.55 + Math.random() * 0.7) * 1.1,
     pauseUntil: 0,
   }
 }
@@ -96,6 +96,30 @@ export function Spiders() {
           .wr-spider-legs-a, .wr-spider-legs-b { animation: none; }
         }
       `}</style>
+
+      {/* Subtle spider webs behind the content. */}
+      <svg className="absolute inset-0 h-full w-full opacity-[0.16]" viewBox="0 0 1600 900" preserveAspectRatio="none">
+        <g fill="none" stroke="#33ff66" strokeWidth="1">
+          <g transform="translate(45 45)">
+            <path d="M0 0 L330 0 M0 0 L260 155 M0 0 L0 260 M0 0 L-170 170" />
+            <path d="M35 0 Q42 42 75 63 Q105 82 140 82 Q175 82 205 99 Q230 114 260 155" />
+            <path d="M90 0 Q98 27 120 44 Q150 66 182 68 Q215 70 238 92" />
+            <path d="M150 0 Q155 18 170 30 Q195 48 218 52" />
+          </g>
+          <g transform="translate(1555 855) rotate(180)">
+            <path d="M0 0 L340 0 M0 0 L270 165 M0 0 L0 270 M0 0 L-180 180" />
+            <path d="M38 0 Q45 45 78 66 Q110 86 145 86 Q180 86 210 103 Q240 120 270 165" />
+            <path d="M96 0 Q104 30 127 47 Q157 69 190 72 Q220 75 246 98" />
+            <path d="M158 0 Q163 19 179 32 Q202 50 224 54" />
+          </g>
+          <g transform="translate(1430 120)">
+            <path d="M0 0 L150 0 M0 0 L125 90 M0 0 L0 145" />
+            <path d="M22 0 Q28 25 48 38 Q67 50 88 52 Q108 54 125 70" />
+            <path d="M55 0 Q60 16 74 25 Q90 36 105 38" />
+          </g>
+        </g>
+      </svg>
+
       {Array.from({ length: COUNT }).map((_, i) => (
         <div
           key={i}
