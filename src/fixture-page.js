@@ -1,13 +1,19 @@
 export function renderHotelFixture(version = 'v1') {
-  const broken = version === 'v2';
-  const finalMarkup = broken
-    ? `<div class="legacy"><span>Subtotal</span><strong class="total-price">₹8,499</strong></div><div class="actual-total redesigned-total" data-testid="order-total"><span>Total due today</span><strong><span class="currency-symbol">₹</span><span class="major">10,147</span></strong></div>`
-    : `<div class="actual-total"><span>Total due today</span><strong class="total-price" data-testid="order-total">₹10,147</strong></div>`;
+  const isV2 = version === 'v2';
+  const isV3 = version === 'v3';
+
+  const finalMarkup = isV3
+    ? `<div class="legacy"><span>Estimated room subtotal</span><strong class="total-price">₹8,499</strong></div><button class="review-button" type="button" data-testid="review-final-amount">Review final amount</button><div data-testid="final-total-slot"></div>`
+    : isV2
+      ? `<div class="legacy"><span>Subtotal</span><strong class="total-price">₹8,499</strong></div><div class="actual-total redesigned-total" data-testid="order-total"><span>Total due today</span><strong><span class="currency-symbol">₹</span><span class="major">10,147</span></strong></div>`
+      : `<div class="actual-total"><span>Total due today</span><strong class="total-price" data-testid="order-total">₹10,147</strong></div>`;
+
+  const checkoutStep = isV3 ? 'Step 2 of 3 · Checkout summary' : 'Step 2 of 2 · Checkout summary';
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ocean House — WebReceipt Fixture</title>
 <style>
-  body{margin:0;background:#f4f1ea;color:#182019;font-family:system-ui,sans-serif}.wrap{max-width:920px;margin:60px auto;padding:0 24px}.tag{font-size:12px;text-transform:uppercase;letter-spacing:.13em;color:#57665a}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px}.hero,.box{background:white;border:1px solid #d9d6cc;border-radius:18px;padding:28px}.hero h1{font-size:42px;margin:8px 0}.price{font-size:34px;font-weight:900}.claim{display:inline-block;background:#edf7e7;padding:8px 10px;border-radius:9px;margin:7px 5px 0 0}.row,.actual-total,.legacy{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #ece9e0}.actual-total{font-size:22px;border:0;padding-top:22px}.legacy{color:#69746b}.terms{margin-top:22px}.version{position:fixed;right:16px;top:16px;background:#182019;color:white;padding:8px 10px;border-radius:8px;font-size:11px}.cta{margin-top:22px;border:0;border-radius:12px;background:#182019;color:white;padding:13px 18px;font-weight:800;cursor:pointer}.step{margin-top:14px;font-size:13px;color:#647064}.box[hidden]{display:none}.notice{font-size:13px;color:#5f695f;margin-top:12px}
+  body{margin:0;background:#f4f1ea;color:#182019;font-family:system-ui,sans-serif}.wrap{max-width:920px;margin:60px auto;padding:0 24px}.tag{font-size:12px;text-transform:uppercase;letter-spacing:.13em;color:#57665a}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px}.hero,.box{background:white;border:1px solid #d9d6cc;border-radius:18px;padding:28px}.hero h1{font-size:42px;margin:8px 0}.price{font-size:34px;font-weight:900}.claim{display:inline-block;background:#edf7e7;padding:8px 10px;border-radius:9px;margin:7px 5px 0 0}.row,.actual-total,.legacy{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #ece9e0}.actual-total{font-size:22px;border:0;padding-top:22px}.legacy{color:#69746b}.terms{margin-top:22px}.version{position:fixed;right:16px;top:16px;background:#182019;color:white;padding:8px 10px;border-radius:8px;font-size:11px}.cta,.review-button{margin-top:22px;border:0;border-radius:12px;background:#182019;color:white;padding:13px 18px;font-weight:800;cursor:pointer}.review-button{width:100%;background:#46524a}.step{margin-top:14px;font-size:13px;color:#647064}.box[hidden]{display:none}.notice{font-size:13px;color:#5f695f;margin-top:12px}
   @media(max-width:760px){.grid{grid-template-columns:1fr}.wrap{margin:30px auto}.hero h1{font-size:34px}}
 </style></head>
 <body>
@@ -38,15 +44,33 @@ export function renderHotelFixture(version = 'v1') {
           <p id="payment-timing"><strong>Payment:</strong> Pay now</p>
           <p id="inclusions"><strong>Includes:</strong> Breakfast</p>
         </div>
-        <div class="step">Step 2 of 2 · Checkout summary</div>
+        <div class="step" data-testid="checkout-journey-state">${checkoutStep}</div>
       </section>
     </div>
   </div>
 <script>
   document.querySelector('[data-testid="continue-to-checkout"]').addEventListener('click', () => {
     document.querySelector('[data-testid="checkout-panel"]').hidden = false;
-    document.querySelector('[data-testid="journey-state"]').textContent = 'Step 2 of 2 · Checkout opened';
+    document.querySelector('[data-testid="journey-state"]').textContent = '${isV3 ? 'Step 2 of 3 · Checkout opened' : 'Step 2 of 2 · Checkout opened'}';
   });
+
+  const reviewButton = document.querySelector('[data-testid="review-final-amount"]');
+  if (reviewButton) {
+    reviewButton.addEventListener('click', () => {
+      const money = (selector) => Number(document.querySelector(selector).textContent.replace(/[^0-9]/g, ''));
+      const total = money('[data-testid="base-price"]') + money('.fee-property') + money('.fee-service') + money('[data-testid="tax"]');
+      const slot = document.querySelector('[data-testid="final-total-slot"]');
+      const totalRow = document.createElement('div');
+      totalRow.className = 'actual-total redesigned-total';
+      totalRow.setAttribute('data-testid', 'order-total');
+      totalRow.innerHTML = '<span>Amount payable now</span><strong><span class="currency-symbol">₹</span><span class="major"></span></strong>';
+      totalRow.querySelector('.major').textContent = total.toLocaleString('en-IN');
+      slot.replaceChildren(totalRow);
+      reviewButton.remove();
+      document.querySelector('[data-testid="checkout-journey-state"]').textContent = 'Step 3 of 3 · Final amount reviewed';
+      document.querySelector('[data-testid="journey-state"]').textContent = 'Step 3 of 3 · Final amount reviewed';
+    });
+  }
 </script>
 </body></html>`;
 }
