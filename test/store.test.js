@@ -4,11 +4,19 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { JsonStore } from '../src/services/store.js';
+import { JsonStore, resolveStateFile } from '../src/services/store.js';
 import { WebReceiptService } from '../src/services/orchestrator.js';
 import { SimulatorCollector } from '../src/integrations/simulator.js';
 import { compileDealContract } from '../src/domain/contract.js';
 import { healthyObservation } from '../src/fixtures/observations.js';
+
+test('Vercel state defaults to writable temp storage instead of the read-only project tree', () => {
+  const resolved = resolveStateFile({ VERCEL:'1', WEBRECEIPT_STATE_FILE:'data/state.json' });
+  assert.equal(resolved, path.join(os.tmpdir(), 'webreceipt-state.json'));
+  assert.equal(resolveStateFile({ VERCEL_ENV:'production' }), path.join(os.tmpdir(), 'webreceipt-state.json'));
+  const explicitTmp = path.join(os.tmpdir(), 'custom-webreceipt-state.json');
+  assert.equal(resolveStateFile({ VERCEL:'1', WEBRECEIPT_STATE_FILE:explicitTmp }), explicitTmp);
+});
 
 test('concurrent observations preserve valid atomic JSON state', async (t) => {
   const file = path.join(os.tmpdir(), `webreceipt-concurrency-${randomUUID()}.json`);
