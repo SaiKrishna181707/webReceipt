@@ -57,7 +57,7 @@ export class WebReceiptService {
   }
 
   async repair({ contract = null, integrity = null, failure = null, mutation = 'healthy', targetUrl }) {
-    const prompt = makeHealPrompt(contract, integrity, failure, targetUrl);
+    const prompt = makeHealPrompt(contract, integrity, failure);
     if (integrity) {
       await this.store.event('integrity', 'Semantic contract failure detected', {
         mutation,
@@ -320,13 +320,10 @@ export class WebReceiptService {
   }
 }
 
-function makeHealPrompt(contract, integrity, failure, targetUrl) {
+function makeHealPrompt(contract, integrity, failure) {
   if (failure) {
-    const error = String(failure?.message || failure).replace(/\s+/g, ' ').slice(0, 360);
-    return `WebReceipt collector failure before Deal Contract compilation. Preserve the output schema and collector identity. Repair extraction on the current public page so advertised price, base price, mandatory fees, taxes, final amount due, cancellation, refundability, payment timing, inclusions, offer name, and journey state are returned correctly. Failure: ${error}. The final amount must equal base price + mandatory fees + taxes. Target: ${targetUrl}`;
+    return 'The scraper fails after the page interaction changed. Repair the interaction and parser while keeping the existing output schema and same collector. Ensure order_total is the final payable amount, not a subtotal, and preserve prices, required fees, tax, terms, offer_name, and journey_state.';
   }
-  const failures = integrity.failures
-    .map((item) => `${item.id}: ${JSON.stringify(item.details)}`)
-    .join('; ');
-  return `WebReceipt semantic integrity failure. Preserve the output schema and collector identity. Re-extract values from the current public page based on field meaning, not legacy selectors. Failures: ${failures}. Critical rule: checkout.finalTotal must represent the amount due and equal checkout.basePrice + checkout.mandatoryFees + checkout.taxes + checkout.optionalAddons - checkout.discounts. Attach source evidence for critical fields. Target: ${contract.targetUrl}`;
+  const failedChecks = integrity.failures.map((item) => item.id).slice(0, 4).join(', ');
+  return `Checkout extraction is semantically invalid (${failedChecks}). Repair the scraper while keeping the existing output schema and same collector. Extract fields by meaning, not old selectors. order_total must be the final payable amount and must match base price plus required fees and tax.`;
 }
