@@ -28,6 +28,14 @@ test('web request parser rejects malformed JSON instead of silently using defaul
   );
 });
 
+test('web request parser rejects invalid UTF-8 instead of decoding replacement characters', async () => {
+  const invalid = new Uint8Array([0x7b, 0x22, 0x78, 0x22, 0x3a, 0x22, 0xff, 0x22, 0x7d]);
+  await assert.rejects(
+    () => readWebJson(request(invalid)),
+    (error) => error instanceof WebRequestError && error.status === 400 && error.code === 'invalid_json',
+  );
+});
+
 test('web request parser rejects arrays and primitives', async () => {
   for (const body of ['[]', 'null', '42', '"text"']) {
     await assert.rejects(
