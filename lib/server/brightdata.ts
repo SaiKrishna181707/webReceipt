@@ -3,6 +3,11 @@ import { BrightDataCollector } from '@/src/integrations/brightdata.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
+// Public/non-secret metadata. Keeping the verified collector in code means the
+// production deployment only needs the Bright Data API token to activate the
+// proven scraper. BRIGHT_DATA_COLLECTOR_ID can still override this for rotation.
+export const VERIFIED_BRIGHT_DATA_COLLECTOR_ID = 'c_mt3ha1iv1jgm8eg813'
+
 type BrightDataStatus = {
   configured: boolean
   collectorId: string | null
@@ -31,6 +36,12 @@ function validCollectorId(value: string): boolean {
   return /^c_[A-Za-z0-9_-]+$/.test(value) && !/^c_x+$/i.test(value)
 }
 
+function configuredCollectorId(): string {
+  // An explicit non-empty value wins even when malformed so a typo fails closed
+  // instead of silently switching to a different collector.
+  return env('BRIGHT_DATA_COLLECTOR_ID') || VERIFIED_BRIGHT_DATA_COLLECTOR_ID
+}
+
 function safeEqual(leftValue: string | null, rightValue: string): boolean {
   const left = Buffer.from(String(leftValue || ''))
   const right = Buffer.from(rightValue)
@@ -39,7 +50,7 @@ function safeEqual(leftValue: string | null, rightValue: string): boolean {
 
 export function brightDataStatus(): BrightDataStatus {
   const token = env('BRIGHT_DATA_API_TOKEN')
-  const collectorId = env('BRIGHT_DATA_COLLECTOR_ID')
+  const collectorId = configuredCollectorId()
   const operatorToken = env('WEBRECEIPT_OPERATOR_TOKEN')
   const allowUnprotectedLive = /^(1|true|yes)$/i.test(env('WEBRECEIPT_ALLOW_UNPROTECTED_LIVE'))
   const configured = Boolean(token && validCollectorId(collectorId))
