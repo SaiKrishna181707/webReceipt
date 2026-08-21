@@ -1,0 +1,26 @@
+{
+  "collector_id": "c_mt3ha1iv1jgm8eg813",
+  "status": "awaiting_approval",
+  "diff_summary": "proposed template has 1 step(s) — review at view_url",
+  "next_step": "bdata scraper approve c_mt3ha1iv1jgm8eg813 --url https://web-receipt-tawny.vercel.app/fixture/hotel",
+  "preview_result": {
+    "advertised_price": {"value": 8499, "currency": "INR"},
+    "base_price": {"value": 8499, "currency": "INR"},
+    "property_fee": {"value": 499, "currency": "INR"},
+    "service_fee": {"value": 349, "currency": "INR"},
+    "tax": {"value": 800, "currency": "INR"},
+    "order_total": {"value": 10147, "currency": "INR"},
+    "cancellation_terms": "Cancellation: Free cancellation until 21 Aug",
+    "refundability": "Refundability: Refundable",
+    "payment_timing": "Payment: Pay now",
+    "inclusions": "Includes: Breakfast",
+    "offer_name": "Ocean House · Deluxe Room",
+    "journey_state": "Step 3 of 3 · Final amount reviewed"
+  },
+  "integrity_check": {
+    "equation": "8499 + 499 + 349 + 800 = 10147",
+    "passed": true,
+    "approval_decision": "approved_for_human_save"
+  },
+  "capture_note": "Normalized token-free copy of the Bright Data CLI heal preview supplied by the operator. The original local CLI output file remains 05-heal-proposal.json on the operator machine."
+}
