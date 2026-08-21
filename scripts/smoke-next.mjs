@@ -31,6 +31,12 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+async function assertStatus(response, expected, label) {
+  if (response.status === expected) return;
+  const detail = await response.clone().text().catch(() => '');
+  throw new Error(`${label} status ${response.status}, expected ${expected}${detail ? `: ${detail}` : ''}`);
+}
+
 const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
 const nextBin = await import.meta.resolve('next/dist/bin/next');
@@ -53,12 +59,12 @@ try {
   await waitFor(`${base}/api/brightdata/health`, child, logs);
 
   let response = await fetch(`${base}/api/brightdata/health`);
-  assert(response.status === 200, `health status ${response.status}`);
+  await assertStatus(response, 200, 'health');
   let body = await response.json();
   assert(body.mode === 'not-configured', `expected not-configured, got ${body.mode}`);
 
   response = await fetch(`${base}/fixture/hotel`);
-  assert(response.status === 200, `fixture status ${response.status}`);
+  await assertStatus(response, 200, 'fixture');
   const fixture = await response.text();
   assert(fixture.includes('Review final amount'), 'production fixture is missing V3 interaction drift');
 
@@ -67,7 +73,7 @@ try {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ targetUrl: 'https://demo.webreceipt.dev/hotel/ocean-house', mutation: 'healthy' }),
   });
-  assert(response.status === 200, `simulator observe status ${response.status}: ${await response.text()}`);
+  await assertStatus(response, 200, 'simulator observe');
   body = await response.json();
   assert(body.integrity?.status === 'valid', `simulator integrity ${body.integrity?.status}`);
 
@@ -76,7 +82,7 @@ try {
     headers: { 'content-type': 'application/json' },
     body: '{broken',
   });
-  assert(response.status === 400, `malformed JSON status ${response.status}`);
+  await assertStatus(response, 400, 'malformed JSON');
   body = await response.json();
   assert(body.code === 'invalid_json', `malformed JSON code ${body.code}`);
 
@@ -85,7 +91,7 @@ try {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ pad: 'x'.repeat(300_000) }),
   });
-  assert(response.status === 413, `oversized body status ${response.status}`);
+  await assertStatus(response, 413, 'oversized body');
   body = await response.json();
   assert(body.code === 'body_too_large', `oversized body code ${body.code}`);
 
@@ -94,7 +100,7 @@ try {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ targetUrl: 'https://web-receipt-tawny.vercel.app/fixture/hotel' }),
   });
-  assert(response.status === 503, `unconfigured live status ${response.status}`);
+  await assertStatus(response, 503, 'unconfigured live');
   body = await response.json();
   assert(body.code === 'brightdata_not_configured', `unconfigured live code ${body.code}`);
 
