@@ -3,9 +3,10 @@
 import { useEffect, useRef } from 'react'
 
 const GLYPHS =
-  'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~'
+  'ｱｲｳｴｵｶｷｸｹｿｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~'
 
 interface Column {
+  x: number
   y: number
   speed: number
   length: number
@@ -52,9 +53,10 @@ export function MatrixRain({
       ctx.textBaseline = 'top'
 
       rows = Math.ceil(height / fontSize)
-      // Keep only 40% of the already-reduced streams for a much quieter background.
-      const count = Math.max(1, Math.ceil((width / fontSize) * 0.28))
+      // Keep a sparse set of streams, but distribute them across the entire viewport.
+      const count = Math.max(1, Math.ceil((width / fontSize) * 0.11))
       columns = Array.from({ length: count }, () => ({
+        x: Math.random() * Math.max(0, width - fontSize),
         y: -Math.random() * rows,
         speed: 0.32 + Math.random() * 0.7,
         length: 8 + Math.random() * 26,
@@ -72,7 +74,7 @@ export function MatrixRain({
 
       for (let i = 0; i < columns.length; i++) {
         const col = columns[i]
-        const x = i * fontSize
+        const x = col.x
         const y = Math.floor(col.y) * fontSize
 
         if (col.y >= 0 && y < height) {
