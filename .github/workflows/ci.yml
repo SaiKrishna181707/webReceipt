@@ -35,6 +35,7 @@ jobs:
           WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE: 'false'
           WEBRECEIPT_ALLOW_UNPROTECTED_LIVE: 'false'
         run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
           npm run dev -- -H 127.0.0.1 -p 3000 > /tmp/webreceipt-browser-e2e.log 2>&1 &
           SERVER_PID=$!
           cleanup() {
@@ -51,7 +52,7 @@ jobs:
             cat /tmp/webreceipt-browser-e2e.log
             exit 1
           fi
-          npx --yes @playwright/test@1.55.0 test e2e/console.spec.cjs --reporter=line --workers=1
+          npx playwright test e2e/console.spec.cjs --reporter=line --workers=1
       - name: Compile the production Next.js app and Bright Data API routes
         run: npm run build
       - name: Smoke-test the built Next.js API surface
