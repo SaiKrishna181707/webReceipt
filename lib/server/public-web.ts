@@ -1,4 +1,5 @@
 import { PublicWebCollector } from '@/src/integrations/public-web-production.js'
+import { securePublicFetch } from '@/src/integrations/pinned-public-fetch.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
@@ -14,10 +15,14 @@ export type PublicWebSession = {
  * and the healed-mutation set). Sharing one collector across anonymous requests
  * lets concurrent visitors overwrite that state during Observe/Break/Heal. The
  * durable/event store can remain shared, but collector state must not be.
+ *
+ * The production fetch implementation pins each public socket to the DNS address
+ * that passed the private/reserved-network check. This closes the DNS-rebinding
+ * gap between validating a hostname and opening the outbound connection.
  */
 export async function createPublicWebSession(): Promise<PublicWebSession> {
   const store = await getStore()
-  const collector = new PublicWebCollector()
+  const collector = new PublicWebCollector({ fetchImpl: securePublicFetch })
   const service = new WebReceiptService({ collector, store })
   return { collector, service }
 }
