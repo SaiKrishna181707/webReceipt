@@ -11,7 +11,7 @@ import {
   Radar,
   Terminal,
 } from 'lucide-react'
-import StrokeText from '@/components/effects/StrokeText'
+import MaskedHeading from '@/components/effects/MaskedHeading'
 import PixelCard from '@/components/effects/pixel-card'
 import { SystemFooter } from '@/components/matrix/system-footer'
 import { SystemTicker } from '@/components/matrix/system-ticker'
@@ -58,29 +58,29 @@ export default function LandingPage() {
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-14 lg:px-8">
           <div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Kicker tone="matrix">System / WebReceipt</Kicker>
-              <SystemRail count={6} tone="matrix" className="opacity-70" />
-              <SystemStatus label="Channel" value="Secure — established" />
+            <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.24em] text-matrix-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-matrix-400 shadow-[0_0_12px_rgba(51,255,102,.8)]" aria-hidden />
+              <span className="text-matrix-300">Live evidence system</span>
+              <span className="h-px w-14 bg-gradient-to-r from-matrix-400/70 to-transparent" aria-hidden />
+              <span className="text-void-300">Channel secure</span>
+              <span className="text-matrix-400">/</span>
+              <span className="text-void-300">Established</span>
             </div>
-            <div className="mt-2 h-[300px] w-full max-w-4xl">
-              <StrokeText
-                text={'PROOF OF\nPROMISE,\nSEALED IN CODE.'}
-                strokeColor="#33ff66"
-                fillColor="#e8ffee"
-                strokeWidth={1.4}
-                drawDuration={1.6}
-                fillDelay={0.2}
-                stagger={0.05}
-                ease="power2.out"
+
+            <div className="mt-7 max-w-5xl">
+              <MaskedHeading
+                text={'PROOF OF PROMISE,\nSEALED IN CODE.'}
+                src="/hero-mask.svg"
+                fillScale={1.18}
+                parallax={9}
+                reveal="wipe"
                 trigger="mount"
-                fillMode="wipe"
-                fontSize={128}
+                fontSize="clamp(3.5rem, 7.4vw, 7.7rem)"
                 fontWeight={800}
-                letterSpacing={-4}
               />
             </div>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
+
+            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-void-200">
               WebReceipt walks a public purchase journey, folds every price, fee and term into one canonical{' '}
               <span className="font-semibold text-void-100">Deal Contract</span>, and seals each claim with timestamped,
               tamper-evident evidence. When a redesign breaks extraction, it proposes a repair — and verifies that repair
