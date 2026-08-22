@@ -131,7 +131,7 @@ export default function LandingPage() {
 
       <div className="border-y border-matrix-400/10 bg-black/50"><SystemTicker /></div>
 
-      <div className="mx-auto max-w-7xl space-y-24 px-4 py-20 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-24 px-4 pt-20 pb-0 sm:px-6 lg:px-8">
         <section className="space-y-10">
           <SectionHead kicker="The problem" tone="alarm" title="The web is mutable. Promises are not kept." desc="Prices drift, fees appear at checkout, terms change overnight — and the scrapers meant to watch them go dark the moment a page is redesigned." />
           <div className="grid gap-6 md:grid-cols-3">
