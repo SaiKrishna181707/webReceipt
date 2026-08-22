@@ -57,18 +57,12 @@ async function malformedJson(path, headers = {}) {
 
 const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
-// `fileURLToPath`, not `new URL(…).pathname`: on Windows the latter yields
-// "/D:/…" with a leading slash, which spawn resolves to "D:\D:\…" and fails.
-// CI is ubuntu-latest so it never saw this; a Windows checkout could not run
-// the smoke test at all.
 const nextBin = fileURLToPath(await import.meta.resolve('next/dist/bin/next'));
 const logs = [];
 const child = spawn(process.execPath, [nextBin, 'start', '-p', String(port), '-H', '127.0.0.1'], {
   env: {
     ...process.env,
     NODE_ENV: 'production',
-    // Dummy values exercise the configured/protected bridge without allowing a
-    // real upstream call. Every protected test below fails before getBrightDataService.
     BRIGHT_DATA_API_TOKEN: 'ci-dummy-bright-data-token',
     BRIGHT_DATA_COLLECTOR_ID: '',
     WEBRECEIPT_OPERATOR_TOKEN: OPERATOR_TOKEN,
@@ -104,6 +98,42 @@ try {
   await assertStatus(response, 200, 'simulator observe');
   body = await response.json();
   assert(body.integrity?.status === 'valid', `simulator integrity ${body.integrity?.status}`);
+  const firstObservation = body;
+
+  // Anonymous state must not expose the warm process-global ledger even after a
+  // successful observation has populated it internally.
+  response = await fetch(`${base}/api/state`, { cache: 'no-store' });
+  await assertStatus(response, 200, 'public state');
+  body = await response.json();
+  assert(Array.isArray(body.contracts) && body.contracts.length === 0, 'public state leaked server contracts');
+  assert(Array.isArray(body.events) && body.events.length === 0, 'public state leaked server events');
+
+  // Stateless Promise Diff accepts two independently sealed browser contracts.
+  response = await fetch(`${base}/api/observe`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ targetUrl: 'https://demo.webreceipt.dev/hotel/ocean-house', mutation: 'healthy' }),
+  });
+  await assertStatus(response, 200, 'second simulator observe');
+  const secondObservation = await response.json();
+
+  response = await fetch(`${base}/api/diff`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ before: firstObservation.contract, after: secondObservation.contract }),
+  });
+  await assertStatus(response, 200, 'sealed client-history diff');
+  body = await response.json();
+  assert(body.source === 'client-history', `expected client-history diff, got ${body.source}`);
+
+  const tampered = JSON.parse(JSON.stringify(secondObservation.contract));
+  tampered.checkout.finalTotal.amount += 1;
+  response = await fetch(`${base}/api/diff`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ before: firstObservation.contract, after: tampered }),
+  });
+  await assertJsonError(response, 400, 'invalid_diff', 'tampered client-history diff');
 
   for (const path of ['/api/observe', '/api/heal', '/api/diff', '/api/stress']) {
     response = await malformedJson(path);
@@ -124,8 +154,6 @@ try {
   });
   await assertJsonError(response, 400, 'invalid_json', 'invalid UTF-8 public body');
 
-  // Protected live routes authorize before parsing. No operator header means a
-  // stable 401 and must not reach Bright Data even with a syntactically valid body.
   for (const path of ['/api/brightdata/observe', '/api/brightdata/heal']) {
     response = await fetch(`${base}${path}`, {
       method: 'POST',
@@ -134,11 +162,27 @@ try {
     });
     await assertJsonError(response, 401, 'operator_required', `${path} unauthorized`);
 
-    // With the correct operator header, malformed JSON is rejected before the
-    // service/upstream collector is instantiated, so this remains network-free.
     response = await malformedJson(path, { 'x-webreceipt-operator': OPERATOR_TOKEN });
     await assertJsonError(response, 400, 'invalid_json', `${path} malformed authorized JSON`);
   }
+
+  // Public non-demo traffic is bounded before any outbound network access. A
+  // private target deterministically fails target validation for the first 12
+  // requests, then the same caller is throttled on request 13.
+  for (let i = 0; i < 12; i++) {
+    response = await fetch(`${base}/api/observe`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ targetUrl: 'http://127.0.0.1/not-a-fixture', mutation: 'healthy' }),
+    });
+    await assertJsonError(response, 400, 'invalid_target', `public limiter warmup ${i + 1}`);
+  }
+  response = await fetch(`${base}/api/observe`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ targetUrl: 'http://127.0.0.1/not-a-fixture', mutation: 'healthy' }),
+  });
+  await assertJsonError(response, 429, 'rate_limited', 'public rate limit');
 
   console.log('Next production smoke: PASS');
 } finally {
