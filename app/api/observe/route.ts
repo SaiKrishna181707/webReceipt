@@ -1,6 +1,7 @@
 import { getPublicWebService, getService } from '@/lib/server/service'
 import { brightDataStatus, getBrightDataService, VERIFIED_BRIGHT_DATA_TARGET, withBrightDataLock } from '@/lib/server/brightdata'
 import { runSafely, readBody } from '@/lib/server/handler'
+import { withPublicScrapeLimit } from '@/lib/server/public-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -67,10 +68,10 @@ export async function POST(req: Request) {
     }
 
     const service = await getPublicWebService()
-    return service.observe({
+    return withPublicScrapeLimit(req, () => service.observe({
       targetUrl,
       mutation,
       autoHeal: false,
-    })
+    }))
   })
 }
