@@ -86,17 +86,17 @@ const RED = {
 }
 
 /**
- * Void → phosphor text. 900 is true black (the screen is off), 100 is the pale
- * green-white that terminal type is actually printed in.
+ * Void → phosphor text. The secondary steps are intentionally lifted so body
+ * copy remains readable on the near-black construct without becoming white.
  */
 const VOID = {
   100: '#e8ffee',
-  200: '#c2e5ca',
-  300: '#86ad91',
-  400: '#5e7b66',
-  500: '#3f5545',
-  600: '#25382a',
-  700: '#15231a',
+  200: '#d0f0d7',
+  300: '#a0c6aa',
+  400: '#789780',
+  500: '#526b58',
+  600: '#304a36',
+  700: '#1a2d20',
   800: '#080d09',
   900: '#000000',
 }
