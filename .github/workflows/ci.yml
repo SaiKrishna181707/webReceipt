@@ -30,3 +30,5 @@ jobs:
         run: npm run build
       - name: Smoke-test the built Next.js API surface
         run: npm run smoke:next
+      - name: Stress-test the built app on localhost
+        run: npm run stress:next
