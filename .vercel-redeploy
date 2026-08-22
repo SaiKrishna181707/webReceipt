@@ -1,2 +1,3 @@
-UI restore checkpoint: masked hero heading + puzzle logo animation. Trigger production deploy from restored main after latest CSS-safe masked heading fix.
-Production redeploy trigger: 2026-08-22T09:40:00Z
+UI restore checkpoint: masked hero heading + puzzle logo animation.
+Production redeploy trigger: 2026-08-22T10:00:00Z
+Masked heading/logo correction commit: 3d34b0f262d91298f51b43a5ba3e0df71f2635b1
