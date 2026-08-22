@@ -54,5 +54,16 @@ export function DecryptText({ text, className = '', delay = 0 }: DecryptTextProp
     }
   }, [text, delay])
 
-  return <span className={className}>{display}</span>
+  // Keep the final text in the layout invisibly while the scrambled layer changes.
+  // This prevents glyph-width changes from reflowing the hero and making the page jump.
+  return (
+    <span className={`inline-grid align-baseline ${className}`}>
+      <span className="invisible col-start-1 row-start-1 whitespace-nowrap" aria-hidden="true">
+        {text}
+      </span>
+      <span className="col-start-1 row-start-1 whitespace-nowrap" aria-live="off">
+        {display}
+      </span>
+    </span>
+  )
 }
