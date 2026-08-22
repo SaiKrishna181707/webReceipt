@@ -142,9 +142,13 @@ export default function Strands({
     const ctn = ctnDom.current
     if (!ctn) return
 
-    // Keep the signature wave on the right side of the evidence panel so the
-    // animation never runs through the explanatory copy on the left.
-    ctn.style.clipPath = 'inset(0 0 0 50%)'
+    // The evidence panel gives the explanatory copy the left half. Make the
+    // WebGL surface itself the right half so the shader's coordinate origin is
+    // the center of the metrics column, not the center of the whole panel.
+    ctn.style.left = '50%'
+    ctn.style.right = 'auto'
+    ctn.style.width = '50%'
+    ctn.style.clipPath = 'none'
 
     const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr: Math.min(window.devicePixelRatio || 1, 1.5) })
     const gl = renderer.gl
