@@ -19,10 +19,9 @@ Four rules carry the whole system:
 
 And one constraint inherited from the previous system, still in force:
 
-Every atmospheric visual — the code rain, floor grid, dust, scanlines, wordmark,
-crawler and fallback portrait — is procedural: canvas, CSS gradients, or inline
-SVG. The one character asset is an original, non-identifiable operator portrait;
-it is documented in §7 and contains no third-party show or actor image.
+Every atmospheric visual — the tunnel, the drifting glyphs, the scanlines, the
+wordmark and the crawler — is procedural: WebGL shaders, CSS gradients, or inline
+SVG. The one raster asset in the interface is the opening sequence's portrait.
 
 ---
 
@@ -45,14 +44,18 @@ Three of those six are the same hue at different intensities. That is deliberate
 `warn` and `alarm` are the only non-green tones in the product, which is what makes
 a red row impossible to miss.
 
-Legacy scale names (`neon`/`mint`→`matrix`, `gold`/`stud`→`phosphor`,
-`aqua`/`azure`→`data`, `blood`/`rose`→`alarm`, `sunset`/`amber`/`tangerine`→`warn`,
-`violet`/`vice`/`night`/`plate`→`void`) are kept **only** so no surface can fall
-back to an off-theme Tailwind pink or orange. Do not write new code against them.
+Every scale also carries a **`DEFAULT`** — the `400` stop, except `void`, where it is
+true black. Without it Tailwind emits nothing at all for the bare utility, so
+`border-matrix` and `text-matrix` render as if unstyled. Nothing in the app relies on
+the bare form today (the opening sequence was the one place that did, and it now names
+`matrix-400` / `matrix-300` explicitly, which is clearer at the call site) — the
+`DEFAULT` is there so reaching for it is never a silent no-op.
 
-`violet` still shadows Tailwind's built-in violet; here it resolves to the void, so
-`violet-*` anywhere in this repo is black-to-phosphor-white and there is no
-`violet-50/100/900`.
+The palette is these six names and nothing else. Earlier revisions carried a set of
+Vice City aliases (`neon`, `mint`, `gold`, `aqua`, `sunset`, `violet`, and a dozen
+more) so no surface could fall back to an off-theme Tailwind pink; every one of them
+had reached zero call sites and they have been removed. If you find one in a diff, it
+is a mistake, not a legacy path.
 
 ### Backgrounds and shadows
 
@@ -64,10 +67,6 @@ weaker one in the upper left. Pages never paint their own background.
 - `bg-matrix-rule` — a hairline running transparent → phosphor → transparent. The
   navigation and footer edges.
 - `shadow-matrix` / `shadow-matrix-sm` — hairline ring + near halo + far bloom.
-- `shadow-chrome` — hot top edge, black underside, long fall-off. For trim.
-- `shadow-deco` — the panel shadow: inset highlight, deep drop, faint green spill.
-- `bg-code-fade`, `bg-chrome` and `bg-sunset-sky` (now a black→deep-green gradient)
-  are defined and available. Reach for them before hand-rolling a new gradient.
 
 Halo strength is tuned in one place — `--halo-soft` / `--halo` / `--halo-hot` in
 `:root`. Do not invent a new `box-shadow` blur radius per component.
@@ -76,8 +75,18 @@ Halo strength is tuned in one place — `--halo-soft` / `--halo` / `--halo-hot` 
 
 ## 2. Typography
 
-Two families, loaded through a single Google Fonts `@import` at the top of
-[app/globals.css](app/globals.css) (Inter + JetBrains Mono, `display=swap`).
+Two families, loaded through `next/font/google` in
+[app/layout.tsx](app/layout.tsx) (Inter + JetBrains Mono, both variable faces,
+`display: 'swap'`). They are self-hosted and preloaded at build time; they used to
+arrive through an `@import` at the top of `globals.css`, which is the one place a
+font request can block first paint twice over — the stylesheet has to parse before
+the import is even discovered.
+
+The catch is that `next/font` generates a **hashed family name**, so nothing may
+name `Inter` or `JetBrains Mono` and expect a hit. Every rule goes through
+`var(--font-display)` / `var(--font-mono)`, and both the Tailwind `fontFamily` map
+and the raw `font-family` declarations in `globals.css` are written that way. A
+literal family name there fails silently to `system-ui`.
 
 | Role | Family | Usage |
 | --- | --- | --- |
@@ -99,13 +108,10 @@ which is what the `Kicker` component and the `.sys-label` class both emit.
 
 ### Text treatments
 
-`.phosphor-text` / `.phosphor-text-bright` (a tight core plus one short halo — at
-most one line per screen), `.code-text`, `.outline-text`, `.sys-prompt` (draws a
-`>` in the `::before`, so it can never be selected or copied), and `.caret` (a
-blinking block caret for anything reading as a live terminal).
-
-`.neon-text`, `.chrome-text` and `.sunset-text` survive as aliases so no legacy
-call site loses its colour; they resolve to the phosphor treatments.
+`.phosphor-text` (a tight core plus one short halo — at most one line per screen),
+`.code-text`, `.sys-prompt` (draws a `>` in the `::before`, so it can never be
+selected or copied), and `.caret` (a blinking block caret for anything reading as a
+live terminal).
 
 ---
 
@@ -137,40 +143,71 @@ class rather than six.
 
 | File | Role |
 | --- | --- |
-| `matrix-background.tsx` | Composes the five layers. Fixed, `aria-hidden`, pointer-transparent. |
-| `matrix-rain.tsx` | The code rain. One canvas, one `requestAnimationFrame` loop, no React state. |
+| `matrix-background.tsx` | Composes the four layers. Fixed, `aria-hidden`, pointer-transparent. |
+| `use-reduced-motion.ts` | A live `prefers-reduced-motion` subscription. Every WebGL loop reads it — the CSS query cannot reach a `requestAnimationFrame` loop. |
 | `use-scan.ts` | The scan state machine. **The only** implementation of a scan in the repo. |
 | `matrix-scan.tsx` | The visible half: sweeping line, digital noise, terminal readout. Renders nothing when idle. |
 | `boot-intro.tsx` | The opening sequence (§5). |
-| `guide-character.tsx` / `guide-portrait.tsx` | The resident guide (§6) and its portrait slot (§7). |
+| `spiders.tsx` | Three crawlers on the page, `z-[2]`. One `requestAnimationFrame` loop for all of them. |
 | `logo-spider.tsx` | The crawler beside the wordmark. Pure CSS, no JS, no re-render. |
 | `system-ticker.tsx` | A slow marquee of what the system *is* — static capability labels, never a live reading. |
 | `system-footer.tsx` | The bottom of the system, including what this build actually runs against. |
+
+### The effect layer — [components/effects/](components/effects)
+
+Five WebGL/canvas effects vendored from React Bits (`ts-tailwind` variants) and
+adapted. Four adaptations apply to all of them: `'use client'`, a
+`prefers-reduced-motion` bail-out, phosphor recolour, and a cleanup that actually
+releases the GL context — Strict Mode double-invokes effects in dev, so a leak
+there caps the browser out within a few navigations.
+
+| File | Role | Dep |
+| --- | --- | --- |
+| `light-tunnel.tsx` | The background. Cables receding to a vanishing point, with pulses running outward. The one always-on shader. | ogl |
+| `strands.tsx` | Ribbons behind the Evidence panel. The page's single signature effect. | ogl |
+| `magic-rings.tsx` | Rings expanding from behind the hero wordmark. **Ported from three.js to ogl** — the fragment shader is upstream's, unchanged; only the renderer differs. | ogl |
+| `pixel-card.tsx` | A pixel field that grows in on hover. Defaults to the `matrix` variant; the `alarm` variant is for panels already toned red. | — |
+| `click-spark.tsx` | Sparks at the click point, on a fixed viewport-sized canvas. | — |
+| `gated-effect.tsx` | IntersectionObserver wrapper. Mounts its child onscreen, **unmounts** it off — pausing a loop is not enough, the context has to be released. | — |
+| `palette.ts` | The only place an effect's colour is decided. Derives from `matrixTones`, so a shader cannot drift off-theme. | — |
+
+**Budget: one always-on shader.** The tunnel is always live; MagicRings and Strands
+render through `GatedEffect` and are gone the moment their section scrolls away. If
+a third always-on shader ever looks necessary, one of these has to go.
+
+Effects that sit on a `MatrixPanel` go **inside** it, above the panel face and below
+the content (`relative z-[1]`), never behind it. The `.panel` background ends at
+`rgba(6,9,6,0.9)` — 90% opaque — so a canvas underneath is invisible.
 
 ### Utility classes — [app/globals.css](app/globals.css)
 
 `.panel` / `.panel-rail` / `.panel-marks` / `.panel-lift` · `.terminal` /
 `.terminal-bar` / `.terminal-phosphor` · `.sys-btn` / `.sys-btn-solid` /
-`.sys-btn-ghost` · `.sys-label` / `.sys-prompt` / `.caret` · `.sys-rule` /
-`.chrome-rule` · `.scan-host` / `.scan-line` / `.scan-line-hover` /
-`.scan-readout` / `.scan-noise` · `.hud-meter` (drive with `--meter: <hex>`) ·
-`.status-dot` / `.status-dot-live` · `.wr-logo` / `.wr-tile*` / `.wr-word*` ·
-`.wr-spider*` · `.construct-grid` / `.construct-dust` · `.crt-overlay` /
-`.crt-vignette` (mounted once in the root layout, `aria-hidden`) ·
-`.scene-3d` / `.card-3d` / `.tilt-3d` · `.reveal` / `.reveal-in` · `.skip-link`.
+`.sys-btn-ghost` · `.sys-label` / `.sys-prompt` / `.caret` · `.sys-rule` ·
+`.scan-host` / `.scan-line` / `.scan-line-hover` / `.scan-readout` /
+`.scan-noise` · `.hud-meter` (drive with `--meter: <hex>`) · `.status-dot` /
+`.status-dot-live` · `.wr-logo` / `.wr-tile*` / `.wr-word*` / `.wr-flicker` ·
+`.wr-spider*` · `.sun-disc` · `.crt-overlay` / `.crt-vignette` (mounted once in
+the root layout, `aria-hidden`) · `.crt-scanlines` (the scanline texture on its
+own, no positioning or sweep — for anything that sits *above* `.crt-overlay` and
+has to paint its own CRT surface, which is the opening sequence) · `.scene-3d` /
+`.card-3d` · `.reveal` / `.reveal-in` · `.skip-link`.
+
+`.wr-spider*` belongs to `logo-spider.tsx` alone. The fullscreen crawlers in
+`spiders.tsx` use `.wr-crawler-*` in a scoped `<style jsx>` block — a different
+gait (a rotation about `16px 17px`, not a translate/scale bob about `12px 12px`),
+and the two were the same class name for a while, which is a trap even when
+styled-jsx scoping happens to keep them apart.
 
 Accent colour reaches all of them through **`--accent`**, so one class serves every
 state: `<div className="panel panel-rail" style={{ '--accent': FAIL }}>`.
 
-The `.deco-panel` / `.glass-panel` / `.glass-card` / `.neon-btn` names still exist
-and now resolve to the panel and key styles above. They are a compatibility shim,
-not an API.
-
-Motion utilities: `animate-scan`, `animate-scan-once`, `animate-grid-drift`,
-`animate-caret-blink`, `animate-marquee`, `animate-float`, `animate-fade-in-up`,
-`animate-neon-pulse` (a phosphor pulse), `animate-flicker` (a failing ballast, kept
-for the wordmark), plus the globals-only `animate-glitch-in`, `animate-shimmer`,
-`animate-pulse-glow`, `animate-border-glow`, `animate-tube-flicker`.
+Motion utilities, and this is the complete list: `animate-scan`, `animate-marquee`,
+`animate-float`, `animate-fade-in-up` (from the Tailwind config) plus
+`animate-shimmer` (globals-only, used by the loading skeleton). A previous revision
+of this document advertised a dozen more — `animate-scan-once`, `animate-grid-drift`,
+`animate-neon-pulse`, `animate-glitch-in`, `animate-pulse-glow`, `animate-tube-flicker`
+and friends. None of them had a call site and none of them exist now.
 
 ### Geometry
 
@@ -193,12 +230,18 @@ none of them own state beyond local UI.
 | `evidence-drawer.tsx` | raw captured evidence | matrix-sealed drawer, data-toned capture text |
 
 That is the whole component library, plus the interface kit, the environment, the
-wordmark in [components/brand/webreceipt-logo.tsx](components/brand/webreceipt-logo.tsx),
+effect layer, the wordmark in
+[components/brand/webreceipt-logo.tsx](components/brand/webreceipt-logo.tsx),
 and [components/navigation.tsx](components/navigation.tsx). There is no
-design-system `ui/` directory, no three.js layer, no gamification, no XP or
-achievements, no voice navigation, no natural-language search, no WebSocket
-presence, and no sidebar — earlier revisions of this document described some of
-those, and none of them exist here now.
+design-system `ui/` directory, no gamification, no XP or achievements, no voice
+navigation, no natural-language search, no WebSocket presence, and no sidebar —
+earlier revisions of this document described some of those, and none of them exist
+here now.
+
+The WebGL layer runs on **`ogl`** (423 KB unpacked) and there is no `three` in the
+dependency tree. That is a deliberate ceiling, not an accident of history: three.js
+is 23 MB unpacked for what amounts to a full-screen triangle and a fragment shader.
+The MagicRings port exists precisely so it did not have to be added.
 
 ### Pages
 
@@ -215,16 +258,25 @@ be readable first; the theme is a frame around it, not a filter over it.
 
 ## 4. The environment
 
-Five layers, back to front. Nothing in it is interactive, and nothing in it is
+Four layers, back to front. Nothing in it is interactive, and nothing in it is
 announced to a screen reader.
 
 | Layer | What | Where |
 | --- | --- | --- |
 | L1 | true black + low green fog | `.construct-body::before`, `z-index: -3` |
-| L2 | falling code | `MatrixRain` canvas, inside `MatrixBackground` |
-| L3 | perspective floor grid + digital dust | `.construct-grid` / `.construct-dust`, `z-index: -1` |
-| L4 | drifting system glyphs | four absolutely-positioned spans in `MatrixBackground` |
-| L5 | the interface | everything else |
+| L2 | the tunnel | `LightTunnel` canvas, inside `MatrixBackground` |
+| L3 | drifting system glyphs | four absolutely-positioned spans in `MatrixBackground` |
+| L4 | the interface | everything else |
+
+It used to be five: L2 was the falling code and L3 a perspective floor grid plus
+digital dust. The tunnel replaced all three. It already carries depth and
+perspective, and a grid stacked on top of it read as two competing horizons.
+`matrix-rain.tsx`, `.construct-grid` and `.construct-dust` are gone — if you find
+one in a diff it is a mistake, not a legacy path.
+
+The three crawlers from `spiders.tsx` sit at `z-[2]`, between the tunnel and the
+interface. There were six at `z-[5]`; over a moving shader a cloud of them read as
+dirt on the lens rather than life in the system.
 
 Above the content, and equally non-interactive: `.crt-overlay` (scanlines plus one
 9-second sweep) and `.crt-vignette`, mounted once in the root layout.
@@ -234,26 +286,28 @@ Above the content, and equally non-interactive: `.crt-overlay` (scanlines plus o
 Performance is a constraint on this layer, not an afterthought — a background that
 costs frames is worse than no background.
 
-- **The rain is one canvas, not a particle system.** A DOM system at this density
-  would be thousands of nodes and a permanent layout cost. Here the whole
-  environment is a single composited layer.
-- **The rain never re-renders React.** No state, no props changing per frame; the
-  loop lives entirely inside one `useEffect`.
-- The loop is throttled to **~20fps**. The rain is stepped in the films too;
-  smoothness buys nothing and costs half the frames.
-- Device pixel ratio is capped at **1.5**.
-- The trail is a translucent black fill, so old glyphs decay for free rather than
-  being tracked and erased.
-- The loop **stops entirely** when the tab is hidden (`visibilitychange`) and never
-  starts under reduced motion.
-- L3 and L4 are gradients and transforms — no JS at all. The crawler is a long CSS
+- **One always-on GL context.** The tunnel. Everything else is gated (§3), which
+  means *unmounted* offscreen, not paused: browsers cap live WebGL contexts around
+  16 and silently drop the oldest, so a paused-but-mounted effect still spends one
+  of them.
+- **Nothing in the environment re-renders React.** No state, no props changing per
+  frame; every loop lives inside one `useEffect` and writes to a canvas or to
+  `style.transform` directly.
+- Each loop **stops entirely** when the tab is hidden (`visibilitychange`) and
+  under `prefers-reduced-motion`. That query collapses CSS animations globally but
+  is invisible to a `requestAnimationFrame` loop, so every effect subscribes to it
+  in JS through `use-reduced-motion.ts`.
+- Device pixel ratio is capped — 1.5 for the shaders, 2 for the spark canvas. The
+  spark canvas is `fixed` and viewport-sized rather than document-sized; a backing
+  store as tall as a long page would cost on the order of 100 MB.
+- The crawlers and L3 are transforms and gradients. The logo crawler is a long CSS
   keyframe track with repeated waypoints, which is where its pauses and changes of
-  direction come from.
-- Under 768px the environment thins out: the grid drops to `30vh` at lower opacity,
-  the dust is removed, and `--rain-opacity` falls to `0.3`.
+  direction come from — no JS at all.
+- MagicRings is desktop-only (`hidden lg:block`): at tablet width the hero's left
+  column is the full page and the rings would sit under body copy.
 
-Never add a second animation loop. If something needs to move, it goes through an
-existing keyframe or the scan system.
+Never add a second always-on loop. If something needs to move, it goes through an
+existing keyframe, the scan system, or `GatedEffect`.
 
 ---
 
@@ -277,59 +331,43 @@ collapses to an immediate handoff.
 this hook; a second implementation is how the timings drift apart.
 
 The opening sequence is the same idea at a larger scale:
-[boot-intro.tsx](components/matrix/boot-intro.tsx) runs black → figure → scan →
-boot log → lift, 3.4 seconds, **once per session**, skippable with the button or
-Escape, and never at all under reduced motion. The short runtime is the point — a
-cinematic that plays on every navigation stops being cinematic and becomes a toll.
+[boot-intro.tsx](components/matrix/boot-intro.tsx) holds the portrait and types the
+three lines over ~2.8s (900ms of black, then 26ms a character), then **waits** — it
+does not lift on a timer. A click anywhere, Escape, Enter, Space or the Skip button
+starts the 460ms lift, after which it unmounts.
+
+Deliberately no auto-exit: the last line is the one thing on screen worth reading,
+and a cover that removes itself mid-sentence is worse than one that asks for a
+click. What keeps it from becoming a toll is the **once per session** gate
+(`sessionStorage`, so a reload or a route change does not replay it) rather than a
+short runtime.
+
+Under reduced motion it still appears — an unannounced cover that never arrives is
+its own surprise. It arrives fully typed instead, with every transition at 0ms, and
+still waits to be dismissed.
 
 ---
 
-## 6. The guide
-
-[guide-character.tsx](components/matrix/guide-character.tsx) is a resident operator
-that says one short thing and gets out of the way. Sizing is the whole design: a
-76px portrait and a panel capped at `20rem`, anchored bottom-left.
-
-- one line of dialogue, two at most, per route
-- it withdraws on its own after 11 seconds
-- dismissing it is remembered for the session
-- a 28px handle brings it back
-
-Messages live in one `SCRIPT` record keyed by route, and each one points at the
-next place worth going. If you add a route, add a line — a guide that has nothing
-to say on a page should not appear on it.
-
----
-
-## 7. The operator portrait
-
-`public/guide/guide.png` is an original, non-identifiable operator portrait for
-the opening sequence and floating guide. It takes the requested Matrix-like,
-tattooed-strategist mood without copying a real actor or a television still.
-
-The floating guide uses a 1:1.28 crop, 240×307 minimum, `object-fit: cover` with
-`object-position: top`. The opening uses the whole 2:3 figure with
-`object-fit: contain`. Both are graded to sit in the environment. See
-[public/guide/README.md](public/guide/README.md).
-
-If the file ever 404s, `GuidePortrait` renders its fallback: a head-and-shoulders
-figure resolved out of vertical code. The 404 result is cached in
-`sessionStorage`, so a missing portrait costs one request per session rather than
-one per render.
-
----
-
-## 8. Accessibility
+## 6. Accessibility
 
 - **`prefers-reduced-motion`** strips every sweep, drift and flicker: animations
   collapse to 0.01ms, `.reveal` content shows unconditionally, the CRT sweep, the
-  dust, the scan line, the crawler and the caret are removed, the grid stops
-  drifting, the rain paints 16 static passes and then never moves, the scan
-  collapses to an immediate handoff, and the opening sequence does not play. The
-  system still reads as a terminal; it just stops moving.
+  scan line, the logo crawler and the caret are removed, the scan collapses to an
+  immediate handoff, and the opening sequence arrives fully typed with 0ms
+  transitions rather than animating in. It still appears, and still waits to be
+  dismissed — see §5.
+- The **WebGL and canvas layers honour the same query in JS**, through
+  `use-reduced-motion.ts` — a CSS media query cannot reach a
+  `requestAnimationFrame` loop, so without this the shaders would keep moving on a
+  machine that asked them not to. Each one paints a single static frame and stops;
+  the spark canvas does not spark; the fullscreen crawlers do not render at all
+  (their positions come from the loop, so rendering them without it would stack
+  three of them in the top-left corner). The subscription is live, so flipping the
+  OS setting takes effect without a reload.
 - **`prefers-contrast: high`** takes borders and muted text to solid `#33ff66` /
-  `#e8ffee`, sets `--scanline-opacity: 0`, removes the grid, dust and vignette, and
-  strips the glow off every phosphor treatment.
+  `#e8ffee`, sets `--scanline-opacity: 0`, removes the vignette, flattens the
+  wordmark tiles to black-on-green with no glow, and turns `.phosphor-text` into
+  plain white with no text shadow.
 - Focus is a visible **2px phosphor outline at 2px offset**, with a short halo, on
   every focusable element via `*:focus-visible`.
 - A `.skip-link` is the first thing in the tab order.
@@ -338,7 +376,16 @@ one per render.
   links — it collapses by `max-height`, so without that its links stay focusable
   while invisible. The hamburger carries `aria-expanded` + `aria-controls`.
 - The evidence drawer closes on Escape.
+- The opening sequence **traps focus while open and unmounts on exit**, restoring
+  focus to `#main` — which carries `tabIndex={-1}` for exactly that reason, and for
+  the skip link. It used to leave a `role="dialog" aria-modal="true"` node at
+  `z-9999` in the tree forever, with Tab walking into unreachable content behind it.
+  `document.querySelectorAll('[aria-modal]').length === 0` after the intro lifts is
+  the regression test.
 - The environment and the CRT overlays are `pointer-events: none` and `aria-hidden`.
+- So is every effect canvas, including the spark canvas — it is `fixed` across the
+  whole viewport *above* the content, so without `pointer-events: none` it would
+  swallow every click on the page.
 - Phosphor text always sits on black — glow is additive on top of a contrast-safe
   pair, never the source of contrast itself.
 
@@ -348,7 +395,7 @@ screen is black because the screen is off.
 
 ---
 
-## 9. Adding a surface
+## 7. Adding a surface
 
 1. Pick the tone from its **meaning** (§1), not its looks. If it is not reporting
    a state, it is `matrix` or `phosphor`.
@@ -365,7 +412,7 @@ screen is black because the screen is off.
 5. Any bar, ratio or score is a `.hud-meter`, never a bare `<progress>`.
 6. If it needs to acknowledge a click, use the scan system. Never a local sweep.
 
-## 10. Truthfulness in the UI
+## 8. Truthfulness in the UI
 
 This is a style rule here because it is a style problem: decorative surfaces are
 exactly where a fake number goes unnoticed.
@@ -379,7 +426,7 @@ exactly where a fake number goes unnoticed.
 
 See [CLAUDE.md](CLAUDE.md) for the full set; those rules outrank anything here.
 
-## 11. Verification
+## 9. Verification
 
 `npm run verify` and `npm test` cover the engine (`src/`, `brightdata/`) only —
 they are pure-Node with no install step and no `next build`, and a retheme must

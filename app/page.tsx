@@ -12,6 +12,10 @@ import {
   Terminal,
 } from 'lucide-react'
 import { WebReceiptLogo } from '@/components/brand/webreceipt-logo'
+import { GatedEffect } from '@/components/effects/gated-effect'
+import MagicRings from '@/components/effects/magic-rings'
+import PixelCard from '@/components/effects/pixel-card'
+import Strands from '@/components/effects/strands'
 import { LogoSpider } from '@/components/matrix/logo-spider'
 import { SystemTicker } from '@/components/matrix/system-ticker'
 import {
@@ -103,11 +107,24 @@ export default function LandingPage() {
       {/* ==================================================================
           HERO
           The type sits left; a terminal reporting the pipeline sits right. The
-          code environment is already running behind both — the hero adds no
-          canvas of its own.
+          tunnel is already running behind both; the hero adds one local shader —
+          rings expanding out from behind the wordmark — and nothing else.
           ================================================================== */}
       <section className="relative w-full overflow-hidden">
-        {/* One wash so the headline never has to fight the rain for contrast. */}
+        {/* Rings behind the left column, painted before the wash so the wash
+            darkens them toward the headline. Desktop only: at tablet width the
+            left column is the full page and the rings would sit under body copy.
+            `GatedEffect` unmounts them once the hero scrolls away, releasing the
+            GL context rather than just pausing it. */}
+        <GatedEffect
+          className="pointer-events-none absolute -left-32 top-1/2 hidden h-[640px] w-[640px] -translate-y-1/2 lg:block"
+          rootMargin="300px"
+        >
+          <MagicRings ringCount={5} attenuation={13} baseRadius={0.3} radiusStep={0.11} noiseAmount={0.04} opacity={0.55} />
+        </GatedEffect>
+
+        {/* One wash so the headline never has to fight the environment for
+            contrast. */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -220,10 +237,16 @@ export default function LandingPage() {
           <div className="grid gap-6 md:grid-cols-3">
             {PROBLEMS.map(([title, body], i) => (
               <Reveal key={title} delay={i * 110}>
-                <MatrixPanel tone="alarm" className="h-full p-6">
-                  <div className="mb-4 h-px w-10 bg-alarm-400 shadow-[0_0_10px_-1px_rgba(255,77,77,.9)]" />
-                  <h3 className="mb-2 text-[17px] font-semibold text-void-100">{title}</h3>
-                  <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
+                {/* The pixel field lives *inside* the panel, not behind it: the
+                    panel face is 90% opaque, so a canvas underneath would be
+                    invisible. Padding moves onto PixelCard so the field spans the
+                    whole card and the hover target is the card, not its text. */}
+                <MatrixPanel tone="alarm" className="h-full">
+                  <PixelCard variant="alarm" className="h-full p-6">
+                    <div className="mb-4 h-px w-10 bg-alarm-400 shadow-[0_0_10px_-1px_rgba(255,77,77,.9)]" />
+                    <h3 className="mb-2 text-[17px] font-semibold text-void-100">{title}</h3>
+                    <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
+                  </PixelCard>
                 </MatrixPanel>
               </Reveal>
             ))}
@@ -297,24 +320,33 @@ export default function LandingPage() {
             ================================================================ */}
         <section>
           <Reveal>
-            <MatrixPanel tone="data" className="grid items-center gap-8 p-8 md:grid-cols-3 md:p-12">
-              <div className="space-y-3 md:col-span-2">
-                <Kicker tone="data">Provenance</Kicker>
-                <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">
-                  Evidence you can verify, not just view
-                </h2>
-                <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">
-                  Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire
-                  Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.
-                </p>
-                <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-[2px] border border-data-400/35 bg-black/60 px-4 py-2.5 font-mono text-[12px] text-data-300">
-                  <Hash size={13} aria-hidden /> 9f2c1a7e4b…c081
-                  <span className="text-void-400">contract hash · example shape</span>
+            <MatrixPanel tone="data" className="relative overflow-hidden p-8 md:p-12">
+              {/* Strands sit above the panel face and below its content — same
+                  reason as the problem cards. This is the page's one signature
+                  effect; it is not repeated anywhere else. */}
+              <GatedEffect className="pointer-events-none absolute inset-0 opacity-70" rootMargin="300px">
+                <Strands count={3} speed={0.4} glow={2.2} intensity={0.5} opacity={0.85} scale={1.6} />
+              </GatedEffect>
+
+              <div className="relative z-[1] grid items-center gap-8 md:grid-cols-3">
+                <div className="space-y-3 md:col-span-2">
+                  <Kicker tone="data">Provenance</Kicker>
+                  <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">
+                    Evidence you can verify, not just view
+                  </h2>
+                  <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">
+                    Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire
+                    Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.
+                  </p>
+                  <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-[2px] border border-data-400/35 bg-black/60 px-4 py-2.5 font-mono text-[12px] text-data-300">
+                    <Hash size={13} aria-hidden /> 9f2c1a7e4b…c081
+                    <span className="text-void-400">contract hash · example shape</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-8 md:justify-end">
-                <Metric icon={Hash} label="Per-field" value="SHA-256" />
-                <Metric icon={Clock} label="Every claim" value="Timestamped" />
+                <div className="flex gap-8 md:justify-end">
+                  <Metric icon={Hash} label="Per-field" value="SHA-256" />
+                  <Metric icon={Clock} label="Every claim" value="Timestamped" />
+                </div>
               </div>
             </MatrixPanel>
           </Reveal>

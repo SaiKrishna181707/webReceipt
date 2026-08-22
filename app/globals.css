@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -18,9 +16,17 @@
      4. System information is monospaced. Prose is not.
    ========================================================================== */
 
-:root {
-  --font-display: 'Inter';
+/* `--font-display` (Inter) and `--font-mono` (JetBrains Mono) are NOT declared
+   here. `next/font/google` defines them on <html> in app/layout.tsx, which
+   self-hosts both faces and preloads them instead of blocking first paint on a
+   request to fonts.googleapis.com.
 
+   That also means the family name is a build-time hash, not "Inter" — so every
+   rule below has to go through the variable. A literal `font-family: Inter`
+   silently falls through to system-ui. Each one keeps a literal fallback inside
+   the `var()` so the cascade still resolves if the class is ever missing. */
+
+:root {
   /* Void */
   --bg: #000000;
   --bg-subtle: #050705;
@@ -48,7 +54,6 @@
   --halo-hot: 0 0 34px -6px rgba(51, 255, 102, 0.75);
 
   --scanline-opacity: 0.05;
-  --rain-opacity: 0.42;
 }
 
 * {
@@ -68,7 +73,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display, Inter), system-ui, -apple-system, sans-serif;
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -80,7 +85,7 @@ h1,
 h2,
 h3,
 .display {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-display, Inter), system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.021em;
   line-height: 1.08;
@@ -96,13 +101,13 @@ h3,
 code,
 kbd,
 pre {
-  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), 'Fira Code', ui-monospace, monospace;
   font-feature-settings: 'ss01', 'zero';
 }
 
 /* A system label: the small monospaced caps that name every block. */
 .sys-label {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.24em;
@@ -154,7 +159,7 @@ pre {
   display: inline-flex;
   align-items: baseline;
   gap: 0.05em;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-display, Inter), system-ui, sans-serif;
   line-height: 1;
   /* The lockup is a picture of a word; never let it hyphenate or wrap. */
   white-space: nowrap;
@@ -418,11 +423,15 @@ pre {
 /* ============================================================================
    THE ENVIRONMENT — fixed layers behind every page.
 
-     L1  true black
-     L2  code rain          (canvas, MatrixRain)
-     L3  perspective grid + digital dust
+     L1  true black + low green fog       (.construct-body::before)
+     L2  the tunnel                       (WebGL, LightTunnel, in MatrixBackground)
+     L3  drifting system glyphs           (spans in MatrixBackground)
      L4  scan sweep + scanlines + vignette   (above content, non-interactive)
      L5  the interface
+
+   The floor grid and digital dust that used to sit between L2 and L3 are gone:
+   the tunnel already supplies depth and perspective, and stacking a CSS grid on
+   top of it read as two competing horizons.
    ========================================================================== */
 
 /* L1 + a very faint green fog pooling at the bottom of the frame. */
@@ -438,52 +447,7 @@ pre {
     #000;
 }
 
-/* L3 — a floor grid running to the vanishing point, drifting slowly toward the
-   viewer. Two repeating gradients and one transform; no JS, no layout cost. */
-.construct-grid {
-  position: fixed;
-  inset: auto 0 0 0;
-  height: 42vh;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.3;
-  background-image: repeating-linear-gradient(90deg, rgba(51, 255, 102, 0.22) 0 1px, transparent 1px 72px),
-    repeating-linear-gradient(0deg, rgba(51, 255, 102, 0.16) 0 1px, transparent 1px 64px);
-  background-size: 72px 64px;
-  transform: perspective(320px) rotateX(70deg);
-  transform-origin: bottom center;
-  animation: gridDrift 26s linear infinite;
-  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.42) 44%, transparent 86%);
-  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.42) 44%, transparent 86%);
-}
-
-@keyframes gridDrift {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 0 640px;
-  }
-}
-
-/* L3 — digital dust. Six static radial dots on a tile, floated very slowly.
-   Cheaper than any particle system and reads the same at this opacity. */
-.construct-dust {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image: radial-gradient(1px 1px at 18% 24%, rgba(123, 255, 160, 0.55) 50%, transparent 51%),
-    radial-gradient(1px 1px at 72% 12%, rgba(51, 255, 102, 0.4) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 44% 68%, rgba(51, 255, 102, 0.3) 50%, transparent 51%),
-    radial-gradient(1px 1px at 88% 54%, rgba(123, 255, 160, 0.35) 50%, transparent 51%),
-    radial-gradient(1px 1px at 8% 82%, rgba(51, 255, 102, 0.3) 50%, transparent 51%),
-    radial-gradient(1px 1px at 60% 92%, rgba(123, 255, 160, 0.28) 50%, transparent 51%);
-  background-size: 340px 340px;
-  animation: dustDrift 34s linear infinite;
-}
-
+/* Kept for `.sun-disc::after`, which crawls its code texture with this track. */
 @keyframes dustDrift {
   0% {
     background-position: 0 0;
@@ -520,6 +484,14 @@ pre {
   z-index: 9997;
   pointer-events: none;
   background: radial-gradient(122% 100% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.86) 100%);
+}
+
+/* The scanline texture on its own, with no positioning, z-index or sweep. For
+   elements that need the CRT surface locally rather than as the page-wide L4
+   layer — the boot intro sits above `.crt-overlay`, so it has to paint its own.
+   The caller supplies inset and opacity. */
+.crt-scanlines {
+  background-image: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0 1px, transparent 1px 3px);
 }
 
 @keyframes scanSweep {
@@ -671,7 +643,7 @@ pre {
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.85rem;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.2em;
@@ -704,7 +676,7 @@ pre {
   justify-content: center;
   gap: 0.55rem;
   border-radius: 2px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
   font-weight: 500;
   font-size: 12px;
   letter-spacing: 0.14em;
@@ -796,11 +768,6 @@ pre {
   text-shadow: 0 0 12px rgba(51, 255, 102, 0.55), 0 0 34px rgba(51, 255, 102, 0.28);
 }
 
-.phosphor-text-bright {
-  color: var(--green-bright);
-  text-shadow: 0 0 14px rgba(51, 255, 102, 0.6), 0 0 40px rgba(51, 255, 102, 0.3);
-}
-
 /* Code-fill: the headline is filled with a vertical fall of light. */
 .code-text {
   background: linear-gradient(180deg, #f2fff5 0%, #7bffa0 52%, #00b83f 100%);
@@ -810,25 +777,6 @@ pre {
   filter: drop-shadow(0 0 26px rgba(51, 255, 102, 0.28));
 }
 
-/* Legacy aliases from the previous theme, remapped so no call site breaks. */
-.neon-text,
-.chrome-text {
-  color: #eaffef;
-  text-shadow: 0 0 12px rgba(51, 255, 102, 0.5), 0 0 34px rgba(51, 255, 102, 0.24);
-}
-
-.sunset-text {
-  background: linear-gradient(180deg, #f2fff5 0%, #7bffa0 52%, #00b83f 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.outline-text {
-  color: transparent;
-  -webkit-text-stroke: 1.2px rgba(51, 255, 102, 0.7);
-}
-
 /* ============================================================================
    RULES, RAILS, METERS
    ========================================================================== */
@@ -836,17 +784,6 @@ pre {
 .sys-rule {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(51, 255, 102, 0.55) 22%, rgba(51, 255, 102, 0.55) 78%, transparent);
-}
-
-.neon-rule {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(51, 255, 102, 0.6) 20%, rgba(51, 255, 102, 0.6) 80%, transparent);
-  box-shadow: 0 0 10px -3px rgba(51, 255, 102, 0.6);
-}
-
-.chrome-rule {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(51, 255, 102, 0.28), transparent);
 }
 
 /* A data rail: N segments that fill left to right. Progress, or a divider. */
@@ -904,106 +841,9 @@ pre {
 }
 
 /* ============================================================================
-   LEGACY UTILITY REMAP
-   The product consoles were written against a glass/deco vocabulary. Rather
-   than rewrite every call site, those classes become Construct surfaces.
+   THE CODE DISC — a ring of phosphor with a scan crawling through it. Used by
+   `DataDisc` in matrix-ui.tsx and the console's status medallion.
    ========================================================================== */
-
-.deco-panel,
-.glass-panel,
-.glass-card {
-  position: relative;
-  border-radius: 2px;
-  background: linear-gradient(180deg, rgba(51, 255, 102, 0.03) 0%, rgba(0, 0, 0, 0.55) 46%, rgba(0, 0, 0, 0.72) 100%),
-    rgba(6, 9, 6, 0.88);
-  border: 1px solid rgba(51, 255, 102, 0.15);
-  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.7),
-    0 20px 44px -28px rgba(0, 0, 0, 1);
-  backdrop-filter: blur(6px);
-}
-
-.deco-panel::before {
-  content: '';
-  position: absolute;
-  inset: -1px -1px auto -1px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--deco-accent, #33ff66) 20%,
-    var(--deco-accent, #33ff66) 80%,
-    transparent
-  );
-  opacity: 0.6;
-  box-shadow: 0 0 10px -2px var(--deco-accent, #33ff66);
-}
-
-.deco-corner::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  pointer-events: none;
-  opacity: 0.34;
-  background-image: linear-gradient(var(--deco-accent, #33ff66) 0 100%),
-    linear-gradient(var(--deco-accent, #33ff66) 0 100%), linear-gradient(var(--deco-accent, #33ff66) 0 100%),
-    linear-gradient(var(--deco-accent, #33ff66) 0 100%);
-  background-size: 1px 9px, 9px 1px, 1px 9px, 9px 1px;
-  background-position: left top, left top, right bottom, right bottom;
-  background-repeat: no-repeat;
-}
-
-.deco-lift,
-.glass-card-hover {
-  transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.deco-lift:hover,
-.glass-card-hover:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--deco-accent, #33ff66) 42%, transparent);
-  box-shadow: inset 0 1px 0 rgba(51, 255, 102, 0.14), 0 28px 52px -30px rgba(0, 0, 0, 1),
-    0 0 44px -26px var(--deco-accent, #33ff66);
-}
-
-.neon-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  border-radius: 2px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-weight: 500;
-  font-style: normal;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #e8ffee;
-  background: rgba(51, 255, 102, 0.07);
-  border: 1px solid rgba(51, 255, 102, 0.42);
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.24s ease;
-}
-
-.neon-btn:hover {
-  border-color: rgba(51, 255, 102, 0.95);
-  background: rgba(51, 255, 102, 0.14);
-  box-shadow: 0 0 24px -8px rgba(51, 255, 102, 0.85);
-}
-
-.neon-btn-solid {
-  color: #001a08;
-  background: linear-gradient(180deg, #7bffa0 0%, #33ff66 52%, #00b83f 100%);
-  border-color: transparent;
-  font-weight: 600;
-}
-
-.glow-stud,
-.glow-lime,
-.glow-azure {
-  box-shadow: 0 0 0 1px rgba(51, 255, 102, 0.3), 0 0 38px -16px rgba(51, 255, 102, 0.6);
-}
-
-/* The banded sun is gone. Anything still asking for one gets a code disc: a
-   ring of phosphor with a scan crawling through it. */
 .sun-disc {
   position: relative;
   border-radius: 999px;
@@ -1023,7 +863,7 @@ pre {
 }
 
 /* ============================================================================
-   DEPTH
+   DEPTH — used by MatrixPanel's tilt prop for 3D card lift on hover.
    ========================================================================== */
 
 .scene-3d {
@@ -1031,14 +871,9 @@ pre {
   perspective-origin: 50% 40%;
 }
 
-.card-3d,
-.tilt-3d {
+.card-3d {
   transform-style: preserve-3d;
   transition: transform 0.4s cubic-bezier(0.2, 1.1, 0.3, 1);
-}
-
-.tilt-3d:hover {
-  transform: rotateX(3deg) rotateY(-4deg) translateZ(14px);
 }
 
 /* ============================================================================
@@ -1053,15 +888,6 @@ pre {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
 
@@ -1084,58 +910,8 @@ pre {
   }
 }
 
-@keyframes phosphorPulse {
-  0%,
-  100% {
-    opacity: 0.72;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* A short, hard glitch. Two frames of offset, then it's over. Used once, on
-   arrival — never on a loop. */
-@keyframes glitchIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-3px) skewX(6deg);
-    filter: blur(2px);
-  }
-  22% {
-    opacity: 1;
-    transform: translateX(2px) skewX(-4deg);
-  }
-  44% {
-    transform: translateX(-1px) skewX(2deg);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
-}
-
 .animate-fade-in-up {
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
-}
-
-.animate-glitch-in {
-  animation: glitchIn 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-pulse-glow,
-.animate-border-glow {
-  animation: phosphorPulse 3.4s infinite ease-in-out;
-}
-
-.animate-tube-flicker {
-  animation: flicker 9s steps(1, end) infinite;
 }
 
 .animate-float {
@@ -1187,7 +963,7 @@ pre {
   z-index: 10000;
   transform: translate(-50%, -140%);
   padding: 0.6rem 1.1rem;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1200,110 +976,10 @@ pre {
   transform: translate(-50%, 0);
 }
 
-.btn-hover {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-hover:hover {
-  transform: translateY(-1px);
-}
-
-.input-focus,
-.progress-bar {
-  transition: all 0.24s ease;
-}
-
-.tooltip {
-  position: relative;
-}
-
-.tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #050705;
-  color: var(--text);
-  border: 1px solid rgba(51, 255, 102, 0.4);
-  padding: 4px 8px;
-  border-radius: 2px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-}
-
-.tooltip:hover::after {
-  opacity: 1;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, rgba(51, 255, 102, 0.04) 25%, rgba(51, 255, 102, 0.12) 50%, rgba(51, 255, 102, 0.04) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s infinite;
-}
-
-@keyframes success-check {
-  0% {
-    stroke-dashoffset: 100;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-.success-check {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: success-check 0.5s ease forwards;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
-}
-
-.error-shake {
-  animation: shake 0.28s ease;
-}
-
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: 2.4rem !important;
-  }
-
-  .section-title {
-    font-size: 1.9rem !important;
-  }
-
   .touch-target {
     min-height: 48px;
     min-width: 48px;
-  }
-
-  /* The environment thins out on phones: less grid, no dust, fewer paints. */
-  .construct-grid {
-    height: 30vh;
-    opacity: 0.2;
-  }
-
-  .construct-dust {
-    display: none;
-  }
-
-  :root {
-    --rain-opacity: 0.3;
   }
 }
 
@@ -1315,23 +991,19 @@ pre {
     --scanline-opacity: 0;
   }
 
-  .phosphor-text,
-  .phosphor-text-bright,
-  .neon-text,
-  .chrome-text {
+  .phosphor-text {
     text-shadow: none;
     color: #ffffff;
   }
 
-  .construct-grid,
-  .construct-dust,
   .crt-vignette {
     display: none;
   }
 }
 
 /* Reduced motion strips every sweep, drift and flicker. The system still reads
-   as a terminal; it just stops moving. */
+   as a terminal; it just stops moving. The WebGL layers honour the same query in
+   JS — see `components/effects/` — because a shader loop is invisible to CSS. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1349,14 +1021,9 @@ pre {
   }
 
   .crt-overlay::after,
-  .construct-dust,
   .scan-line,
   .wr-spider-zone,
   .caret::after {
     display: none;
-  }
-
-  .construct-grid {
-    animation: none;
   }
 }

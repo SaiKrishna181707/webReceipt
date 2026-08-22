@@ -1,8 +1,27 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useReducedMotion } from './use-reduced-motion'
 
-type Spider = {
+/* ============================================================================
+   THE CRAWLERS
+
+   A few arachnids patrolling the viewport, well behind the interface. One RAF
+   loop drives all of them by writing `transform` directly — no React state, so a
+   crawl step never costs a render.
+
+   Three, not six, and at `z-[2]` rather than `z-[5]`: they now share the screen
+   with the tunnel, and a cloud of them over a moving shader read as dirt on the
+   lens rather than life in the system.
+
+   Their leg classes are `wr-crawler-*`, deliberately not the `wr-spider-*` names
+   in `globals.css`. Those belong to `logo-spider.tsx`, which has a different gait
+   (a translate/scale bob about `12px 12px`); this one rotates about `16px 17px`.
+   Two different animations under one name is a trap even when styled-jsx scoping
+   happens to keep them apart.
+   ========================================================================== */
+
+type Crawler = {
   x: number
   y: number
   angle: number
@@ -12,9 +31,9 @@ type Spider = {
   pauseUntil: number
 }
 
-const COUNT = 6
+const COUNT = 3
 
-function randomSpider(w: number, h: number): Spider {
+function randomCrawler(w: number, h: number): Crawler {
   return {
     x: Math.random() * w,
     y: Math.random() * h,
@@ -28,13 +47,14 @@ function randomSpider(w: number, h: number): Spider {
 
 export function Spiders() {
   const nodes = useRef<(HTMLDivElement | null)[]>([])
+  const reduced = useReducedMotion()
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (reduced) return
 
     let w = window.innerWidth
     let h = window.innerHeight
-    const spiders: Spider[] = Array.from({ length: COUNT }, () => randomSpider(w, h))
+    const crawlers: Crawler[] = Array.from({ length: COUNT }, () => randomCrawler(w, h))
 
     const onResize = () => {
       w = window.innerWidth
@@ -49,7 +69,7 @@ export function Spiders() {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
 
-      spiders.forEach((s, i) => {
+      crawlers.forEach((s, i) => {
         const node = nodes.current[i]
         if (!node) return
         const resting = now < s.pauseUntil
@@ -71,29 +91,60 @@ export function Spiders() {
       })
     }
 
-    raf = requestAnimationFrame(tick)
+    const start = () => {
+      if (raf === 0) {
+        last = performance.now()
+        raf = requestAnimationFrame(tick)
+      }
+    }
+    const stop = () => {
+      if (raf !== 0) {
+        cancelAnimationFrame(raf)
+        raf = 0
+      }
+    }
+    const onVisibility = () => (document.hidden ? stop() : start())
+    document.addEventListener('visibilitychange', onVisibility)
+
+    start()
     return () => {
       window.removeEventListener('resize', onResize)
-      cancelAnimationFrame(raf)
+      document.removeEventListener('visibilitychange', onVisibility)
+      stop()
     }
-  }, [])
+  }, [reduced])
+
+  /* Under reduced motion there is no loop to place them, so without this they
+     would render stacked in the top-left corner at their untransformed origin. */
+  if (reduced) return null
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[2] overflow-hidden">
       <style jsx>{`
-        @keyframes wr-spider-step {
-          0%, 100% { transform: rotate(-7deg); }
-          50% { transform: rotate(7deg); }
+        @keyframes wr-crawler-step {
+          0%,
+          100% {
+            transform: rotate(-7deg);
+          }
+          50% {
+            transform: rotate(7deg);
+          }
         }
-        .wr-spider-legs-a, .wr-spider-legs-b {
+        .wr-crawler-legs-a,
+        .wr-crawler-legs-b {
           transform-origin: 16px 17px;
           transform-box: fill-box;
-          animation: wr-spider-step 0.26s ease-in-out infinite;
+          animation: wr-crawler-step 0.26s ease-in-out infinite;
           animation-play-state: var(--leg-state, running);
         }
-        .wr-spider-legs-b { animation-direction: reverse; }
+        .wr-crawler-legs-b {
+          animation-direction: reverse;
+        }
         @media (prefers-reduced-motion: reduce) {
-          .wr-spider-legs-a, .wr-spider-legs-b { animation: none; }
+          .wr-crawler-legs-a,
+          .wr-crawler-legs-b {
+            animation: none;
+          }
         }
       `}</style>
       {Array.from({ length: COUNT }).map((_, i) => (
@@ -106,13 +157,13 @@ export function Spiders() {
         >
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-[0.42]">
             <g stroke="#33ff66" strokeWidth="1.1" strokeLinecap="round" fill="none">
-              <g className="wr-spider-legs-a">
+              <g className="wr-crawler-legs-a">
                 <path d="M15 14 L7 8 L3 11" />
                 <path d="M15 16 L6 14 L2 17" />
                 <path d="M15 18 L6 20 L3 24" />
                 <path d="M15 20 L8 24 L6 28" />
               </g>
-              <g className="wr-spider-legs-b">
+              <g className="wr-crawler-legs-b">
                 <path d="M17 14 L25 8 L29 11" />
                 <path d="M17 16 L26 14 L30 17" />
                 <path d="M17 18 L26 20 L29 24" />

@@ -1,41 +1,49 @@
-'use client'
+/* ============================================================================
+   THE WORDMARK
 
-import { useState } from 'react'
+   Two periodic-table tiles carrying the capitals — tungsten (W, 74) and rhenium
+   (Re, 75) — with the lowercase running between them: W-eb-Re-ceipt.
+
+   The lockup is CSS, not an image. Every dimension in `.wr-logo` and its children
+   is expressed in `em`, so a single `font-size` scales the whole thing: 21px in
+   the nav, 30px in the hero, 20px in the footer, all from the same rules. That is
+   also why it needs no `next/image`, no intrinsic size, and no crop offsets.
+
+   See `app/globals.css` → "THE WORDMARK" for the tile geometry.
+   ========================================================================== */
 
 interface LogoProps {
-  /** Root size in px. Kept compatible with existing callers. */
+  /** Root font-size in px. Every part of the lockup scales from it. */
   size?: number
-  /** Kept for API compatibility with existing callers. */
+  /** Flickers the second tile occasionally, like a failing ballast. */
   flicker?: boolean
   className?: string
 }
 
-const ARTWORK = '/ChatGPT_Image_Aug_21,_2026,_10_14_22_AM.png'
-
-export function WebReceiptLogo({ size = 21, className = '' }: LogoProps) {
-  const [src, setSrc] = useState(ARTWORK)
-  const height = size * 1.6
-
+export function WebReceiptLogo({ size = 21, flicker = false, className = '' }: LogoProps) {
   return (
     <span
       role="img"
       aria-label="WebReceipt"
-      className={`relative block shrink-0 overflow-hidden bg-black ${className}`}
-      style={{ height, width: height * 4.6 }}
+      className={`wr-logo shrink-0 ${className}`.trim()}
+      style={{ fontSize: size }}
     >
-      <img
-        src={src}
-        alt=""
-        onError={() => setSrc('/webreceipt-mark.svg')}
-        className="absolute max-w-none"
-        style={{
-          width: '126%',
-          height: '290%',
-          left: '-13%',
-          top: '-95%',
-          objectFit: 'fill',
-        }}
-      />
+      {/* aria-hidden throughout: the label above already reads "WebReceipt", and
+          without this a screen reader would announce "W 74 eb Re 75 ceipt". */}
+      <span aria-hidden className="wr-tile">
+        <span className="wr-tile-number">74</span>
+        <span className="wr-tile-symbol">W</span>
+      </span>
+      <span aria-hidden className="wr-word">
+        eb
+      </span>
+      <span aria-hidden className={`wr-tile ${flicker ? 'wr-flicker' : ''}`.trim()}>
+        <span className="wr-tile-number">75</span>
+        <span className="wr-tile-symbol">Re</span>
+      </span>
+      <span aria-hidden className="wr-word wr-word-accent">
+        ceipt
+      </span>
     </span>
   )
 }

@@ -2,23 +2,30 @@
 
 import dynamic from 'next/dynamic'
 
-/* Rain is client-only: it measures the viewport before it can lay out columns,
-   so there is nothing useful to render on the server. */
-const MatrixRain = dynamic(() => import('./matrix-rain').then((m) => m.MatrixRain), { ssr: false })
+/* The tunnel is client-only: it measures the viewport before it can size its
+   drawing buffer, so there is nothing useful to render on the server. */
+const LightTunnel = dynamic(() => import('@/components/effects/light-tunnel'), { ssr: false })
 
 /* ============================================================================
    THE ENVIRONMENT
 
-   Five layers, back to front:
+   Four layers, back to front:
 
-     1  true black + a low green fog          (body::before, in the stylesheet)
-     2  falling code                          (canvas)
-     3  perspective floor grid + digital dust (CSS)
-     4  drifting system symbols               (CSS)
-     5  the interface                          (everything else on the page)
+     1  true black + a low green fog   (body::before, in the stylesheet)
+     2  the tunnel                     (WebGL — cables running to a vanishing
+                                        point, with data pulses along them)
+     3  drifting system symbols        (CSS)
+     4  the interface                  (everything else on the page)
 
    All of it is fixed, `aria-hidden`, and pointer-transparent. It is atmosphere:
    it must never intercept a click or be announced to a screen reader.
+
+   This is the one shader held for the life of the page. Everything else in
+   `components/effects/` mounts through `GatedEffect` and gives its GL context
+   back when it scrolls away.
+
+   The old CSS floor grid and dust are gone: the tunnel already supplies depth and
+   perspective, and stacking a grid on top of it read as two competing horizons.
    ========================================================================== */
 
 /** A few glyphs adrift in the depth of field, well behind the UI. */
@@ -32,8 +39,8 @@ const DRIFT = [
 export function MatrixBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* L2 — the code itself. Masked at the top so the navigation stays legible
-          and at the bottom so it sinks into the grid rather than stopping. */}
+      {/* L2 — the tunnel. Masked at the top so the navigation stays legible and
+          at the bottom so it sinks into the black rather than stopping. */}
       <div
         className="absolute inset-0"
         style={{
@@ -42,14 +49,12 @@ export function MatrixBackground() {
             'linear-gradient(to bottom, rgba(0,0,0,.35) 0%, #000 22%, #000 72%, rgba(0,0,0,.25) 100%)',
         }}
       >
-        <MatrixRain fontSize={16} opacity={0.4} />
+        {/* Dim and slow on purpose. This sits under live integrity data on
+            /console; anything brighter competes with the numbers. */}
+        <LightTunnel opacity={0.5} brightness={0.85} speed={0.08} cableCount={22} glow={0.9} mouseStrength={0.06} />
       </div>
 
       {/* L3 */}
-      <div className="construct-grid" />
-      <div className="construct-dust" />
-
-      {/* L4 */}
       {DRIFT.map((d) => (
         <span
           key={d.char + d.left}
