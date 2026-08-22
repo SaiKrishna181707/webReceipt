@@ -11,8 +11,7 @@ import {
   Radar,
   Terminal,
 } from 'lucide-react'
-import MaskedHeading from '@/components/effects/MaskedHeading'
-import PixelCard from '@/components/effects/pixel-card'
+import { PixelCard } from '@/components/effects/pixel-card'
 import { SystemFooter } from '@/components/matrix/system-footer'
 import { SystemTicker } from '@/components/matrix/system-ticker'
 import {
@@ -67,21 +66,12 @@ export default function LandingPage() {
               <span className="text-void-300">Established</span>
             </div>
 
-            <div className="mt-8 max-w-3xl">
-              <MaskedHeading
-                text={'PROOF OF PROMISE\nSEALED IN CODE.'}
-                src="/hero-mask.svg"
-                fillScale={1.12}
-                parallax={14}
-                drift={4}
-                brightness={0.86}
-                saturation={0.92}
-                reveal="wipe"
-                trigger="mount"
-                textScale={0.068}
-                fontSize="clamp(3.35rem, 6.2vw, 6.4rem)"
-                fontWeight={800}
-              />
+            <div className="mt-8 max-w-4xl">
+              <h1 className="font-sans text-[clamp(3.25rem,7vw,6.9rem)] font-black uppercase leading-[0.86] tracking-[-0.055em]">
+                <span className="block text-void-50">No promises.</span>
+                <span className="block text-matrix-400 drop-shadow-[0_0_24px_rgba(51,255,102,.18)]">All evidence.</span>
+              </h1>
+              <div className="mt-5 h-px w-28 bg-matrix-400/70 shadow-[0_0_12px_rgba(51,255,102,.35)]" aria-hidden />
             </div>
 
             <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-void-200">
