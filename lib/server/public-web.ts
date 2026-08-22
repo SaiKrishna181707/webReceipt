@@ -2,35 +2,24 @@ import { PublicWebCollector } from '@/src/integrations/public-web-production.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
-type PublicWebBundle = {
+export type PublicWebSession = {
   collector: InstanceType<typeof PublicWebCollector>
   service: InstanceType<typeof WebReceiptService>
 }
 
-type PublicWebGlobal = {
-  __webreceiptPublicWeb?: Promise<PublicWebBundle>
-}
-
-const globalRef = globalThis as unknown as PublicWebGlobal
-
-async function bundle(): Promise<PublicWebBundle> {
-  if (!globalRef.__webreceiptPublicWeb) {
-    globalRef.__webreceiptPublicWeb = (async () => {
-      const store = await getStore()
-      const collector = new PublicWebCollector()
-      const service = new WebReceiptService({ collector, store })
-      return { collector, service }
-    })()
-  }
-  return globalRef.__webreceiptPublicWeb
-}
-
-export async function getPublicWebService() {
-  return (await bundle()).service
-}
-
-export async function getPublicWebCollector() {
-  return (await bundle()).collector
+/**
+ * Create an isolated public-web collector/service pair for one API request.
+ *
+ * PublicWebCollector intentionally carries transient repair state (`lastTargetUrl`
+ * and the healed-mutation set). Sharing one collector across anonymous requests
+ * lets concurrent visitors overwrite that state during Observe/Break/Heal. The
+ * durable/event store can remain shared, but collector state must not be.
+ */
+export async function createPublicWebSession(): Promise<PublicWebSession> {
+  const store = await getStore()
+  const collector = new PublicWebCollector()
+  const service = new WebReceiptService({ collector, store })
+  return { collector, service }
 }
 
 function parseTarget(rawUrl?: string): URL | null {
