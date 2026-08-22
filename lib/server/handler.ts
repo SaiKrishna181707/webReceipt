@@ -18,8 +18,18 @@ function classify(error: unknown): { status: number; code: string; message: stri
     return { status: 400, code: 'invalid_json', message }
   if (/Request body exceeds \d+ bytes/i.test(message))
     return { status: 413, code: 'body_too_large', message }
-  if (/valid URL|Only http|Credential-bearing|publicly reachable|login\/private|public anonymous|Target hostname|Target must|requires targetUrl/i.test(message))
+  if (/valid URL|Only http|Credential-bearing|publicly reachable|login\/private|public anonymous|Target hostname|Target must|requires targetUrl|private, reserved, or non-public network|did not resolve to a public address/i.test(message))
     return { status: 400, code: 'invalid_target', message }
+  if (/No public price was found|currency could not be identified reliably/i.test(message))
+    return { status: 422, code: 'unsupported_page', message }
+  if (/unsupported content type/i.test(message)) return { status: 415, code: 'unsupported_content', message }
+  if (/Public page exceeds .* byte capture limit/i.test(message)) return { status: 413, code: 'page_too_large', message }
+  if (/Public page request timed out/i.test(message)) return { status: 504, code: 'public_page_timeout', message }
+  if (/Public page returned HTTP \d+|redirected more than \d+ times/i.test(message))
+    return { status: 502, code: 'public_page_upstream', message }
+  if (/Unknown public-web mutation/i.test(message)) return { status: 400, code: 'invalid_mutation', message }
+  if (/Promise Diff contracts must belong to the same target URL|Promise Diff rejected a contract with an invalid seal/i.test(message))
+    return { status: 400, code: 'invalid_diff', message }
   if (/Operator authorization required/i.test(message)) return { status: 401, code: 'operator_required', message }
   if (/Another Bright Data operation is already running/i.test(message)) return { status: 409, code: 'live_operation_busy', message }
   if (/Need at least two stored observations/i.test(message)) return { status: 409, code: 'insufficient_history', message }
