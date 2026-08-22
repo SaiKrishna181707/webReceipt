@@ -24,15 +24,7 @@ interface Spark {
   startTime: number
 }
 
-/**
- * Click sparks rendered in true viewport coordinates.
- *
- * The canvas is portaled directly to document.body. This is important because
- * CSS `position: fixed` becomes relative to a transformed ancestor when the
- * canvas lives inside one. The app contains animated/transformed containers,
- * so keeping the canvas under <body> guarantees that clientX/clientY and the
- * canvas coordinate system are the same coordinate space.
- */
+/** Click sparks use a body-level portal so fixed viewport coordinates cannot be affected by transformed ancestors. */
 const ClickSpark: React.FC<ClickSparkProps> = ({
   sparkColor = EFFECT_BRIGHT,
   sparkSize = 10,
