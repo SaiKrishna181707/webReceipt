@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface StrokeTextProps {
   text: string
@@ -41,24 +41,23 @@ export default function StrokeText({
   letterSpacing = -4,
   className = '',
 }: StrokeTextProps) {
-  const id = useId().replace(/:/g, '')
   const [active, setActive] = useState(trigger === 'mount')
-
-  useEffect(() => {
-    if (trigger === 'mount') {
-      const frame = requestAnimationFrame(() => setActive(true))
-      return () => cancelAnimationFrame(frame)
-    }
-  }, [trigger])
-
   const lines = text.split('\n')
   const lineHeight = Math.max(fontSize * 0.86, 72)
   const height = Math.max(360, lineHeight * lines.length + 30)
   const easing = EASINGS[ease] ?? EASINGS['power2.out']
+  const fillDuration = Math.max(0.45, drawDuration * 0.55)
+  const fillDelayTotal = drawDuration + fillDelay
+
+  useEffect(() => {
+    if (trigger !== 'mount') return
+    const frame = requestAnimationFrame(() => setActive(true))
+    return () => cancelAnimationFrame(frame)
+  }, [trigger])
 
   return (
     <div
-      className={`relative h-full w-full overflow-hidden ${trigger === 'hover' ? 'group' : ''} ${className}`}
+      className={`relative h-full w-full overflow-hidden ${className}`}
       onMouseEnter={trigger === 'hover' ? () => setActive(true) : undefined}
     >
       <svg
@@ -67,19 +66,13 @@ export default function StrokeText({
         preserveAspectRatio="xMinYMid meet"
         aria-label={text.replace(/\n/g, ' ')}
         role="img"
+        style={{
+          ['--stroke-duration' as string]: `${drawDuration}s`,
+          ['--fill-delay' as string]: `${fillDelayTotal}s`,
+          ['--fill-duration' as string]: `${fillDuration}s`,
+          ['--stroke-ease' as string]: easing,
+        }}
       >
-        <defs>
-          <clipPath id={`wipe-${id}`}>
-            <rect
-              className="stroke-fill-wipe"
-              x="0"
-              y="0"
-              width="1000"
-              height={height}
-            />
-          </clipPath>
-        </defs>
-
         <g
           fill="none"
           stroke={strokeColor}
@@ -87,10 +80,6 @@ export default function StrokeText({
           strokeLinejoin="round"
           strokeLinecap="round"
           className={active ? 'stroke-draw-active' : ''}
-          style={{
-            ['--stroke-duration' as string]: `${drawDuration}s`,
-            ['--stroke-ease' as string]: easing,
-          }}
         >
           {lines.map((line, index) => (
             <text
@@ -113,13 +102,7 @@ export default function StrokeText({
         <g
           fill={fillColor}
           stroke="none"
-          clipPath={fillMode === 'wipe' ? `url(#wipe-${id})` : undefined}
           className={active ? 'stroke-fill-active' : ''}
-          style={{
-            ['--fill-delay' as string]: `${drawDuration + fillDelay}s`,
-            ['--fill-duration' as string]: `${Math.max(0.45, drawDuration * 0.55)}s`,
-            ['--stroke-ease' as string]: easing,
-          }}
         >
           {lines.map((line, index) => (
             <text
@@ -150,28 +133,18 @@ export default function StrokeText({
 
         .stroke-fill-active {
           opacity: 0;
-          transform-origin: left center;
-          animation:
-            ${fillMode === 'wipe' ? 'strokeFillReveal' : 'strokeFillFade'}
-            var(--fill-duration)
-            var(--stroke-ease)
-            var(--fill-delay)
-            forwards;
-        }
-
-        .stroke-fill-wipe {
-          transform: scaleX(0);
-          transform-origin: left center;
-          animation: strokeWipe var(--fill-duration) var(--stroke-ease) var(--fill-delay) forwards;
+          clip-path: ${fillMode === 'wipe' ? 'inset(0 100% 0 0)' : 'inset(0 0 0 0)'};
+          animation: ${fillMode === 'wipe' ? 'strokeFillWipe' : 'strokeFillFade'} var(--fill-duration) var(--stroke-ease) var(--fill-delay) forwards;
         }
 
         @keyframes strokeDraw {
           to { stroke-dashoffset: 0; }
         }
 
-        @keyframes strokeFillReveal {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        @keyframes strokeFillWipe {
+          0% { opacity: 0; clip-path: inset(0 100% 0 0); }
+          18% { opacity: 1; }
+          100% { opacity: 1; clip-path: inset(0 0 0 0); }
         }
 
         @keyframes strokeFillFade {
@@ -179,23 +152,15 @@ export default function StrokeText({
           to { opacity: 1; }
         }
 
-        @keyframes strokeWipe {
-          from { transform: scaleX(0); }
-          to { transform: scaleX(1); }
-        }
-
         @media (prefers-reduced-motion: reduce) {
           .stroke-text-outline {
             animation: none !important;
             stroke-dashoffset: 0 !important;
           }
-          .stroke-fill-wipe {
-            animation: none !important;
-            transform: scaleX(1) !important;
-          }
           .stroke-fill-active {
             animation: none !important;
             opacity: 1 !important;
+            clip-path: none !important;
           }
         }
       `}</style>
