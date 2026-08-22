@@ -6,7 +6,7 @@ import { extractPublicPageObservation } from '../src/integrations/public-web.js'
 import {
   PublicWebCollector,
   enhanceProductionCommerceHtml,
-} from '../src/integrations/public-web-production.js';
+} from '../src/integrations/public-web-priority.js';
 
 const UNLOCKER_ENDPOINT = 'https://api.brightdata.com/request';
 const LIVE_ENV = ['BRIGHT_DATA_API_TOKEN', 'BRIGHT_DATA_UNLOCKER_ZONE', 'WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE'];
