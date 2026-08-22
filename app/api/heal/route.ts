@@ -1,18 +1,23 @@
 import { getService } from '@/lib/server/service'
+import { getPublicWebService, isSimulatorTarget } from '@/lib/server/public-web'
 import { runSafely, readBody } from '@/lib/server/handler'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300
 
-// Trigger the self-heal loop for a broken mutation: re-observe with autoHeal on
-// so the engine requests a Scraper Studio repair, verifies the untrusted preview
-// against every contract invariant, deploys it, and re-runs the collector.
+// Heal the currently selected target. The controlled proof target uses the
+// deterministic simulator repair. Real public URLs re-run the public collector,
+// verify the proposed healthy preview against the same Deal Contract invariants,
+// then approve it before the mandatory post-repair verification run.
 export async function POST(req: Request) {
   return runSafely(async () => {
     const body = await readBody(req)
-    const service = await getService()
+    const targetUrl = (body.targetUrl as string) || undefined
+    const service = isSimulatorTarget(targetUrl) ? await getService() : await getPublicWebService()
+
     return service.observe({
-      targetUrl: (body.targetUrl as string) || undefined,
+      targetUrl,
       mutation: (body.mutation as string) || 'wrong-valid-total',
       autoHeal: true,
     })
