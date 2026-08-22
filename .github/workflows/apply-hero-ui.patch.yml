@@ -1,0 +1,59 @@
+name: Apply hero UI patch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: "!contains(github.event.head_commit.message, '[hero-patched]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply hero changes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import subprocess
+
+          page = Path('app/page.tsx')
+          s = page.read_text(encoding='utf-8')
+
+          if "import ParticleText from '@/components/effects/ParticleText'" not in s:
+              s = s.replace(
+                  "import PixelCard from '@/components/effects/pixel-card'",
+                  "import ParticleText from '@/components/effects/ParticleText'\nimport PixelCard from '@/components/effects/pixel-card'",
+                  1,
+              )
+
+          s = s.replace("import { WebReceiptLogo } from '@/components/brand/webreceipt-logo'\n", '', 1)
+          s = s.replace("import { LogoSpider } from '@/components/matrix/logo-spider'\n", '', 1)
+          s = s.replace('className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-28 lg:px-8"',
+                        'className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-14 lg:px-8"', 1)
+
+          s, n = re.subn(
+              r'\s*<div className="relative mt-7 inline-block">.*?</div>\s*\n\s*<h1 className="mt-6[^>]*>.*?</h1>',
+              '''\n            <div className="mt-2 h-[300px] w-full max-w-4xl">\n              <ParticleText\n                text={"PROOF OF\\nPROMISE,\\nSEALED IN CODE."}\n                particleSize={2}\n                density={4}\n                color="#eafff1"\n                highlightColor="#00ff66"\n                scatter={180}\n                gatherDuration={1600}\n                stagger={420}\n                pointerRepel={40}\n                repelRadius={120}\n                idleDrift={0.7}\n                trigger="hover"\n                fontSize="clamp(3rem, 12vw, 8rem)"\n                fontWeight={800}\n                fontFamily="inherit"\n                glow\n              />\n            </div>''',
+              s,
+              count=1,
+              flags=re.S,
+          )
+          if n != 1:
+              raise SystemExit('Hero logo/heading block was not found; refusing to patch.')
+
+          page.write_text(s, encoding='utf-8')
+
+          subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          subprocess.run(['git', 'add', 'app/page.tsx'], check=True)
+          subprocess.run(['git', 'diff', '--cached', '--quiet'], check=False)
+          if subprocess.run(['git', 'diff', '--cached', '--quiet']).returncode != 0:
+              subprocess.run(['git', 'commit', '-m', 'feat(ui): particle hero and tighter top spacing [hero-patched]'], check=True)
+              subprocess.run(['git', 'push', 'origin', 'main'], check=True)
