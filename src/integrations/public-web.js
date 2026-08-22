@@ -263,6 +263,32 @@ function brightDataUnlockerConfigured() {
   return Boolean(String(process.env.BRIGHT_DATA_API_TOKEN || '').trim() && String(process.env.BRIGHT_DATA_UNLOCKER_ZONE || '').trim() && enabled('WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE'));
 }
 
+function looksLikeAccessChallenge(html) {
+  const visible = htmlToText(html).slice(0, 12_000).toLowerCase();
+  const title = String(html).match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, ' ').toLowerCase() || '';
+  const text = `${title} ${visible}`;
+  return [
+    'verify you are human',
+    'checking your browser',
+    'just a moment',
+    'access denied',
+    'request blocked',
+    'unusual traffic',
+    'security check',
+    'captcha',
+  ].some((marker) => text.includes(marker));
+}
+
+function collectorVersionFor(response) {
+  return response.via === 'brightdata-unlocker' ? 'public-web-brightdata-v1' : 'public-web-direct-v1';
+}
+
+function fallbackError(directError, unlockerError) {
+  const direct = String(directError?.message || directError || 'unknown direct error');
+  const unlocker = String(unlockerError?.message || unlockerError || 'unknown Bright Data error');
+  return new Error(`Public page fetch failed: direct path: ${direct}; Bright Data fallback: ${unlocker}`);
+}
+
 export class PublicWebCollector {
   constructor({
     fetchImpl = fetch,
@@ -279,33 +305,40 @@ export class PublicWebCollector {
     this.lastTargetUrl = null;
   }
 
-  async requestHtml(rawUrl) {
-    if (brightDataUnlockerConfigured()) {
-      const targetUrl = await this.resolveTarget(rawUrl);
-      let response;
-      try {
-        response = await this.fetchImpl('https://api.brightdata.com/request', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${String(process.env.BRIGHT_DATA_API_TOKEN).trim()}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ zone: String(process.env.BRIGHT_DATA_UNLOCKER_ZONE).trim(), url: targetUrl, format: 'raw', method: 'GET' }),
-          signal: AbortSignal.timeout(this.timeoutMs),
-        });
-      } catch (error) {
-        if (error?.name === 'TimeoutError' || /aborted|timeout/i.test(String(error?.message || error))) {
-          throw new Error(`Bright Data Unlocker timed out after ${this.timeoutMs}ms.`);
-        }
-        throw new Error(`Bright Data Unlocker request failed: ${error?.message || error}`);
+  async requestBrightDataHtml(rawUrl) {
+    if (!brightDataUnlockerConfigured()) throw new Error('Bright Data Web Unlocker fallback is not configured.');
+    const targetUrl = await this.resolveTarget(rawUrl);
+    let response;
+    try {
+      response = await this.fetchImpl('https://api.brightdata.com/request', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${String(process.env.BRIGHT_DATA_API_TOKEN).trim()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone: String(process.env.BRIGHT_DATA_UNLOCKER_ZONE).trim(), url: targetUrl, format: 'raw', method: 'GET' }),
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch (error) {
+      if (error?.name === 'TimeoutError' || /aborted|timeout/i.test(String(error?.message || error))) {
+        throw new Error(`Bright Data Unlocker timed out after ${this.timeoutMs}ms.`);
       }
-      if (!response.ok) throw new Error(`Bright Data Unlocker failed: ${response.status} ${(await response.text()).slice(0, 500)}`);
-      const contentType = response.headers?.get?.('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const body = await response.json();
-        if (body && typeof body === 'object' && typeof body.body === 'string') return { html: body.body, sourceUrl: targetUrl, via: 'brightdata-unlocker' };
-        if (typeof body === 'string') return { html: body, sourceUrl: targetUrl, via: 'brightdata-unlocker' };
-      }
-      return { html: await readTextLimited(response, this.maxBytes), sourceUrl: targetUrl, via: 'brightdata-unlocker' };
+      throw new Error(`Bright Data Unlocker request failed: ${error?.message || error}`);
     }
+    if (!response.ok) throw new Error(`Bright Data Unlocker failed: ${response.status} ${(await response.text()).slice(0, 500)}`);
 
+    const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
+    const payload = await readTextLimited(response, this.maxBytes);
+    if (contentType.includes('application/json')) {
+      let body;
+      try { body = JSON.parse(payload); } catch { body = null; }
+      if (body && typeof body === 'object' && typeof body.body === 'string') {
+        if (Buffer.byteLength(body.body) > this.maxBytes) throw new Error(`Public page response exceeds ${this.maxBytes} bytes.`);
+        return { html: body.body, sourceUrl: targetUrl, via: 'brightdata-unlocker' };
+      }
+      if (typeof body === 'string') return { html: body, sourceUrl: targetUrl, via: 'brightdata-unlocker' };
+    }
+    return { html: payload, sourceUrl: targetUrl, via: 'brightdata-unlocker' };
+  }
+
+  async requestDirectHtml(rawUrl) {
     let current = await this.resolveTarget(rawUrl);
     for (let redirect = 0; redirect <= MAX_REDIRECTS; redirect++) {
       let response;
@@ -338,19 +371,53 @@ export class PublicWebCollector {
       if (contentType && !contentType.includes('text/html') && !contentType.includes('application/xhtml+xml') && !/^\s*</.test(html)) {
         throw new Error(`Public page returned unsupported content type: ${contentType}.`);
       }
+      if (brightDataUnlockerConfigured() && looksLikeAccessChallenge(html)) {
+        throw new Error('Public page returned an access challenge instead of the requested content.');
+      }
       return { html, sourceUrl: current, via: 'direct' };
     }
     throw new Error(`Public page exceeded ${MAX_REDIRECTS} redirects.`);
   }
 
+  async requestHtml(rawUrl) {
+    try {
+      return await this.requestDirectHtml(rawUrl);
+    } catch (directError) {
+      if (!brightDataUnlockerConfigured()) throw directError;
+      try {
+        return await this.requestBrightDataHtml(rawUrl);
+      } catch (unlockerError) {
+        throw fallbackError(directError, unlockerError);
+      }
+    }
+  }
+
+  extractObservation(response) {
+    return extractPublicPageObservation(response.html, {
+      sourceUrl: response.sourceUrl,
+      collectorVersion: collectorVersionFor(response),
+    });
+  }
+
   async collect({ url, mutation = 'healthy' } = {}) {
     if (!url) throw new Error('Public web collection requires a URL input.');
     this.lastTargetUrl = assertPublicTarget(url);
-    const response = await this.requestHtml(this.lastTargetUrl);
-    const observation = extractPublicPageObservation(response.html, {
-      sourceUrl: response.sourceUrl,
-      collectorVersion: response.via === 'brightdata-unlocker' ? 'public-web-brightdata-v1' : 'public-web-direct-v1',
-    });
+    let response = await this.requestHtml(this.lastTargetUrl);
+    let observation;
+    try {
+      observation = this.extractObservation(response);
+    } catch (directParseError) {
+      const canFallback = response.via === 'direct'
+        && brightDataUnlockerConfigured()
+        && /No commerce price with an identifiable currency/i.test(String(directParseError?.message || directParseError));
+      if (!canFallback) throw directParseError;
+      try {
+        response = await this.requestBrightDataHtml(this.lastTargetUrl);
+        observation = this.extractObservation(response);
+      } catch (unlockerError) {
+        throw fallbackError(directParseError, unlockerError);
+      }
+    }
     if (mutation !== 'healthy' && !this.healed.has(mutation)) return mutateObservation(observation, mutation);
     return observation;
   }
