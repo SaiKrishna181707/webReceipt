@@ -45,20 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MatrixBackground />
         <Navigation />
 
-        {/* `tabIndex={-1}` makes this a focus target rather than a focus stop: the
-            skip link above and the opening sequence both hand focus here, and
-            neither can without it. `outline-none` because the ring belongs on the
-            control that was activated, not on the whole page. */}
         <main id="main" tabIndex={-1} className="relative z-10 min-h-screen pt-16 outline-none">
-          {/* Sparks on every click in the content region. The canvas is fixed and
-              pointer-transparent, so it changes nothing about the layout or
-              hit-testing below it. */}
           <ClickSpark className="min-h-full">{children}</ClickSpark>
         </main>
-
-        <div className="relative z-10">
-          <div id="footer-slot" />
-        </div>
 
         <div className="crt-overlay" aria-hidden />
         <div className="crt-vignette" aria-hidden />
