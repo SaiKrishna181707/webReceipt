@@ -2,35 +2,14 @@ import { PublicWebCollector } from '@/src/integrations/public-web.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
-type PublicWebBundle = {
-  collector: InstanceType<typeof PublicWebCollector>
-  service: InstanceType<typeof WebReceiptService>
-}
-
-type PublicWebGlobal = {
-  __webreceiptPublicWeb?: Promise<PublicWebBundle>
-}
-
-const globalRef = globalThis as unknown as PublicWebGlobal
-
-async function bundle(): Promise<PublicWebBundle> {
-  if (!globalRef.__webreceiptPublicWeb) {
-    globalRef.__webreceiptPublicWeb = (async () => {
-      const store = await getStore()
-      const collector = new PublicWebCollector()
-      const service = new WebReceiptService({ collector, store })
-      return { collector, service }
-    })()
-  }
-  return globalRef.__webreceiptPublicWeb
-}
-
+// Public collectors are request-scoped so one visitor's simulated repair state
+// and last target can never affect another visitor. The shared engine store is
+// still reused internally for invariant/event bookkeeping, but anonymous UI
+// history is isolated in the browser by lib/api.ts.
 export async function getPublicWebService() {
-  return (await bundle()).service
-}
-
-export async function getPublicWebCollector() {
-  return (await bundle()).collector
+  const store = await getStore()
+  const collector = new PublicWebCollector()
+  return new WebReceiptService({ collector, store })
 }
 
 export function isSimulatorTarget(rawUrl?: string): boolean {
