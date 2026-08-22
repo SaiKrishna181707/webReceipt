@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { extractPublicPageObservation, PublicWebCollector } from '../src/integrations/public-web.js';
-import { assertPublicNetworkTarget } from '../src/domain/target-policy.js';
+import { assertPublicNetworkTarget, assertPublicTarget } from '../src/domain/target-policy.js';
+import { securePublicFetch } from '../src/integrations/pinned-public-fetch.js';
 import { compileDealContract } from '../src/domain/contract.js';
 import { evaluateIntegrity } from '../src/domain/integrity.js';
 
@@ -21,6 +22,16 @@ test('public page extraction compiles into a valid Deal Contract', () => {
   assert.equal(contract.journey.length, 2);
   assert.equal(integrity.status, 'valid');
   assert.equal(integrity.passed, integrity.total);
+});
+
+test('public page extraction falls back to visible currency text', () => {
+  const html = '<html><head><title>Ocean Room</title></head><body><h1>Ocean Room</h1><p>Final price ₹10,147 today.</p><p>Free cancellation until Friday.</p></body></html>';
+  const observation = extractPublicPageObservation(html, { sourceUrl: 'https://hotel.example/room' });
+  const contract = compileDealContract(observation);
+  assert.equal(observation.currency, 'INR');
+  assert.equal(contract.checkout.finalTotal.amount, 10147);
+  assert.match(contract.terms.cancellation, /cancellation/i);
+  assert.equal(evaluateIntegrity(contract).status, 'valid');
 });
 
 test('public collector supports deterministic break, verified preview and heal', async () => {
@@ -65,6 +76,19 @@ test('DNS validation rejects hostnames that resolve to private addresses', async
     }),
     /private\/reserved/,
   );
+});
+
+test('public target policy blocks reserved ranges and non-standard ports', () => {
+  assert.throws(() => assertPublicTarget('https://example.com:8443/item'), /ports 80 and 443/i);
+  assert.throws(() => assertPublicTarget('http://203.0.113.10/item'), /publicly reachable/i);
+  assert.throws(() => assertPublicTarget('http://198.51.100.20/item'), /publicly reachable/i);
+  assert.throws(() => assertPublicTarget('http://[2001:db8::1]/item'), /publicly reachable/i);
+  assert.equal(assertPublicTarget('https://example.com/item#fragment'), 'https://example.com/item');
+});
+
+test('DNS-pinned public fetch rejects private targets before opening a socket', async () => {
+  await assert.rejects(() => securePublicFetch('http://127.0.0.1/'), /publicly reachable/i);
+  await assert.rejects(() => securePublicFetch('http://169.254.169.254/latest/meta-data'), /publicly reachable/i);
 });
 
 test('public extraction rejects pages without a priced commerce signal', () => {
