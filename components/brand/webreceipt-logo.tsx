@@ -17,7 +17,7 @@ export function WebReceiptLogo({ size = 54, className = '' }: LogoProps) {
       role="img"
       aria-label="WebReceipt"
       className={`relative block shrink-0 overflow-visible ${className}`}
-      style={{ height, width: height * 1.5 }}
+      style={{ height, width: height * 2 }}
     >
       <img
         src={ARTWORK}
