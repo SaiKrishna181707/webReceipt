@@ -1,4 +1,4 @@
-import { PublicWebCollector } from '@/src/integrations/public-web.js'
+import { PublicWebCollector } from '@/src/integrations/public-web-resilient.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
