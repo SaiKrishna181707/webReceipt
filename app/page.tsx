@@ -111,20 +111,12 @@ export default function LandingPage() {
           rings expanding out from behind the wordmark — and nothing else.
           ================================================================== */}
       <section className="relative w-full overflow-hidden">
-        {/* Rings behind the left column, painted before the wash so the wash
-            darkens them toward the headline. Desktop only: at tablet width the
-            left column is the full page and the rings would sit under body copy.
-            `GatedEffect` unmounts them once the hero scrolls away, releasing the
-            GL context rather than just pausing it. */}
         <GatedEffect
           className="pointer-events-none absolute -left-32 top-1/2 hidden h-[640px] w-[640px] -translate-y-1/2 lg:block"
           rootMargin="300px"
         >
           <MagicRings ringCount={5} attenuation={13} baseRadius={0.3} radiusStep={0.11} noiseAmount={0.04} opacity={0.55} />
         </GatedEffect>
-
-        {/* One wash so the headline never has to fight the environment for
-            contrast. */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -140,25 +132,20 @@ export default function LandingPage() {
               <SystemRail count={6} tone="matrix" className="opacity-70" />
               <SystemStatus label="Channel" value="Secure — established" />
             </div>
-
-            {/* The wordmark at full size, with the crawler patrolling beside it. */}
             <div className="relative mt-7 inline-block">
               <WebReceiptLogo size={30} flicker />
               <LogoSpider className="-right-[68px] top-1/2 hidden -translate-y-1/2 sm:block" />
             </div>
-
             <h1 className="mt-6 font-bold uppercase leading-[0.98] tracking-[-0.02em] text-[clamp(2.1rem,6.4vw,4.25rem)]">
               <span className="block phosphor-text">Proof of promise,</span>
               <span className="block code-text">sealed in code.</span>
             </h1>
-
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
               WebReceipt walks a public purchase journey, folds every price, fee and term into one canonical{' '}
               <span className="font-semibold text-void-100">Deal Contract</span>, and seals each claim with timestamped,
               tamper-evident evidence. When a redesign breaks extraction, it proposes a repair — and verifies that repair
               against the contract’s invariants before trusting it.
             </p>
-
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>
                 Launch console <ChevronRight size={16} aria-hidden />
@@ -167,7 +154,6 @@ export default function LandingPage() {
                 Explore receipts
               </SystemLink>
             </div>
-
             <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
               {[
                 ['11', 'integrity checks'],
@@ -182,8 +168,6 @@ export default function LandingPage() {
             </dl>
           </div>
 
-          {/* The pipeline, as a terminal. Static labels — it reports what the
-              engine does, never a fabricated live run. */}
           <Reveal delay={140}>
             <div className="terminal terminal-phosphor">
               <div className="terminal-bar">
@@ -191,28 +175,20 @@ export default function LandingPage() {
                 <span className="sys-label flex-1">webreceipt · pipeline</span>
                 <SystemStatus label="" value="Ready" className="!text-[9px]" />
               </div>
-
               <ol className="relative z-[1] space-y-3 px-5 py-5">
                 {STAGES.map((s) => (
                   <li key={s.n} className="flex gap-3">
-                    <span className="mt-[3px] font-mono text-[10px] tabular-nums text-void-400">
-                      {String(s.n).padStart(2, '0')}
-                    </span>
+                    <span className="mt-[3px] font-mono text-[10px] tabular-nums text-void-400">{String(s.n).padStart(2, '0')}</span>
                     <span className="min-w-0">
-                      <span className="sys-prompt font-mono text-[12.5px] uppercase tracking-[0.16em] text-matrix-200">
-                        {s.title}
-                      </span>
+                      <span className="sys-prompt font-mono text-[12.5px] uppercase tracking-[0.16em] text-matrix-200">{s.title}</span>
                       <span className="mt-0.5 block text-[12.5px] leading-relaxed text-void-200">{s.body}</span>
                     </span>
                   </li>
                 ))}
               </ol>
-
               <div className="relative z-[1] flex items-center gap-2 border-t border-matrix-400/12 px-5 py-3">
                 <Radar size={12} className="text-matrix-400" aria-hidden />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">
-                  Collector: simulated in this app
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Collector: simulated in this app</span>
               </div>
             </div>
           </Reveal>
@@ -224,9 +200,6 @@ export default function LandingPage() {
       </div>
 
       <div className="mx-auto max-w-7xl space-y-24 px-4 py-20 sm:px-6 lg:px-8">
-        {/* ================================================================
-            PROBLEM
-            ================================================================ */}
         <section className="space-y-10">
           <SectionHead
             kicker="The problem"
@@ -237,10 +210,6 @@ export default function LandingPage() {
           <div className="grid gap-6 md:grid-cols-3">
             {PROBLEMS.map(([title, body], i) => (
               <Reveal key={title} delay={i * 110}>
-                {/* The pixel field lives *inside* the panel, not behind it: the
-                    panel face is 90% opaque, so a canvas underneath would be
-                    invisible. Padding moves onto PixelCard so the field spans the
-                    whole card and the hover target is the card, not its text. */}
                 <MatrixPanel tone="alarm" className="h-full">
                   <PixelCard variant="alarm" className="h-full p-6">
                     <div className="mb-4 h-px w-10 bg-alarm-400 shadow-[0_0_10px_-1px_rgba(255,77,77,.9)]" />
@@ -253,9 +222,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ================================================================
-            CAPABILITIES — each card scans, then routes
-            ================================================================ */}
         <section className="space-y-10">
           <SectionHead
             kicker="Subsystems"
@@ -265,75 +231,64 @@ export default function LandingPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {CAPABILITIES.map(([Icon, tone, title, body, href], i) => (
               <Reveal key={title} delay={i * 80}>
-                <SystemCard href={href} tone={tone} className="group h-full p-6">
-                  <div
-                    className="mb-4 grid h-10 w-10 place-items-center rounded-[2px] border bg-black/50"
-                    style={{
-                      borderColor: 'color-mix(in srgb, var(--accent) 45%, transparent)',
-                      color: 'var(--accent)',
-                      boxShadow: 'inset 0 0 18px -9px var(--accent)',
-                    }}
-                  >
-                    <Icon size={18} aria-hidden />
-                  </div>
-                  <h3 className="mb-2 text-[16.5px] font-semibold text-void-100">{title}</h3>
-                  <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.2em] text-void-300 transition-colors group-hover:text-matrix-300">
-                    Open <ChevronRight size={11} aria-hidden />
-                  </span>
+                <SystemCard href={href} tone={tone} className="group h-full">
+                  <PixelCard variant={tone === 'alarm' ? 'alarm' : 'matrix'} className="h-full p-6">
+                    <div
+                      className="mb-4 grid h-10 w-10 place-items-center rounded-[2px] border bg-black/50"
+                      style={{
+                        borderColor: 'color-mix(in srgb, var(--accent) 45%, transparent)',
+                        color: 'var(--accent)',
+                        boxShadow: 'inset 0 0 18px -9px var(--accent)',
+                      }}
+                    >
+                      <Icon size={18} aria-hidden />
+                    </div>
+                    <h3 className="mb-2 text-[16.5px] font-semibold text-void-100">{title}</h3>
+                    <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
+                    <span className="mt-4 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.2em] text-void-300 transition-colors group-hover:text-matrix-300">
+                      Open <ChevronRight size={11} aria-hidden />
+                    </span>
+                  </PixelCard>
                 </SystemCard>
               </Reveal>
             ))}
           </div>
         </section>
 
-        {/* ================================================================
-            PIPELINE
-            ================================================================ */}
         <section className="space-y-10">
           <SectionHead
             kicker="How it works"
             title="Input → transformation → verification → result"
             desc="Five stages, one contract. Nothing downstream trusts a value that hasn’t survived the checks."
           />
-
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {STAGES.map((s, i) => (
               <Reveal key={s.n} delay={i * 90}>
-                <MatrixPanel tone={s.tone} className="h-full p-5">
-                  <SystemRail count={4} tone={s.tone} />
-                  <div className="mt-3 flex items-baseline gap-2">
-                    <span className="font-mono text-[11px] tabular-nums text-void-400">
-                      {String(s.n).padStart(2, '0')}
-                    </span>
-                    <h3 className="text-[16px] font-semibold text-void-100">{s.title}</h3>
-                  </div>
-                  <p className="mt-2 text-[13px] leading-relaxed text-void-200">{s.body}</p>
+                <MatrixPanel tone={s.tone} className="h-full">
+                  <PixelCard variant={s.tone === 'alarm' ? 'alarm' : 'matrix'} className="h-full p-5">
+                    <SystemRail count={4} tone={s.tone} />
+                    <div className="mt-3 flex items-baseline gap-2">
+                      <span className="font-mono text-[11px] tabular-nums text-void-400">{String(s.n).padStart(2, '0')}</span>
+                      <h3 className="text-[16px] font-semibold text-void-100">{s.title}</h3>
+                    </div>
+                    <p className="mt-2 text-[13px] leading-relaxed text-void-200">{s.body}</p>
+                  </PixelCard>
                 </MatrixPanel>
               </Reveal>
             ))}
           </div>
         </section>
 
-        {/* ================================================================
-            EVIDENCE
-            ================================================================ */}
         <section>
           <Reveal>
             <MatrixPanel tone="data" className="relative overflow-hidden p-8 md:p-12">
-              {/* Strands sit above the panel face and below its content — same
-                  reason as the problem cards. This is the page's one signature
-                  effect; it is not repeated anywhere else. */}
               <GatedEffect className="pointer-events-none absolute inset-0 opacity-70" rootMargin="300px">
                 <Strands count={3} speed={0.4} glow={2.2} intensity={0.5} opacity={0.85} scale={1.6} />
               </GatedEffect>
-
               <div className="relative z-[1] grid items-center gap-8 md:grid-cols-3">
                 <div className="space-y-3 md:col-span-2">
                   <Kicker tone="data">Provenance</Kicker>
-                  <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">
-                    Evidence you can verify, not just view
-                  </h2>
+                  <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">Evidence you can verify, not just view</h2>
                   <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">
                     Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire
                     Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.
@@ -352,21 +307,11 @@ export default function LandingPage() {
           </Reveal>
         </section>
 
-        {/* ================================================================
-            CTA
-            ================================================================ */}
         <section className="space-y-6 pb-4 text-center">
-          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]">
-            <span className="phosphor-text">See the whole loop</span> <span className="code-text">in two minutes</span>
-          </h2>
-          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">
-            Observe a journey, break the extraction, heal it with a verified repair, and diff the promise — all on live
-            engine data.
-          </p>
+          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the whole loop</span> <span className="code-text">in two minutes</span></h2>
+          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe a journey, break the extraction, heal it with a verified repair, and diff the promise — all on live engine data.</p>
           <div className="flex justify-center pt-2">
-            <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>
-              Launch console <ChevronRight size={16} aria-hidden />
-            </SystemLink>
+            <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink>
           </div>
         </section>
       </div>
@@ -377,9 +322,7 @@ export default function LandingPage() {
 function Metric({ icon: Icon, label, value }: { icon: typeof Hash; label: string; value: string }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">
-        <Icon size={12} aria-hidden /> {label}
-      </div>
+      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-void-300"><Icon size={12} aria-hidden /> {label}</div>
       <div className="mt-1 font-mono text-[15px] font-semibold text-data-300">{value}</div>
     </div>
   )
