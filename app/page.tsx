@@ -133,9 +133,9 @@ export default function LandingPage() {
             </div>
             <div className="mt-2 h-[300px] w-full max-w-4xl">
               <ParticleText
-                text={"PROOF OF
+                text={'PROOF OF
 PROMISE,
-SEALED IN CODE."}
+SEALED IN CODE.'}
                 particleSize={2}
                 density={4}
                 color="#eafff1"
