@@ -20,6 +20,17 @@ async function withLiveEnv(fn) {
   }
 }
 
+test('production collector prefers the explicit current price over an earlier original price', async () => {
+  const fetchImpl = async () => new Response(
+    '<html><head><title>Camera</title></head><body><p>Original price 199.99 USD</p><p>Now 149.99 USD</p></body></html>',
+    { status: 200, headers: { 'content-type': 'text/html' } },
+  );
+  const collector = new PublicWebCollector({ fetchImpl, resolveTarget: async (url) => url });
+  const observation = await collector.collect({ url: 'https://shop.example/camera' });
+  assert.equal(observation.checkout.finalTotal, 149.99);
+  assert.equal(observation.currency, 'USD');
+});
+
 test('production collector uses direct public HTML first and sends a browser-like user agent', async () => {
   await withLiveEnv(async () => {
     const calls = [];
