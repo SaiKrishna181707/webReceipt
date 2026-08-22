@@ -56,7 +56,7 @@ test('resilient parser extracts commerce data from Next.js embedded JSON', () =>
 test('resilient parser extracts formatted prices from client-side state', () => {
   const html = enhancePublicCommerceHtml(`
     <html><head><title>Dynamic Product</title></head><body><div id="app"></div>
-    <script>window.__STATE__={product:{displayPrice:"A$ 89.50"}};</script>
+    <script>window.__STATE__={product:{price:"A$ 89.50"}};</script>
     </body></html>
   `);
   const observation = extractPublicPageObservation(html, { sourceUrl: 'https://shop.example/dynamic-product' });
