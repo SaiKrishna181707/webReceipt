@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   CheckCircle2,
   ChevronDown,
   Eye,
   GitCompare,
+  MousePointer2,
   Pause,
   Play,
   RefreshCw,
@@ -22,8 +23,8 @@ const workflows = [
     width: '100%',
     color: '#27dda1',
     signals: [
-      { chip: 'Observation', color: '#ff6b12', bg: '#fff0e5', text: 'A public purchase journey was captured and normalized.', time: '4h ago' },
-      { chip: 'Evidence', color: '#eaaa00', bg: '#fff5cf', text: 'Price, fees and terms were sealed with source evidence.', time: '1d ago' },
+      { chip: 'Observation', color: '#ff6b12', bg: '#fff0e5', text: 'Journey captured and normalized.', time: '4h' },
+      { chip: 'Evidence', color: '#eaaa00', bg: '#fff5cf', text: 'Promise sealed with evidence.', time: '1d' },
     ],
   },
   {
@@ -33,8 +34,8 @@ const workflows = [
     width: '100%',
     color: '#27dda1',
     signals: [
-      { chip: 'Integrity', color: '#ea2f7d', bg: '#ffe6f1', text: 'A wrong-but-valid checkout total was detected semantically.', time: '4h ago' },
-      { chip: 'Contract', color: '#10ad7a', bg: '#dcf7ed', text: 'The healthy rerun produced a valid Deal Contract.', time: '1d ago' },
+      { chip: 'Integrity', color: '#ea2f7d', bg: '#ffe6f1', text: 'Semantic drift detected.', time: '4h' },
+      { chip: 'Contract', color: '#10ad7a', bg: '#dcf7ed', text: 'Healthy contract verified.', time: '1d' },
     ],
   },
   {
@@ -44,8 +45,8 @@ const workflows = [
     width: '50%',
     color: '#27dda1',
     signals: [
-      { chip: 'Repair', color: '#6c3cf0', bg: '#eee7ff', text: 'A repair preview passed verification before approval.', time: '2d ago' },
-      { chip: 'Verified', color: '#10ad7a', bg: '#dcf7ed', text: 'The repaired collector reran successfully.', time: '2d ago' },
+      { chip: 'Repair', color: '#6c3cf0', bg: '#eee7ff', text: 'Repair preview verified.', time: '2d' },
+      { chip: 'Verified', color: '#10ad7a', bg: '#dcf7ed', text: 'Collector rerun passed.', time: '2d' },
     ],
   },
   {
@@ -55,8 +56,8 @@ const workflows = [
     width: '50%',
     color: '#27dda1',
     signals: [
-      { chip: 'Diff', color: '#3f78ee', bg: '#e8efff', text: 'Commercial promises were compared across observations.', time: '3d ago' },
-      { chip: 'History', color: '#10ad7a', bg: '#dcf7ed', text: 'Stored Deal Contracts remained independently verifiable.', time: '3d ago' },
+      { chip: 'Diff', color: '#3f78ee', bg: '#e8efff', text: 'Promise changes compared.', time: '3d' },
+      { chip: 'History', color: '#10ad7a', bg: '#dcf7ed', text: 'History remains verifiable.', time: '3d' },
     ],
   },
 ]
@@ -68,16 +69,65 @@ const demoSteps = [
   { title: 'Promise Diff', sub: 'Compare what changed', color: '#3f78ee' },
 ]
 
+const demoRoutes = [
+  { label: 'Home', href: '/' },
+  { label: 'Console', href: '/console' },
+  { label: 'Mutation Lab', href: '/mutation-lab' },
+  { label: 'Receipts', href: '/receipts' },
+  { label: 'Docs', href: '/docs' },
+]
+
 export default function HomePage() {
   const [expanded, setExpanded] = useState(1)
   const [demoStep, setDemoStep] = useState(0)
   const [playing, setPlaying] = useState(true)
+  const [cursorClicking, setCursorClicking] = useState(false)
+  const [cursor, setCursor] = useState({ x: 0, y: 0, ready: false })
+  const browserRef = useRef<HTMLDivElement | null>(null)
+  const stepRefs = useRef<Array<HTMLButtonElement | null>>([])
+
+  const moveCursor = useCallback((index: number) => {
+    const browser = browserRef.current
+    const target = stepRefs.current[index]
+    if (!browser || !target) return
+
+    const root = browser.getBoundingClientRect()
+    const box = target.getBoundingClientRect()
+    setCursor({
+      x: box.left - root.left + Math.min(box.width - 34, box.width * 0.78),
+      y: box.top - root.top + box.height * 0.52,
+      ready: true,
+    })
+  }, [])
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => moveCursor(demoStep))
+    const onResize = () => moveCursor(demoStep)
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [demoStep, moveCursor])
 
   useEffect(() => {
     if (!playing) return
-    const timer = window.setInterval(() => setDemoStep((step) => (step + 1) % demoSteps.length), 1700)
-    return () => window.clearInterval(timer)
-  }, [playing])
+
+    const next = (demoStep + 1) % demoSteps.length
+    const move = window.setTimeout(() => moveCursor(next), 620)
+    const press = window.setTimeout(() => setCursorClicking(true), 1320)
+    const select = window.setTimeout(() => {
+      setDemoStep(next)
+      setExpanded(next)
+      setCursorClicking(false)
+    }, 1510)
+
+    return () => {
+      window.clearTimeout(move)
+      window.clearTimeout(press)
+      window.clearTimeout(select)
+    }
+  }, [demoStep, moveCursor, playing])
 
   const chooseWorkflow = (index: number) => {
     setExpanded((current) => (current === index ? -1 : index))
@@ -85,12 +135,20 @@ export default function HomePage() {
     setPlaying(false)
   }
 
+  const chooseDemoStep = (index: number) => {
+    setPlaying(false)
+    setCursorClicking(false)
+    setDemoStep(index)
+    setExpanded(index)
+    moveCursor(index)
+  }
+
   return (
     <div className="scout-page">
       <header className="scout-page-head">
         <div>
           <h1>Portfolio</h1>
-          <p>4 WebReceipt workflows tracked</p>
+          <p>4 live workflows</p>
         </div>
         <div className="scout-signal-pill">
           <span className="scout-signal-pill-dot" aria-hidden />
@@ -125,7 +183,7 @@ export default function HomePage() {
 
               {open && (
                 <div className="scout-workflow-detail">
-                  <div className="scout-workflow-detail-label">Recent signals</div>
+                  <div className="scout-workflow-detail-label">Recent</div>
                   {workflow.signals.map((signal) => (
                     <div key={signal.text} className="scout-recent-signal">
                       <span className="scout-chip" style={{ color: signal.color, background: signal.bg }}>
@@ -146,21 +204,27 @@ export default function HomePage() {
       <section className="scout-demo-section" aria-labelledby="interactive-demo-title">
         <div className="scout-demo-head">
           <div>
-            <h2 id="interactive-demo-title">Interactive walkthrough</h2>
-            <p>It auto-plays like a product video, but every step is clickable.</p>
+            <h2 id="interactive-demo-title">Live walkthrough</h2>
+            <p>Auto-play. Click anywhere to take control.</p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" className="scout-demo-play" onClick={() => setPlaying((value) => !value)}>
               {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />}
               {playing ? 'Pause' : 'Play'}
             </button>
-            <Link href="/console" className="scout-demo-play">
-              Open live console
+            <Link href="/console" className="scout-demo-play scout-demo-primary">
+              Open Console
             </Link>
           </div>
         </div>
 
-        <div className="scout-browser">
+        <div
+          ref={browserRef}
+          className="scout-browser"
+          onPointerDownCapture={() => {
+            if (playing) setPlaying(false)
+          }}
+        >
           <div className="scout-browser-top">
             <div className="scout-traffic" aria-hidden><i /><i /><i /></div>
             <div className="scout-browser-address">app.webreceipt.local/console</div>
@@ -168,36 +232,32 @@ export default function HomePage() {
           </div>
 
           <div className="scout-demo-body">
-            <aside className="scout-demo-sidebar" aria-hidden>
-              <div className="scout-demo-brand">
+            <aside className="scout-demo-sidebar" aria-label="Walkthrough navigation">
+              <Link href="/" className="scout-demo-brand" aria-label="WebReceipt home">
                 <span className="scout-brand-mark"><i /><i /><i /><i /></span>
                 WebReceipt
-              </div>
-              <div className="scout-demo-nav">
-                <span>Home</span>
-                <span className="is-active">Console</span>
-                <span>Mutation Lab</span>
-                <span>Receipts</span>
-                <span>Docs</span>
-              </div>
+              </Link>
+              <nav className="scout-demo-nav" aria-label="Walkthrough routes">
+                {demoRoutes.map((route) => (
+                  <Link key={route.href} href={route.href} className={route.href === '/console' ? 'is-active' : ''}>
+                    {route.label}
+                  </Link>
+                ))}
+              </nav>
             </aside>
 
             <div className="scout-demo-center">
               <div className="scout-demo-kicker">Live workflow</div>
-              <h3>Proof of promise, end to end</h3>
-              <p>Click any step below. The walkthrough remains interactive while it plays.</p>
+              <h3>Proof of promise</h3>
 
               <div className="scout-demo-steps">
                 {demoSteps.map((step, index) => (
                   <button
+                    ref={(node) => { stepRefs.current[index] = node }}
                     type="button"
                     key={step.title}
                     className={`scout-demo-step ${demoStep === index ? 'is-active' : ''}`}
-                    onClick={() => {
-                      setDemoStep(index)
-                      setPlaying(false)
-                      setExpanded(index)
-                    }}
+                    onClick={() => chooseDemoStep(index)}
                   >
                     <span className="scout-demo-step-num">{String(index + 1).padStart(2, '0')}</span>
                     <span>
@@ -210,7 +270,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <aside className="scout-demo-rail" aria-hidden>
+            <aside className="scout-demo-rail" aria-live="polite">
               <div className="scout-demo-kicker">Current state</div>
               <div className="scout-demo-rail-card">
                 <b>{demoStep + 1}/4</b>
@@ -229,11 +289,20 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-5 flex items-center gap-2 text-[11px] text-[#7f8580]">
+              <div className="scout-demo-state">
                 {demoStep >= 2 ? <CheckCircle2 size={14} color="#10ad7a" aria-hidden /> : <RefreshCw size={14} aria-hidden />}
-                {demoStep >= 2 ? 'Verified state' : 'Watching changes'}
+                {demoStep >= 2 ? 'Verified' : 'Watching'}
               </div>
             </aside>
+          </div>
+
+          <div
+            className={`scout-demo-cursor ${cursor.ready && playing ? 'is-visible' : ''} ${cursorClicking ? 'is-clicking' : ''}`}
+            style={{ transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)` }}
+            aria-hidden
+          >
+            <span className="scout-demo-cursor-ring" />
+            <MousePointer2 size={22} strokeWidth={2.3} fill="white" />
           </div>
         </div>
       </section>
