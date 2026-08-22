@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { compileDealContract } from '../src/domain/contract.js';
+import { evaluateIntegrity } from '../src/domain/integrity.js';
 import { PublicWebCollector } from '../src/integrations/public-web-production.js';
 
 const UNLOCKER_ENDPOINT = 'https://api.brightdata.com/request';
@@ -104,6 +106,42 @@ test('production collector falls back to Web Unlocker after anti-bot HTTP respon
     assert.deepEqual(calls, ['https://protected.example/shoes', UNLOCKER_ENDPOINT]);
     assert.equal(observation.checkout.finalTotal, 129);
   });
+});
+
+test('production collector preserves explicit ISO currencies outside the legacy shortlist', async () => {
+  await withLiveEnv(async () => {
+    const calls = [];
+    const fetchImpl = async (url) => {
+      calls.push(String(url));
+      return new Response('<html><head><title>Seoul Hotel</title></head><body><p>Final total KRW 159,000</p></body></html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+      });
+    };
+
+    const collector = new PublicWebCollector({ fetchImpl, resolveTarget: async (url) => url });
+    const observation = await collector.collect({ url: 'https://travel.example/seoul' });
+    const integrity = evaluateIntegrity(compileDealContract(observation));
+
+    assert.deepEqual(calls, ['https://travel.example/seoul']);
+    assert.equal(observation.currency, 'KRW');
+    assert.equal(observation.checkout.finalTotal, 159000);
+    assert.match(observation.evidence.find((item) => item.field === 'checkout.finalTotal')?.capturedText || '', /KRW/);
+    assert.equal(integrity.status, 'valid');
+  });
+});
+
+test('production collector recognizes regional currency symbols before generic dollar parsing', async () => {
+  const fetchImpl = async () => new Response(
+    '<html><head><title>Brazil Stay</title></head><body><p>Preço total R$ 1.299,00</p></body></html>',
+    { status: 200, headers: { 'content-type': 'text/html' } },
+  );
+  const collector = new PublicWebCollector({ fetchImpl, resolveTarget: async (url) => url });
+  const observation = await collector.collect({ url: 'https://travel.example/rio' });
+
+  assert.equal(observation.currency, 'BRL');
+  assert.equal(observation.checkout.finalTotal, 1299);
+  assert.equal(evaluateIntegrity(compileDealContract(observation)).status, 'valid');
 });
 
 test('production collector keeps paid fallback disabled unless explicitly configured', async () => {
