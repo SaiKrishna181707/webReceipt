@@ -75,13 +75,14 @@ export default function ParticleText({
     let dpr = 1
     let raf = 0
     let start = performance.now()
+    let lastDraw = 0
     let pointer = { x: -9999, y: -9999 }
 
     const build = () => {
       const rect = root.getBoundingClientRect()
       width = rect.width
       height = rect.height
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       canvas.width = Math.max(1, Math.floor(width * dpr))
       canvas.height = Math.max(1, Math.floor(height * dpr))
       canvas.style.width = `${width}px`
@@ -146,6 +147,14 @@ export default function ParticleText({
     }
 
     const draw = (now: number) => {
+      // Particle text is intentionally capped at ~30 FPS. It remains fluid,
+      // while avoiding a second full-canvas 60 FPS loop on top of DotField.
+      if (now - lastDraw < 32) {
+        raf = requestAnimationFrame(draw)
+        return
+      }
+      lastDraw = now
+
       const particles = particlesRef.current
       ctx.clearRect(0, 0, width, height)
       const active = trigger === 'always' || hoveredRef.current
@@ -175,7 +184,7 @@ export default function ParticleText({
         const mix = active ? Math.min(1, Math.max(0, (repelRadius - dist) / repelRadius)) : 0
         ctx.fillStyle = mix > 0.15 ? highlightColor : color
         if (glow) {
-          ctx.shadowBlur = mix > 0.15 ? 10 : 5
+          ctx.shadowBlur = mix > 0.15 ? 8 : 3
           ctx.shadowColor = mix > 0.15 ? highlightColor : color
         } else {
           ctx.shadowBlur = 0
