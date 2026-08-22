@@ -29,7 +29,6 @@ import {
   type MatrixTone,
 } from '@/components/matrix/matrix-ui'
 
-/** The pipeline, in the order the engine actually runs it. */
 const STAGES = [
   { n: 1, title: 'Observe', body: 'Traverse the public journey and capture every displayed price, fee and term.', tone: 'data' },
   { n: 2, title: 'Compile', body: 'Fold the observations into one canonical Deal Contract.', tone: 'phosphor' },
@@ -82,7 +81,7 @@ export default function LandingPage() {
                 pointerRepel={40}
                 repelRadius={120}
                 idleDrift={0.7}
-                trigger="hover"
+                trigger="always"
                 fontSize="clamp(3rem, 12vw, 8rem)"
                 fontWeight={800}
                 fontFamily="inherit"
