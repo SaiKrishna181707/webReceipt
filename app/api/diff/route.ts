@@ -1,5 +1,5 @@
 import { getService } from '@/lib/server/service'
-import { getPublicWebService, isSimulatorTarget } from '@/lib/server/public-web'
+import { createPublicWebSession, isSimulatorTarget } from '@/lib/server/public-web'
 import { runSafely, readBody } from '@/lib/server/handler'
 import { withPublicScrapeLimit } from '@/lib/server/public-limit'
 import { diffContracts } from '@/src/domain/diff.js'
@@ -20,7 +20,10 @@ function requireSealed(contract: DealContract) {
 
 async function freshPublicDiff(req: Request, targetUrl: string) {
   return withPublicScrapeLimit(req, async () => {
-    const service = await getPublicWebService()
+    // Keep both observations in one request-scoped public session. This preserves
+    // collector isolation between visitors while giving the comparison a stable
+    // collector configuration for the full before/after pair.
+    const { service } = await createPublicWebSession()
     const first = await service.observe({ targetUrl, mutation: 'healthy', autoHeal: false })
     const second = await service.observe({ targetUrl, mutation: 'healthy', autoHeal: false })
     return {
