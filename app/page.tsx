@@ -12,7 +12,6 @@ import {
   Terminal,
 } from 'lucide-react'
 import { GatedEffect } from '@/components/effects/gated-effect'
-import MagicRings from '@/components/effects/magic-rings'
 import ParticleText from '@/components/effects/ParticleText'
 import PixelCard from '@/components/effects/pixel-card'
 import Strands from '@/components/effects/strands'
@@ -56,9 +55,6 @@ export default function LandingPage() {
   return (
     <div>
       <section className="relative w-full overflow-hidden">
-        <GatedEffect className="pointer-events-none absolute -left-32 top-1/2 hidden h-[640px] w-[640px] -translate-y-1/2 lg:block" rootMargin="300px">
-          <MagicRings ringCount={5} attenuation={13} baseRadius={0.3} radiusStep={0.11} noiseAmount={0.04} opacity={0.55} />
-        </GatedEffect>
         <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(72% 60% at 22% 42%, rgba(0,0,0,.92) 0%, rgba(0,0,0,.72) 46%, transparent 78%)' }} />
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-14 lg:px-8">
