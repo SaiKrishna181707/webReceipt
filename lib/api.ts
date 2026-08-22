@@ -50,7 +50,7 @@ async function liveClientDiff(targetUrl: string): Promise<DiffResult> {
     const fresh = await post<ObserveResult>('/api/observe', { targetUrl, mutation: 'healthy', autoHeal: false }); rememberObservation(fresh)
     state = readClientState(); matches = state.contracts.filter((entry) => sameTarget(entry.contract.targetUrl, fresh.contract.targetUrl))
   }
-  if (matches.length < 2) throw new Error('Need at least two observations before calculating a Promise Diff.')
+  if (matches.length < 2) return post<DiffResult>('/api/diff', { simulate: true, targetUrl })
   const after = matches[0].contract; const before = matches[1].contract
   const diff = await post<DiffResult>('/api/diff', { simulate: false, targetUrl: after.targetUrl, before, after })
   state = readClientState(); addClientEvent(state, 'diff', `${diff.changes.length} promise changes detected`, { targetUrl: after.targetUrl, source: diff.source }); writeClientState(state); return diff
