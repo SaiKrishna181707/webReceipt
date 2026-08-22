@@ -1,13 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import './scout.css'
 import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
-import ClickSpark from '@/components/effects/click-spark'
-import { MatrixBackground } from '@/components/matrix/matrix-background'
-import { BootIntro } from '@/components/matrix/boot-intro'
+import { ScoutRightRail } from '@/components/scout-right-rail'
 
-/* Both faces are self-hosted and preloaded at build time. */
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-display' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-mono' })
 
@@ -19,22 +17,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="construct-body relative min-h-screen bg-black text-void-100 selection:bg-matrix-500/35 selection:text-white">
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="scout-theme min-h-screen">
         <a href="#main" className="skip-link">Skip to content</a>
-        <MatrixBackground />
         <Navigation />
-        <main id="main" tabIndex={-1} className="relative z-10 min-h-screen pt-[4.5rem] outline-none">
-          <ClickSpark className="min-h-full">{children}</ClickSpark>
+        <main id="main" tabIndex={-1} className="scout-main">
+          {children}
         </main>
-        <div className="crt-overlay" aria-hidden />
-        <div className="crt-vignette" aria-hidden />
-        <BootIntro />
+        <ScoutRightRail />
         <Toaster
-          theme="dark"
+          theme="light"
           position="bottom-right"
           richColors
-          toastOptions={{ className: 'font-mono !rounded-[2px] !text-[12.5px]' }}
+          toastOptions={{ className: '!rounded-xl !text-[13px] !shadow-lg' }}
         />
       </body>
     </html>
