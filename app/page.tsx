@@ -56,7 +56,7 @@ export default function LandingPage() {
       <section className="relative w-full overflow-hidden">
         <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(72% 60% at 22% 42%, rgba(0,0,0,.92) 0%, rgba(0,0,0,.72) 46%, transparent 78%)' }} />
 
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-14 lg:px-8">
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.08fr_1fr] lg:gap-14 lg:py-14 lg:px-8">
           <div>
             <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.24em] text-matrix-200">
               <span className="h-1.5 w-1.5 rounded-full bg-matrix-400 shadow-[0_0_12px_rgba(51,255,102,.8)]" aria-hidden />
@@ -67,15 +67,19 @@ export default function LandingPage() {
               <span className="text-void-300">Established</span>
             </div>
 
-            <div className="mt-7 max-w-5xl">
+            <div className="mt-8 max-w-3xl">
               <MaskedHeading
-                text={'PROOF OF PROMISE,\nSEALED IN CODE.'}
+                text={'PROOF OF PROMISE\nSEALED IN CODE.'}
                 src="/hero-mask.svg"
-                fillScale={1.18}
-                parallax={9}
+                fillScale={1.12}
+                parallax={14}
+                drift={4}
+                brightness={0.86}
+                saturation={0.92}
                 reveal="wipe"
                 trigger="mount"
-                fontSize="clamp(3.5rem, 7.4vw, 7.7rem)"
+                textScale={0.068}
+                fontSize="clamp(3.35rem, 6.2vw, 6.4rem)"
                 fontWeight={800}
               />
             </div>
