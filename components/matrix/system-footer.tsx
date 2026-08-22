@@ -9,13 +9,11 @@ const ROUTES = [
   { label: 'Docs', href: '/docs' },
 ]
 
-/** The bottom of the system: wordmark, routes, and runtime status. */
+/** The bottom of the home page: wordmark, routes, and runtime status. */
 export function SystemFooter() {
   return (
-    <footer className="relative mt-24 border-t border-matrix-400/12 bg-black/60">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-matrix-rule opacity-30" />
-
-      <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="relative mt-0 border-t border-matrix-400/10 bg-transparent pt-8">
+      <div className="mx-auto w-full px-0 pb-4">
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-md">
             <div className="inline-block">
@@ -64,7 +62,7 @@ export function SystemFooter() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-matrix-400/10 pt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-void-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col gap-2 border-t border-matrix-400/10 pt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-void-400 sm:flex-row sm:items-center sm:justify-between">
           <span>WebReceipt · Proof of promise</span>
           <span>Built for WeMakeDevs · Into the Scrape-Verse</span>
         </div>
