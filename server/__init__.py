@@ -1,1 +1,0 @@
-# WebReceipt FastAPI Backend Package
