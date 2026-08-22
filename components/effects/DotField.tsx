@@ -39,7 +39,7 @@ const DotField = memo(function DotField({
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const dotsRef = useRef<Dot[]>([])
-  const mouseRef = useRef({ x: -9999, y: -9999, speed: 0, prevX: -9999, prevY: -9999 })
+  const mouseRef = useRef({ x: -9999, y: -9999, speed: 0 })
   const pausedRef = useRef(paused)
   const propsRef = useRef({ dotRadius, dotSpacing, cursorRadius, bulgeStrength, glowRadius, sparkle, waveAmplitude, gradientFrom, gradientTo, glowColor })
 
@@ -88,6 +88,9 @@ const DotField = memo(function DotField({
       dotsRef.current = dots
     }
 
+    // Track the real pointer on the window because the background layer is
+    // intentionally pointer-transparent. This keeps buttons/cards clickable
+    // while preserving the React Bits-style magnetic interaction everywhere.
     const onPointerMove = (event: PointerEvent) => {
       const rect = container.getBoundingClientRect()
       const nextX = event.clientX - rect.left
@@ -95,11 +98,10 @@ const DotField = memo(function DotField({
       const mouse = mouseRef.current
       const dx = nextX - mouse.x
       const dy = nextY - mouse.y
-      mouse.speed += (Math.hypot(dx, dy) - mouse.speed) * 0.35
+      const distance = mouse.x < -100 ? 0 : Math.hypot(dx, dy)
+      mouse.speed += (distance - mouse.speed) * 0.35
       mouse.x = nextX
       mouse.y = nextY
-      mouse.prevX = nextX
-      mouse.prevY = nextY
     }
 
     const onPointerLeave = () => {
@@ -169,15 +171,15 @@ const DotField = memo(function DotField({
 
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(container)
-    container.addEventListener('pointermove', onPointerMove, { passive: true })
-    container.addEventListener('pointerleave', onPointerLeave, { passive: true })
+    window.addEventListener('pointermove', onPointerMove, { passive: true })
+    window.addEventListener('blur', onPointerLeave)
     resize()
     raf = requestAnimationFrame(draw)
     return () => {
       cancelAnimationFrame(raf)
       resizeObserver.disconnect()
-      container.removeEventListener('pointermove', onPointerMove)
-      container.removeEventListener('pointerleave', onPointerLeave)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('blur', onPointerLeave)
     }
   }, [])
 
