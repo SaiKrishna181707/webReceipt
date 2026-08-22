@@ -1,0 +1,35 @@
+name: Fix particle hero JSX
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: "!contains(github.event.head_commit.message, '[particle-fixed]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fix JSX string
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+
+          p = Path('app/page.tsx')
+          s = p.read_text(encoding='utf-8')
+          broken = 'text={"PROOF OF\\nPROMISE,\\nSEALED IN CODE."}'
+          fixed = "text={'PROOF OF\\\\nPROMISE,\\\\nSEALED IN CODE.'}"
+          if broken not in s:
+              raise SystemExit('Expected broken particle text expression was not found.')
+          p.write_text(s.replace(broken, fixed, 1), encoding='utf-8')
+          subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          subprocess.run(['git', 'add', 'app/page.tsx'], check=True)
+          subprocess.run(['git', 'commit', '-m', 'fix(ui): repair particle hero JSX string [particle-fixed]'], check=True)
+          subprocess.run(['git', 'push', 'origin', 'main'], check=True)
