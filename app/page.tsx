@@ -11,10 +11,8 @@ import {
   Radar,
   Terminal,
 } from 'lucide-react'
-import { GatedEffect } from '@/components/effects/gated-effect'
 import ParticleText from '@/components/effects/ParticleText'
 import PixelCard from '@/components/effects/pixel-card'
-import Strands from '@/components/effects/strands'
 import { SystemFooter } from '@/components/matrix/system-footer'
 import { SystemTicker } from '@/components/matrix/system-ticker'
 import {
@@ -194,26 +192,23 @@ export default function LandingPage() {
 
         <section>
           <Reveal>
-            <MatrixPanel tone="data" className="relative overflow-hidden p-8 md:p-12">
-              <div className="relative z-[1] grid items-center gap-8 md:grid-cols-3">
-                <div className="space-y-3 md:col-span-2">
-                  <Kicker tone="data">Provenance</Kicker>
-                  <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">Evidence you can verify, not just view</h2>
-                  <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.</p>
-                  <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-[2px] border border-data-400/35 bg-black/60 px-4 py-2.5 font-mono text-[12px] text-data-300"><Hash size={13} aria-hidden /> 9f2c1a7e4b…c081 <span className="text-void-400">contract hash · example shape</span></div>
-                </div>
-                <div className="flex flex-col items-center justify-center">
-                  <div className="flex w-full justify-center gap-8">
-                    <Metric icon={Hash} label="Per-field" value="SHA-256" />
-                    <Metric icon={Clock} label="Every claim" value="Timestamped" />
+            <MatrixPanel tone="data" className="relative overflow-hidden">
+              <PixelCard variant="matrix" className="relative p-8 md:p-12">
+                <div className="relative z-[1] grid items-center gap-8 md:grid-cols-3">
+                  <div className="space-y-3 md:col-span-2">
+                    <Kicker tone="data">Provenance</Kicker>
+                    <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">Evidence you can verify, not just view</h2>
+                    <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.</p>
+                    <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-[2px] border border-data-400/35 bg-black/60 px-4 py-2.5 font-mono text-[12px] text-data-300"><Hash size={13} aria-hidden /> 9f2c1a7e4b…c081 <span className="text-void-400">contract hash · example shape</span></div>
                   </div>
-                  <div className="relative mt-5 h-24 w-80 max-w-full">
-                    <GatedEffect className="pointer-events-none absolute inset-0 opacity-90" rootMargin="300px">
-                      <Strands count={1} speed={0.35} glow={2.0} intensity={0.7} opacity={0.9} scale={1.1} />
-                    </GatedEffect>
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="flex w-full justify-center gap-8">
+                      <Metric icon={Hash} label="Per-field" value="SHA-256" />
+                      <Metric icon={Clock} label="Every claim" value="Timestamped" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </PixelCard>
             </MatrixPanel>
           </Reveal>
         </section>
@@ -223,9 +218,9 @@ export default function LandingPage() {
           <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe a journey, break the extraction, heal it with a verified repair, and diff the promise — all on live engine data.</p>
           <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink></div>
         </section>
-      </div>
 
-      <SystemFooter />
+        <SystemFooter />
+      </div>
     </div>
   )
 }
