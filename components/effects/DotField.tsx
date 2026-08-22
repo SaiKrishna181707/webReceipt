@@ -88,9 +88,6 @@ const DotField = memo(function DotField({
       dotsRef.current = dots
     }
 
-    // Track the real pointer on the window because the background layer is
-    // intentionally pointer-transparent. This keeps buttons/cards clickable
-    // while preserving the React Bits-style magnetic interaction everywhere.
     const onPointerMove = (event: PointerEvent) => {
       const rect = container.getBoundingClientRect()
       const nextX = event.clientX - rect.left
@@ -159,11 +156,13 @@ const DotField = memo(function DotField({
         }
         ctx.fill()
         if (engagement > 0.01 && mouse.x > -100) {
-          const glow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, p.glowRadius)
-          glow.addColorStop(0, `${p.glowColor}55`)
+          const glowRadius = Math.min(p.glowRadius, 120)
+          const glow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, glowRadius)
+          glow.addColorStop(0, `${p.glowColor}20`)
+          glow.addColorStop(0.45, `${p.glowColor}0b`)
           glow.addColorStop(1, `${p.glowColor}00`)
           ctx.fillStyle = glow
-          ctx.fillRect(mouse.x - p.glowRadius, mouse.y - p.glowRadius, p.glowRadius * 2, p.glowRadius * 2)
+          ctx.fillRect(mouse.x - glowRadius, mouse.y - glowRadius, glowRadius * 2, glowRadius * 2)
         }
       }
       raf = requestAnimationFrame(draw)
