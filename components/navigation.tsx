@@ -31,17 +31,17 @@ export function Navigation() {
       <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-matrix-rule opacity-40" />
 
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex h-[4.5rem] items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4 lg:gap-8">
             <Link
               href="/"
               aria-label="WebReceipt home"
               className="group flex shrink-0 items-center font-mono text-matrix-400/40"
             >
-              <WebReceiptLogo size={33} className="transition-transform duration-300 group-hover:-translate-y-px" />
+              <WebReceiptLogo size={39} className="transition-transform duration-300 group-hover:-translate-y-px" />
             </Link>
 
-            <span className="hidden h-4 w-px bg-matrix-400/15 lg:block" aria-hidden />
+            <span className="hidden h-5 w-px bg-matrix-400/15 lg:block" aria-hidden />
             <SystemStatus label="System" value="Online" className="hidden lg:inline-flex" />
           </div>
 
