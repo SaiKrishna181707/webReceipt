@@ -6,40 +6,90 @@ interface LogoProps {
   className?: string
 }
 
-/** Clean WebReceipt wordmark: a receipt/document mark plus a crisp text lockup. */
+const ARTWORK = '/ChatGPT_Image_Aug_21,_2026,_10_14_22_AM.png'
+
+const TILES = Array.from({ length: 12 }, (_, index) => {
+  const col = index % 4
+  const row = Math.floor(index / 4)
+  const vectors = [
+    [-16, -8, -8, .94], [9, -13, 7, .95], [18, -7, 10, .93], [13, 10, 8, .95],
+    [-18, 9, -8, .94], [5, 15, 6, .96], [-10, -15, -6, .94], [16, 15, 9, .95],
+    [-15, 7, -9, .93], [10, -12, 7, .95], [-12, 14, -7, .94], [18, 6, 9, .93],
+  ] as const
+  const [tx, ty, rotate, scale] = vectors[index]
+  return { col, row, tx, ty, rotate, scale }
+})
+
+/** WebReceipt wordmark. Every five seconds the mark briefly separates into puzzle-like tiles, then locks back in. */
 export function WebReceiptLogo({ size = 39, className = '' }: LogoProps) {
-  const iconSize = size * 1.45
+  const height = size * 1.48
 
   return (
     <span
       role="img"
       aria-label="WebReceipt"
-      className={`group/wr-logo inline-flex shrink-0 items-center gap-2.5 ${className}`}
-      style={{ height: iconSize }}
+      className={`wr-logo-puzzle relative block shrink-0 overflow-visible ${className}`}
+      style={{ height, width: height * 4.6 }}
     >
-      <span
-        aria-hidden
-        className="relative grid shrink-0 place-items-center overflow-hidden rounded-[3px] border border-matrix-400/70 bg-black shadow-[0_0_18px_rgba(51,255,102,.12)]"
-        style={{ width: iconSize, height: iconSize }}
-      >
-        <svg viewBox="0 0 48 48" className="absolute inset-0 h-full w-full" fill="none">
-          <path d="M11 5.5h21l5 5v31H11z" stroke="currentColor" strokeWidth="1.6" className="text-matrix-400" />
-          <path d="M32 5.5v6h5" stroke="currentColor" strokeWidth="1.6" className="text-matrix-400" />
-          <path d="M16 20h16M16 25h16M16 30h10" stroke="currentColor" strokeWidth="1.5" className="text-matrix-400/55" />
-        </svg>
-        <span className="relative z-[1] font-mono text-[22px] font-extrabold leading-none text-void-50">W</span>
-        <span className="absolute right-[5px] top-[3px] font-mono text-[7px] font-semibold tracking-tight text-matrix-300">74</span>
-        <span className="absolute bottom-0 left-0 h-[2px] w-full bg-matrix-400 shadow-[0_0_8px_rgba(51,255,102,.8)]" />
+      <span className="wr-logo-stage absolute inset-0">
+        {TILES.map((tile, index) => (
+          <span
+            key={index}
+            aria-hidden
+            className="wr-logo-tile"
+            style={{
+              width: '25%',
+              height: '33.3333%',
+              left: `${tile.col * 25}%`,
+              top: `${tile.row * 33.3333}%`,
+              backgroundImage: `url("${ARTWORK}")`,
+              backgroundSize: '400% 300%',
+              backgroundPosition: `${tile.col * 33.3333}% ${tile.row * 50}%`,
+              ['--tx' as string]: tile.tx,
+              ['--ty' as string]: tile.ty,
+              ['--rot' as string]: `${tile.rotate}deg`,
+              ['--scale' as string]: tile.scale,
+              animationDelay: `${index * 16}ms`,
+            } as React.CSSProperties}
+          />
+        ))}
       </span>
-
-      <span className="flex min-w-0 flex-col leading-none">
-        <span className="whitespace-nowrap font-sans text-[24px] font-bold tracking-[-0.055em] text-void-50 sm:text-[26px]">
-          Web<span className="text-matrix-400">Receipt</span>
-        </span>
-        <span className="mt-1 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.22em] text-void-400 sm:text-[8px]">
-          Evidence you can trust.
-        </span>
-      </span>
+      <span aria-hidden className="wr-logo-sheen" />
+      <style jsx>{`
+        .wr-logo-puzzle { contain:layout paint; }
+        .wr-logo-stage { transform:scale(1.04); transform-origin:left center; filter:drop-shadow(0 0 14px rgba(51,255,102,.12)); }
+        .wr-logo-tile {
+          position:absolute;
+          display:block;
+          background-repeat:no-repeat;
+          animation:wr-logo-puzzle 5s cubic-bezier(.16,1,.3,1) infinite;
+          will-change:transform,opacity,filter;
+          transform-origin:center;
+        }
+        .wr-logo-sheen {
+          position:absolute;
+          inset:0;
+          pointer-events:none;
+          background:linear-gradient(108deg,transparent 24%,rgba(224,255,235,.20) 48%,transparent 70%);
+          animation:wr-logo-sheen 5s ease-in-out infinite;
+          mix-blend-mode:screen;
+        }
+        @keyframes wr-logo-puzzle {
+          0%,68%,100% { transform:translate3d(0,0,0) rotate(0deg) scale(1); opacity:1; filter:none; }
+          74% { transform:translate3d(calc(var(--tx) * 1px),calc(var(--ty) * 1px),0) rotate(var(--rot)) scale(var(--scale)); opacity:.72; filter:brightness(1.22); }
+          83% { transform:translate3d(calc(var(--tx) * .34px),calc(var(--ty) * .34px),0) rotate(calc(var(--rot) * .34)) scale(1); opacity:1; }
+          92% { transform:translate3d(0,0,0) rotate(0deg) scale(1); opacity:1; filter:none; }
+        }
+        @keyframes wr-logo-sheen {
+          0%,56% { transform:translateX(-130%); opacity:0; }
+          66% { opacity:.32; }
+          88% { transform:translateX(130%); opacity:0; }
+          100% { transform:translateX(130%); opacity:0; }
+        }
+        @media (prefers-reduced-motion:reduce) {
+          .wr-logo-tile,.wr-logo-sheen { animation:none; }
+        }
+      `}</style>
     </span>
   )
 }
