@@ -1,14 +1,10 @@
-import { getService } from '@/lib/server/service'
+import { getPublicWebService, getService } from '@/lib/server/service'
 import { brightDataStatus, getBrightDataService, VERIFIED_BRIGHT_DATA_TARGET, withBrightDataLock } from '@/lib/server/brightdata'
 import { runSafely, readBody } from '@/lib/server/handler'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
-
-function enabled(name: string): boolean {
-  return /^(1|true|yes)$/i.test(String(process.env[name] || '').trim())
-}
 
 function normalizeUrl(value: string): string | null {
   try {
@@ -20,36 +16,46 @@ function normalizeUrl(value: string): string | null {
   }
 }
 
+function isDemoTarget(targetUrl?: string): boolean {
+  if (!targetUrl) return true
+  const normalized = normalizeUrl(targetUrl)
+  if (!normalized) return false
+  return new URL(normalized).hostname === 'demo.webreceipt.dev'
+}
+
 function shouldUseBrightData(targetUrl?: string): boolean {
   if (!targetUrl || !brightDataStatus().configured) return false
   const normalizedTarget = normalizeUrl(targetUrl)
   if (!normalizedTarget) return false
 
-  const target = new URL(normalizedTarget)
-  // Preserve the deterministic built-in demo exactly as-is.
-  if (target.hostname === 'demo.webreceipt.dev') return false
-
-  // Anonymous browser traffic is allowed to spend Bright Data credits only on
-  // the controlled public proof target by default. Operators can still scrape
-  // arbitrary public URLs through the protected /api/brightdata/observe route.
-  // A future public product can deliberately opt into arbitrary URLs.
-  if (enabled('WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE')) return true
-
+  // The existing Scraper Studio collector is deliberately specialized for the
+  // verified WebReceipt proof fixture. Never send arbitrary anonymous URLs to
+  // that paid, fixture-specific worker: ordinary public URLs use the hardened
+  // generic public-web collector instead.
   const configuredTarget = String(process.env.BRIGHT_DATA_TARGET_URL || '').trim()
   const allowedTarget = normalizeUrl(configuredTarget || VERIFIED_BRIGHT_DATA_TARGET)
   return Boolean(allowedTarget && normalizedTarget === allowedTarget)
 }
 
-// Run one anonymous public journey and compile it into a Deal Contract.
-// The built-in demo remains simulator-backed. The controlled public proof URL
-// uses Bright Data when the deployment has a token. Public observe never
-// self-heals or mutates the collector; the protected /api/brightdata/heal route
-// owns mutation/repair operations.
+// Run one public journey and compile it into a Deal Contract.
+// - The built-in demo stays deterministic and simulator-backed.
+// - The verified proof fixture can use the existing Bright Data collector.
+// - Any other public HTTP(S) deal page uses the hardened generic collector,
+//   which validates DNS/redirect targets and never accesses login/private URLs.
 export async function POST(req: Request) {
   return runSafely(async () => {
     const body = await readBody(req)
     const targetUrl = (body.targetUrl as string) || undefined
     const mutation = (body.mutation as string) || 'healthy'
+
+    if (isDemoTarget(targetUrl)) {
+      const service = await getService()
+      return service.observe({
+        targetUrl,
+        mutation,
+        autoHeal: body.autoHeal === true,
+      })
+    }
 
     if (mutation === 'healthy' && shouldUseBrightData(targetUrl)) {
       const service = await getBrightDataService()
@@ -60,11 +66,11 @@ export async function POST(req: Request) {
       }))
     }
 
-    const service = await getService()
+    const service = await getPublicWebService()
     return service.observe({
       targetUrl,
       mutation,
-      autoHeal: body.autoHeal === true,
+      autoHeal: false,
     })
   })
 }
