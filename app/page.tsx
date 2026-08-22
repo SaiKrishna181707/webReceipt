@@ -1,234 +1,242 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import {
-  ShieldCheck,
-  FileText,
-  ScanSearch,
+  CheckCircle2,
+  ChevronDown,
+  Eye,
   GitCompare,
+  Pause,
+  Play,
+  RefreshCw,
+  ShieldCheck,
   Wrench,
-  ChevronRight,
-  Hash,
-  Fingerprint,
-  Clock,
-  Radar,
-  Terminal,
 } from 'lucide-react'
-import PixelCard from '@/components/effects/pixel-card'
-import { DecryptText } from '@/components/effects/decrypt-text'
-import { SystemFooter } from '@/components/matrix/system-footer'
-import { SystemTicker } from '@/components/matrix/system-ticker'
-import {
-  SystemLink,
-  SystemCard,
-  MatrixPanel,
-  Reveal,
-  SystemRail,
-  SystemStatus,
-  SectionHead,
-  Kicker,
-  type MatrixTone,
-} from '@/components/matrix/matrix-ui'
 
-const STAGES = [
-  { n: 1, title: 'Observe', body: 'Traverse the public journey and capture every displayed price, fee and term.', tone: 'data' },
-  { n: 2, title: 'Compile', body: 'Fold the observations into one canonical Deal Contract.', tone: 'phosphor' },
-  { n: 3, title: 'Verify', body: 'Run 11 integrity checks; flag wrong-but-valid drift.', tone: 'matrix' },
-  { n: 4, title: 'Heal', body: 'Propose a repair, verify the preview against invariants, then deploy.', tone: 'matrix' },
-  { n: 5, title: 'Diff', body: 'Compare contracts over time to expose changed promises.', tone: 'data' },
-] as const
-
-const PROBLEMS = [
-  ['Silent economic drift', 'An advertised ₹8,499 quietly becomes ₹10,147 by checkout. No record, no diff, no proof.'],
-  ['Wrong-but-valid extraction', 'A redesign makes a scraper read ₹8,499 as the total. Every field is populated — and every number is wrong.'],
-  ['Screenshots aren’t evidence', 'A PNG can’t prove when it was taken or that it wasn’t edited. Claims need cryptographic provenance.'],
-] as const
-
-const CAPABILITIES: [typeof FileText, MatrixTone, string, string, string][] = [
-  [FileText, 'phosphor', 'Deal Contract', 'One canonical schema compiled from any site — advertised price, checkout breakdown, fees, taxes, and terms.', '/docs'],
-  [ShieldCheck, 'matrix', 'Contract Integrity Engine', 'Eleven deterministic checks catch semantic drift like 8499 + 848 + 800 ≠ 8499 — not just null selectors.', '/docs'],
-  [ScanSearch, 'warn', 'Deal Anomalies', 'Surfaces observed price increases and mandatory charges as reported facts — observed, never adjudicated.', '/console'],
-  [GitCompare, 'data', 'Promise Diff', 'git diff for commercial promises: watch “Free cancellation” turn into “Non-refundable” across time.', '/console'],
-  [Wrench, 'matrix', 'Self-Healing', 'When a redesign breaks extraction, an AI repair is proposed — then verified against contract invariants before deploy.', '/console'],
-  [Fingerprint, 'data', 'Tamper-Evident Evidence', 'Every field carries a SHA-256 hash; the whole contract is sealed, so any change is detectable.', '/receipts'],
+const workflows = [
+  {
+    name: 'Observation feed',
+    icon: Eye,
+    count: 2,
+    width: '100%',
+    color: '#27dda1',
+    signals: [
+      { chip: 'Observation', color: '#ff6b12', bg: '#fff0e5', text: 'A public purchase journey was captured and normalized.', time: '4h ago' },
+      { chip: 'Evidence', color: '#eaaa00', bg: '#fff5cf', text: 'Price, fees and terms were sealed with source evidence.', time: '1d ago' },
+    ],
+  },
+  {
+    name: 'Integrity monitor',
+    icon: ShieldCheck,
+    count: 2,
+    width: '100%',
+    color: '#27dda1',
+    signals: [
+      { chip: 'Integrity', color: '#ea2f7d', bg: '#ffe6f1', text: 'A wrong-but-valid checkout total was detected semantically.', time: '4h ago' },
+      { chip: 'Contract', color: '#10ad7a', bg: '#dcf7ed', text: 'The healthy rerun produced a valid Deal Contract.', time: '1d ago' },
+    ],
+  },
+  {
+    name: 'Self-heal',
+    icon: Wrench,
+    count: 1,
+    width: '50%',
+    color: '#27dda1',
+    signals: [
+      { chip: 'Repair', color: '#6c3cf0', bg: '#eee7ff', text: 'A repair preview passed verification before approval.', time: '2d ago' },
+      { chip: 'Verified', color: '#10ad7a', bg: '#dcf7ed', text: 'The repaired collector reran successfully.', time: '2d ago' },
+    ],
+  },
+  {
+    name: 'Promise Diff',
+    icon: GitCompare,
+    count: 1,
+    width: '50%',
+    color: '#27dda1',
+    signals: [
+      { chip: 'Diff', color: '#3f78ee', bg: '#e8efff', text: 'Commercial promises were compared across observations.', time: '3d ago' },
+      { chip: 'History', color: '#10ad7a', bg: '#dcf7ed', text: 'Stored Deal Contracts remained independently verifiable.', time: '3d ago' },
+    ],
+  },
 ]
 
-export default function LandingPage() {
+const demoSteps = [
+  { title: 'Observe journey', sub: 'Capture promise + evidence', color: '#ff6b12' },
+  { title: 'Detect drift', sub: 'Catch semantic failure', color: '#ea2f7d' },
+  { title: 'Verify repair', sub: 'Preview before deploy', color: '#10ad7a' },
+  { title: 'Promise Diff', sub: 'Compare what changed', color: '#3f78ee' },
+]
+
+export default function HomePage() {
+  const [expanded, setExpanded] = useState(1)
+  const [demoStep, setDemoStep] = useState(0)
+  const [playing, setPlaying] = useState(true)
+
+  useEffect(() => {
+    if (!playing) return
+    const timer = window.setInterval(() => setDemoStep((step) => (step + 1) % demoSteps.length), 1700)
+    return () => window.clearInterval(timer)
+  }, [playing])
+
+  const chooseWorkflow = (index: number) => {
+    setExpanded((current) => (current === index ? -1 : index))
+    setDemoStep(index)
+    setPlaying(false)
+  }
+
   return (
-    <div>
-      <section className="relative w-full overflow-hidden">
-        <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(72% 60% at 22% 42%, rgba(0,0,0,.92) 0%, rgba(0,0,0,.72) 46%, transparent 78%)' }} />
-
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.08fr_1fr] lg:gap-14 lg:py-14 lg:px-8">
-          <div>
-            <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.24em] text-matrix-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-matrix-400 shadow-[0_0_12px_rgba(51,255,102,.8)]" aria-hidden />
-              <span className="text-matrix-300">Live evidence system</span>
-              <span className="h-px w-14 bg-gradient-to-r from-matrix-400/70 to-transparent" aria-hidden />
-              <span className="text-void-300">Channel secure</span>
-              <span className="text-matrix-400">/</span>
-              <span className="text-void-300">Established</span>
-            </div>
-
-            <div className="mt-8 max-w-4xl">
-              <h1 className="font-mono text-[clamp(2.15rem,4.2vw,4.25rem)] font-bold uppercase leading-[0.92] tracking-[0.025em]">
-                <span className="block text-void-50">
-                  <DecryptText text="PROOF OF" delay={120} />
-                </span>
-                <span className="block text-void-50">
-                  <DecryptText text="PROMISE SEALED" delay={360} />
-                </span>
-                <span className="block text-matrix-400 drop-shadow-[0_0_24px_rgba(51,255,102,.18)]">
-                  <DecryptText text="IN CODE._" delay={600} />
-                </span>
-              </h1>
-              <div className="mt-4 h-px w-24 bg-matrix-400/70 shadow-[0_0_12px_rgba(51,255,102,.35)]" aria-hidden />
-            </div>
-
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
-              WebReceipt walks a public purchase journey, folds every price, fee and term into one canonical{' '}
-              <span className="font-semibold text-void-100">Deal Contract</span>, and seals each claim with timestamped,
-              tamper-evident evidence. When a redesign breaks extraction, it proposes a repair — and verifies that repair
-              against the contract’s invariants before trusting it.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink>
-              <SystemLink href="/receipts" tone="void" size="lg" scan>Explore receipts</SystemLink>
-            </div>
-            <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
-              {[['11', 'integrity checks'], ['SHA-256', 'per evidence field'], ['1', 'canonical contract']].map(([v, k]) => (
-                <div key={k}>
-                  <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-void-300">{k}</dt>
-                  <dd className="mt-1 font-mono text-xl font-semibold text-matrix-300">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <Reveal delay={140}>
-            <div className="terminal terminal-phosphor">
-              <div className="terminal-bar">
-                <Terminal size={12} className="text-matrix-400" aria-hidden />
-                <span className="sys-label flex-1">webreceipt · pipeline</span>
-                <SystemStatus label="" value="Ready" className="!text-[9px]" />
-              </div>
-              <ol className="relative z-[1] space-y-3 px-5 py-5">
-                {STAGES.map((s) => (
-                  <li key={s.n} className="flex gap-3">
-                    <span className="mt-[3px] font-mono text-[10px] tabular-nums text-void-400">{String(s.n).padStart(2, '0')}</span>
-                    <span className="min-w-0">
-                      <span className="sys-prompt font-mono text-[12.5px] uppercase tracking-[0.16em] text-matrix-200">{s.title}</span>
-                      <span className="mt-0.5 block text-[12.5px] leading-relaxed text-void-200">{s.body}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-              <div className="relative z-[1] flex items-center gap-2 border-t border-matrix-400/12 px-5 py-3">
-                <Radar size={12} className="text-matrix-400" aria-hidden />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Collector: simulated in this app</span>
-              </div>
-            </div>
-          </Reveal>
+    <div className="scout-page">
+      <header className="scout-page-head">
+        <div>
+          <h1>Portfolio</h1>
+          <p>4 WebReceipt workflows tracked</p>
         </div>
+        <div className="scout-signal-pill">
+          <span className="scout-signal-pill-dot" aria-hidden />
+          6 signals
+        </div>
+      </header>
+
+      <section className="scout-portfolio" aria-label="WebReceipt workflow portfolio">
+        {workflows.map((workflow, index) => {
+          const Icon = workflow.icon
+          const open = expanded === index
+          return (
+            <article key={workflow.name} className={`scout-workflow-card ${open ? 'is-open' : ''}`}>
+              <button
+                type="button"
+                className="scout-workflow-row"
+                aria-expanded={open}
+                onClick={() => chooseWorkflow(index)}
+              >
+                <span className="scout-workflow-main">
+                  <span className="scout-workflow-icon"><Icon size={19} strokeWidth={2} aria-hidden /></span>
+                  <span className="scout-workflow-name">{workflow.name}</span>
+                </span>
+                <span className="scout-workflow-meta">
+                  <span className="scout-mini-track" aria-hidden>
+                    <span className="scout-mini-fill" style={{ width: workflow.width, background: workflow.color }} />
+                  </span>
+                  <span className="scout-workflow-count">{workflow.count}</span>
+                  <ChevronDown className="scout-workflow-chevron" size={15} aria-hidden />
+                </span>
+              </button>
+
+              {open && (
+                <div className="scout-workflow-detail">
+                  <div className="scout-workflow-detail-label">Recent signals</div>
+                  {workflow.signals.map((signal) => (
+                    <div key={signal.text} className="scout-recent-signal">
+                      <span className="scout-chip" style={{ color: signal.color, background: signal.bg }}>
+                        <span className="scout-chip-dot" aria-hidden />
+                        {signal.chip}
+                      </span>
+                      <span>{signal.text}</span>
+                      <span className="scout-recent-time">{signal.time}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          )
+        })}
       </section>
 
-      <div className="border-y border-matrix-400/10 bg-black/50"><SystemTicker /></div>
-
-      <div className="mx-auto max-w-7xl space-y-24 px-4 py-20 sm:px-6 lg:px-8">
-        <section className="space-y-10">
-          <SectionHead kicker="The problem" tone="alarm" title="The web is mutable. Promises are not kept." desc="Prices drift, fees appear at checkout, terms change overnight — and the scrapers meant to watch them go dark the moment a page is redesigned." />
-          <div className="grid gap-6 md:grid-cols-3">
-            {PROBLEMS.map(([title, body], i) => (
-              <Reveal key={title} delay={i * 110}>
-                <MatrixPanel tone="alarm" className="h-full">
-                  <PixelCard variant="alarm" className="h-full p-6">
-                    <div className="mb-4 h-px w-10 bg-alarm-400 shadow-[0_0_10px_-1px_rgba(255,77,77,.9)]" />
-                    <h3 className="mb-2 text-[17px] font-semibold text-void-100">{title}</h3>
-                    <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
-                  </PixelCard>
-                </MatrixPanel>
-              </Reveal>
-            ))}
+      <section className="scout-demo-section" aria-labelledby="interactive-demo-title">
+        <div className="scout-demo-head">
+          <div>
+            <h2 id="interactive-demo-title">Interactive walkthrough</h2>
+            <p>It auto-plays like a product video, but every step is clickable.</p>
           </div>
-        </section>
-
-        <section className="space-y-10">
-          <SectionHead kicker="Subsystems" title="A self-healing consumer evidence engine" desc="Every capability is wired into the same canonical Deal Contract, so extraction, verification and diffing all speak one economic language." />
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {CAPABILITIES.map(([Icon, tone, title, body, href], i) => (
-              <Reveal key={title} delay={i * 80}>
-                <SystemCard href={href} tone={tone} className="group h-full">
-                  <PixelCard variant={tone === 'alarm' ? 'alarm' : 'matrix'} className="h-full p-6">
-                    <div className="mb-4 grid h-10 w-10 place-items-center rounded-[2px] border bg-black/50" style={{ borderColor: 'color-mix(in srgb, var(--accent) 45%, transparent)', color: 'var(--accent)', boxShadow: 'inset 0 0 18px -9px var(--accent)' }}>
-                      <Icon size={18} aria-hidden />
-                    </div>
-                    <h3 className="mb-2 text-[16.5px] font-semibold text-void-100">{title}</h3>
-                    <p className="text-[13.5px] leading-relaxed text-void-200">{body}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.2em] text-void-300 transition-colors group-hover:text-matrix-300">Open <ChevronRight size={11} aria-hidden /></span>
-                  </PixelCard>
-                </SystemCard>
-              </Reveal>
-            ))}
+          <div className="flex items-center gap-2">
+            <button type="button" className="scout-demo-play" onClick={() => setPlaying((value) => !value)}>
+              {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />}
+              {playing ? 'Pause' : 'Play'}
+            </button>
+            <Link href="/console" className="scout-demo-play">
+              Open live console
+            </Link>
           </div>
-        </section>
+        </div>
 
-        <section className="space-y-10">
-          <SectionHead kicker="How it works" title="Input → transformation → verification → result" desc="Five stages, one contract. Nothing downstream trusts a value that hasn’t survived the checks." />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {STAGES.map((s, i) => (
-              <Reveal key={s.n} delay={i * 90}>
-                <MatrixPanel tone={s.tone} className="h-full">
-                  <PixelCard variant={s.tone === 'alarm' ? 'alarm' : 'matrix'} className="h-full p-5">
-                    <SystemRail count={4} tone={s.tone} />
-                    <div className="mt-3 flex items-baseline gap-2">
-                      <span className="font-mono text-[11px] tabular-nums text-void-400">{String(s.n).padStart(2, '0')}</span>
-                      <h3 className="text-[16px] font-semibold text-void-100">{s.title}</h3>
-                    </div>
-                    <p className="mt-2 text-[13px] leading-relaxed text-void-200">{s.body}</p>
-                  </PixelCard>
-                </MatrixPanel>
-              </Reveal>
-            ))}
+        <div className="scout-browser">
+          <div className="scout-browser-top">
+            <div className="scout-traffic" aria-hidden><i /><i /><i /></div>
+            <div className="scout-browser-address">app.webreceipt.local/console</div>
+            <div className="scout-browser-dots" aria-hidden><i /><i /></div>
           </div>
-        </section>
 
-        <section>
-          <Reveal>
-            <MatrixPanel tone="data" className="relative overflow-hidden">
-              <PixelCard variant="matrix" className="relative p-8 md:p-12">
-                <div className="relative z-[1] grid items-center gap-8 md:grid-cols-3">
-                  <div className="space-y-3 md:col-span-2">
-                    <Kicker tone="data">Provenance</Kicker>
-                    <h2 className="text-[26px] font-bold leading-tight text-void-100 sm:text-[30px]">Evidence you can verify, not just view</h2>
-                    <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.</p>
-                    <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-[2px] border border-data-400/35 bg-black/60 px-4 py-2.5 font-mono text-[12px] text-data-300"><Hash size={13} aria-hidden /> 9f2c1a7e4b…c081 <span className="text-void-400">contract hash · example shape</span></div>
+          <div className="scout-demo-body">
+            <aside className="scout-demo-sidebar" aria-hidden>
+              <div className="scout-demo-brand">
+                <span className="scout-brand-mark"><i /><i /><i /><i /></span>
+                WebReceipt
+              </div>
+              <div className="scout-demo-nav">
+                <span>Home</span>
+                <span className="is-active">Console</span>
+                <span>Mutation Lab</span>
+                <span>Receipts</span>
+                <span>Docs</span>
+              </div>
+            </aside>
+
+            <div className="scout-demo-center">
+              <div className="scout-demo-kicker">Live workflow</div>
+              <h3>Proof of promise, end to end</h3>
+              <p>Click any step below. The walkthrough remains interactive while it plays.</p>
+
+              <div className="scout-demo-steps">
+                {demoSteps.map((step, index) => (
+                  <button
+                    type="button"
+                    key={step.title}
+                    className={`scout-demo-step ${demoStep === index ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setDemoStep(index)
+                      setPlaying(false)
+                      setExpanded(index)
+                    }}
+                  >
+                    <span className="scout-demo-step-num">{String(index + 1).padStart(2, '0')}</span>
+                    <span>
+                      <strong>{step.title}</strong>
+                      <small>{step.sub}</small>
+                    </span>
+                    <span className="scout-demo-status" style={{ background: step.color }} aria-hidden />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <aside className="scout-demo-rail" aria-hidden>
+              <div className="scout-demo-kicker">Current state</div>
+              <div className="scout-demo-rail-card">
+                <b>{demoStep + 1}/4</b>
+                <span>{demoSteps[demoStep].title}</span>
+              </div>
+              <div className="scout-demo-progress">
+                {demoSteps.map((step, index) => (
+                  <div key={step.title} className="scout-demo-progress-line">
+                    <span>{step.title}</span>
+                    <i
+                      style={{
+                        ['--width' as string]: index <= demoStep ? '100%' : '18%',
+                        ['--color' as string]: index === demoStep ? step.color : '#b9d8d3',
+                      }}
+                    />
                   </div>
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="flex w-full justify-center gap-8">
-                      <Metric icon={Hash} label="Per-field" value="SHA-256" />
-                      <Metric icon={Clock} label="Every claim" value="Timestamped" />
-                    </div>
-                  </div>
-                </div>
-              </PixelCard>
-            </MatrixPanel>
-          </Reveal>
-        </section>
-
-        <section className="space-y-6 pb-4 text-center">
-          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the whole loop</span> <span className="code-text">in two minutes</span></h2>
-          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe a journey, break the extraction, heal it with a verified repair, and diff the promise — all on live engine data.</p>
-          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink></div>
-        </section>
-
-        <SystemFooter />
-      </div>
-    </div>
-  )
-}
-
-function Metric({ icon: Icon, label, value }: { icon: typeof Hash; label: string; value: string }) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-void-300"><Icon size={12} aria-hidden /> {label}</div>
-      <div className="mt-1 font-mono text-[15px] font-semibold text-data-300">{value}</div>
+                ))}
+              </div>
+              <div className="mt-5 flex items-center gap-2 text-[11px] text-[#7f8580]">
+                {demoStep >= 2 ? <CheckCircle2 size={14} color="#10ad7a" aria-hidden /> : <RefreshCw size={14} aria-hidden />}
+                {demoStep >= 2 ? 'Verified state' : 'Watching changes'}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
