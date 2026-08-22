@@ -26,6 +26,8 @@ jobs:
         run: npm audit --omit=dev --audit-level=critical
       - name: Verify custom Scraper Studio package, app, and chaos suite
         run: npm run verify
+      - name: Stress-test the actual Next dev localhost workflow
+        run: npm run stress:dev
       - name: Compile the production Next.js app and Bright Data API routes
         run: npm run build
       - name: Smoke-test the built Next.js API surface
