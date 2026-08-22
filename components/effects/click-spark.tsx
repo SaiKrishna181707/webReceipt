@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useReducedMotion } from '@/components/matrix/use-reduced-motion'
 import { EFFECT_BRIGHT } from './palette'
@@ -24,7 +24,7 @@ interface Spark {
   startTime: number
 }
 
-/** Click sparks use a body-level portal so fixed viewport coordinates cannot be affected by transformed ancestors. */
+/** Click sparks use a body-level portal after hydration so SSR and the first client render stay identical. */
 const ClickSpark: React.FC<ClickSparkProps> = ({
   sparkColor = EFFECT_BRIGHT,
   sparkSize = 10,
@@ -40,11 +40,20 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   const sparksRef = useRef<Spark[]>([])
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 })
   const wakeRef = useRef<(() => void) | null>(null)
+  const [mounted, setMounted] = useState(false)
   const reduced = useReducedMotion()
   const reducedRef = useRef(reduced)
   reducedRef.current = reduced
 
+  // Do not create the portal during SSR or the first client render.
+  // That was the source of the hydration error: the server had no <canvas>,
+  // while the client immediately rendered one.
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -63,7 +72,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     resize()
     window.addEventListener('resize', resize)
     return () => window.removeEventListener('resize', resize)
-  }, [])
+  }, [mounted])
 
   const ease = useCallback(
     (t: number) => {
@@ -82,6 +91,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   )
 
   useEffect(() => {
+    if (!mounted) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -141,7 +151,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
       wakeRef.current = null
       if (animationId !== 0) cancelAnimationFrame(animationId)
     }
-  }, [sparkColor, sparkSize, sparkRadius, duration, ease, extraScale])
+  }, [mounted, sparkColor, sparkSize, sparkRadius, duration, ease, extraScale])
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (reducedRef.current) return
@@ -170,7 +180,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   return (
     <div className={`relative ${className}`.trim()} onPointerDown={handlePointerDown}>
       {children}
-      {typeof document !== 'undefined' ? createPortal(canvas, document.body) : null}
+      {mounted ? createPortal(canvas, document.body) : null}
     </div>
   )
 }
