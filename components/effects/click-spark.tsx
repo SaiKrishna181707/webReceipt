@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { createPortal, useCallback, useEffect, useRef } from 'react'
 import { useReducedMotion } from '@/components/matrix/use-reduced-motion'
 import { EFFECT_BRIGHT } from './palette'
 
@@ -24,11 +24,13 @@ interface Spark {
 }
 
 /**
- * Click sparks rendered in viewport coordinates.
+ * Click sparks rendered in true viewport coordinates.
  *
- * The canvas is fixed to the viewport, so pointer coordinates must also stay in
- * viewport space. Using clientX/clientY directly avoids coordinate drift caused
- * by transformed or positioned ancestors around the wrapper.
+ * The canvas is portaled directly to document.body. This is important because
+ * CSS `position: fixed` becomes relative to a transformed ancestor when the
+ * canvas lives inside one. The app contains animated/transformed containers,
+ * so keeping the canvas under <body> guarantees that clientX/clientY and the
+ * canvas coordinate system are the same coordinate space.
  */
 const ClickSpark: React.FC<ClickSparkProps> = ({
   sparkColor = EFFECT_BRIGHT,
@@ -58,6 +60,8 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
       const height = window.innerHeight
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
       canvas.width = Math.max(1, Math.round(width * dpr))
       canvas.height = Math.max(1, Math.round(height * dpr))
       sizeRef.current = { width, height, dpr }
@@ -162,14 +166,18 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     wakeRef.current?.()
   }
 
+  const canvas = (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className="pointer-events-none fixed left-0 top-0 z-[9999] block"
+    />
+  )
+
   return (
     <div className={`relative ${className}`.trim()} onPointerDown={handlePointerDown}>
-      <canvas
-        ref={canvasRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[60]"
-      />
       {children}
+      {typeof document !== 'undefined' ? createPortal(canvas, document.body) : null}
     </div>
   )
 }
