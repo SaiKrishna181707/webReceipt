@@ -41,6 +41,38 @@ test('resilient parser supports price microdata on non-meta elements', () => {
   assert.equal(observation.currency, 'USD');
 });
 
+test('resilient parser extracts commerce data from Next.js embedded JSON', () => {
+  const html = enhancePublicCommerceHtml(`
+    <html><head><title>Rendered Later</title></head><body><div id="__next"></div>
+    <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"product":{"name":"Headphones","currentPrice":{"amount":"249.99","currencyCode":"USD"}}}}}</script>
+    </body></html>
+  `);
+  const observation = extractPublicPageObservation(html, { sourceUrl: 'https://shop.example/headphones' });
+  assert.equal(observation.checkout.finalTotal, 249.99);
+  assert.equal(observation.currency, 'USD');
+  assert.equal(evaluateIntegrity(compileDealContract(observation)).status, 'valid');
+});
+
+test('resilient parser extracts formatted prices from client-side state', () => {
+  const html = enhancePublicCommerceHtml(`
+    <html><head><title>Dynamic Product</title></head><body><div id="app"></div>
+    <script>window.__STATE__={product:{displayPrice:"A$ 89.50"}};</script>
+    </body></html>
+  `);
+  const observation = extractPublicPageObservation(html, { sourceUrl: 'https://shop.example/dynamic-product' });
+  assert.equal(observation.checkout.finalTotal, 89.5);
+  assert.equal(observation.currency, 'AUD');
+});
+
+test('resilient parser prefers price-labelled visible text over unrelated currency mentions', () => {
+  const html = enhancePublicCommerceHtml(
+    '<html><head><title>Course</title></head><body><p>Shipping insurance can cost $5.</p><p>Sale price: $129.00</p></body></html>',
+  );
+  const observation = extractPublicPageObservation(html, { sourceUrl: 'https://shop.example/course' });
+  assert.equal(observation.checkout.finalTotal, 129);
+  assert.equal(observation.currency, 'USD');
+});
+
 test('production resilient collector applies enhancement before Deal Contract compilation', async () => {
   const fetchImpl = async () => new Response(
     '<html><head><title>Ticket</title></head><body><p>Total 49.95 EUR</p><p>Refundable within 24 hours.</p></body></html>',
