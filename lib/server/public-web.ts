@@ -2,37 +2,45 @@ import { PublicWebCollector } from '@/src/integrations/public-web.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
-type PublicWebBundle = {
-  collector: InstanceType<typeof PublicWebCollector>
-  service: InstanceType<typeof WebReceiptService>
-}
-
 type RateBucket = { count: number; resetAt: number }
-type PublicWebGlobal = {
-  __webreceiptPublicWeb?: Promise<PublicWebBundle>
-  __webreceiptPublicWebRate?: Map<string, RateBucket>
-}
+type PublicWebGlobal = { __webreceiptPublicWebRate?: Map<string, RateBucket> }
 
 const globalRef = globalThis as unknown as PublicWebGlobal
 
-async function bundle(): Promise<PublicWebBundle> {
-  if (!globalRef.__webreceiptPublicWeb) {
-    globalRef.__webreceiptPublicWeb = (async () => {
-      const store = await getStore()
-      const collector = new PublicWebCollector()
-      const service = new WebReceiptService({ collector, store })
-      return { collector, service }
-    })()
+// Public scraping is request-scoped. That keeps repair state isolated between
+// users while the receipt/event store remains shared. The adapter below supplies
+// the current target to the generic verified-heal protocol without modifying the
+// existing orchestrator or any UI code.
+class RequestPublicWebCollector extends PublicWebCollector {
+  private lastTargetUrl: string | null = null
+
+  inject(_mutation?: string) {
+    // A fresh collector starts clean for every request, so there is no healed
+    // state from a previous click/user to invalidate here.
   }
-  return globalRef.__webreceiptPublicWeb
+
+  async collect(args: { url?: string; mutation?: string } = {}) {
+    if (args.url) this.lastTargetUrl = args.url
+    return super.collect(args)
+  }
+
+  async heal(args: { mutation?: string; prompt?: string } = {}) {
+    return super.heal({ ...args, targetUrl: this.lastTargetUrl })
+  }
+
+  async approveHeal(args: { mutation?: string; autoSave?: boolean } = {}) {
+    return super.approveHeal({ ...args, targetUrl: this.lastTargetUrl })
+  }
+
+  async rejectHeal(args: { mutation?: string } = {}) {
+    return super.rejectHeal({ ...args, targetUrl: this.lastTargetUrl })
+  }
 }
 
 export async function getPublicWebService() {
-  return (await bundle()).service
-}
-
-export async function getPublicWebCollector() {
-  return (await bundle()).collector
+  const store = await getStore()
+  const collector = new RequestPublicWebCollector()
+  return new WebReceiptService({ collector, store })
 }
 
 export function isSimulatorTarget(rawUrl?: string): boolean {
