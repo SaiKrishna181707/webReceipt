@@ -7,6 +7,14 @@ import {
 const MAX_REDIRECTS = 5;
 const UNLOCKER_ENDPOINT = 'https://api.brightdata.com/request';
 const BROWSER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+const CURRENCY = '(?:INR|USD|EUR|GBP|JPY|AUD|CAD|AED|SGD|US\\$|A\\$|AU\\$|C\\$|CA\\$|S\\$|SG\\$|Rs\\.?|₹|\\$|€|£|¥)';
+const AMOUNT = '(?:[0-9]{1,3}(?:[ ,.]?[0-9]{3})*(?:[.,][0-9]{1,2})?|[0-9]+(?:[.,][0-9]{1,2})?)';
+const PRIORITY_LABELS = [
+  ['grand total', 50], ['order total', 49], ['final total', 48], ['checkout total', 47],
+  ['total due', 46], ['amount due', 45], ['payable', 44], ['sale price', 38],
+  ['current price', 37], ['deal price', 36], ['our price', 35], ['special price', 34],
+  ['pay now', 33], ['now', 30],
+];
 
 function enabled(name) {
   return /^(1|true|yes)$/i.test(String(process.env[name] || '').trim());
@@ -28,6 +36,85 @@ function canExtract(html, sourceUrl) {
     if (/No commerce price with an identifiable currency/i.test(String(error?.message || error))) return false;
     throw error;
   }
+}
+
+function decodeEntities(value) {
+  return String(value || '')
+    .replace(/&nbsp;|&#160;|\u00a0/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;|&#34;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
+}
+
+function visibleText(html) {
+  return decodeEntities(String(html || '')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ')
+    .replace(/<[^>]+>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeCurrency(value) {
+  const raw = String(value || '').trim();
+  const upper = raw.toUpperCase();
+  if (['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'AED', 'SGD'].includes(upper)) return upper;
+  if (/^RS\.?$/i.test(raw) || raw === '₹') return 'INR';
+  if (raw === '$' || /^US\$$/i.test(raw)) return 'USD';
+  if (raw === '€') return 'EUR';
+  if (raw === '£') return 'GBP';
+  if (raw === '¥') return 'JPY';
+  if (/^(?:A|AU)\$$/i.test(raw)) return 'AUD';
+  if (/^(?:C|CA)\$$/i.test(raw)) return 'CAD';
+  if (/^(?:S|SG)\$$/i.test(raw)) return 'SGD';
+  return null;
+}
+
+function findPriorityPrice(html) {
+  const text = visibleText(html);
+  if (!text) return null;
+  let selected = null;
+  for (const [label, score] of PRIORITY_LABELS) {
+    const prefix = escapeRegex(label);
+    const patterns = [
+      new RegExp(`\\b${prefix}\\b\\s*[:=–—-]?\\s*(${CURRENCY})\\s*(${AMOUNT})(?![0-9A-Za-z])`, 'ig'),
+      new RegExp(`\\b${prefix}\\b\\s*[:=–—-]?\\s*(${AMOUNT})\\s*(${CURRENCY})(?![A-Za-z])`, 'ig'),
+    ];
+    for (let order = 0; order < patterns.length; order++) {
+      for (const match of text.matchAll(patterns[order])) {
+        const amount = order === 0 ? match[2] : match[1];
+        const currency = normalizeCurrency(order === 0 ? match[1] : match[2]);
+        if (!currency) continue;
+        const candidate = { amount, currency, score, index: match.index || 0 };
+        if (!selected || candidate.score > selected.score || (candidate.score === selected.score && candidate.index > selected.index)) selected = candidate;
+      }
+    }
+  }
+  return selected;
+}
+
+function injectPriorityPrice(html, selected) {
+  if (!selected) return String(html || '');
+  const amount = String(selected.amount).replace(/[^0-9.,]/g, '');
+  if (!amount) return String(html || '');
+  const injected = `<meta property="product:price:amount" content="${amount}"><meta property="product:price:currency" content="${selected.currency}">`;
+  const value = String(html || '');
+  return /<head\b[^>]*>/i.test(value)
+    ? value.replace(/<head\b[^>]*>/i, (head) => `${head}${injected}`)
+    : `${injected}${value}`;
+}
+
+export function enhanceProductionCommerceHtml(html) {
+  const prepared = enhancePublicCommerceHtml(html);
+  return injectPriorityPrice(prepared, findPriorityPrice(html));
 }
 
 async function readTextLimited(response, maxBytes) {
@@ -170,7 +257,7 @@ export class PublicWebCollector extends ResilientPublicWebCollector {
   async requestHtml(rawUrl) {
     try {
       const direct = await this.requestDirectHtml(rawUrl);
-      const html = enhancePublicCommerceHtml(direct.html);
+      const html = enhanceProductionCommerceHtml(direct.html);
       if (canExtract(html, direct.sourceUrl) || !unlockerConfigured()) {
         return { ...direct, html };
       }
@@ -183,6 +270,6 @@ export class PublicWebCollector extends ResilientPublicWebCollector {
     // signal in the server response, so anonymous traffic does not spend credits
     // when a normal fetch is already sufficient.
     const unlocked = await this.requestUnlockedHtml(rawUrl);
-    return { ...unlocked, html: enhancePublicCommerceHtml(unlocked.html) };
+    return { ...unlocked, html: enhanceProductionCommerceHtml(unlocked.html) };
   }
 }
