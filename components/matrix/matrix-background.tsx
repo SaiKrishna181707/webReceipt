@@ -8,10 +8,14 @@ export function MatrixBackground() {
       <DotField
         dotRadius={1.5}
         dotSpacing={14}
+        cursorRadius={360}
         bulgeStrength={67}
-        glowRadius={160}
+        glowRadius={90}
         sparkle={false}
         waveAmplitude={0}
+        gradientFrom="#08733a"
+        gradientTo="#48e886"
+        glowColor="#00ff66"
       />
     </div>
   )
