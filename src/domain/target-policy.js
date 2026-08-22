@@ -51,9 +51,20 @@ function pathLooksPrivate(pathname) {
   return segments.some((segment) => BLOCKED_SEGMENTS.has(segment));
 }
 
+function normalizeTargetInput(rawUrl) {
+  const value = String(rawUrl ?? '').trim();
+  if (!value) throw new Error('Target must be a valid URL.');
+  if (value.startsWith('//')) return `https:${value}`;
+  // People commonly paste "example.com/product" into the console. Treat a
+  // missing scheme as HTTPS instead of rejecting an otherwise valid public URL.
+  // Inputs that already declare a URI scheme are never rewritten.
+  if (!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value)) return `https://${value}`;
+  return value;
+}
+
 export function assertPublicTarget(rawUrl, { allowLocal = false } = {}) {
   let url;
-  try { url = new URL(rawUrl); } catch { throw new Error('Target must be a valid URL.'); }
+  try { url = new URL(normalizeTargetInput(rawUrl)); } catch { throw new Error('Target must be a valid URL.'); }
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Only http(s) public web URLs are allowed.');
   if (url.username || url.password) throw new Error('Credential-bearing URLs are not allowed.');
   if (!url.hostname) throw new Error('Target URL must include a hostname.');
