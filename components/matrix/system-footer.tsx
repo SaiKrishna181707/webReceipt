@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { WebReceiptLogo } from '@/components/brand/webreceipt-logo'
-import { LogoSpider } from './logo-spider'
 import { SystemStatus } from './matrix-ui'
 
 const ROUTES = [
@@ -10,11 +9,7 @@ const ROUTES = [
   { label: 'Docs', href: '/docs' },
 ]
 
-/**
- * The bottom of the system. The wordmark, the routes, and — plainly, not in a
- * footnote — what this build is actually running against. The crawler patrols
- * here because there is room for it beside the lockup at this size.
- */
+/** The bottom of the system: wordmark, routes, and runtime status. */
 export function SystemFooter() {
   return (
     <footer className="relative mt-24 border-t border-matrix-400/12 bg-black/60">
@@ -23,9 +18,8 @@ export function SystemFooter() {
       <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-md">
-            <div className="relative inline-block">
+            <div className="inline-block">
               <WebReceiptLogo size={20} />
-              <LogoSpider className="-right-[64px] top-1/2 hidden -translate-y-1/2 sm:block" />
             </div>
 
             <p className="mt-4 text-[13.5px] leading-relaxed text-void-200">
