@@ -194,9 +194,6 @@ export default function LandingPage() {
         <section>
           <Reveal>
             <MatrixPanel tone="data" className="relative overflow-hidden p-8 md:p-12">
-              <GatedEffect className="pointer-events-none absolute inset-0 opacity-70" rootMargin="300px">
-                <Strands count={3} speed={0.4} glow={2.2} intensity={0.5} opacity={0.85} scale={1.6} />
-              </GatedEffect>
               <div className="relative z-[1] grid items-center gap-8 md:grid-cols-3">
                 <div className="space-y-3 md:col-span-2">
                   <Kicker tone="data">Provenance</Kicker>
@@ -204,9 +201,16 @@ export default function LandingPage() {
                   <p className="max-w-xl text-[14.5px] leading-relaxed text-void-200">Captured text, source URL, DOM path, journey step and timestamp are hashed with SHA-256. The entire Deal Contract is sealed with its own hash, so tampering with any claim is provable — and detectable.</p>
                   <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-[2px] border border-data-400/35 bg-black/60 px-4 py-2.5 font-mono text-[12px] text-data-300"><Hash size={13} aria-hidden /> 9f2c1a7e4b…c081 <span className="text-void-400">contract hash · example shape</span></div>
                 </div>
-                <div className="flex gap-8 md:justify-end">
-                  <Metric icon={Hash} label="Per-field" value="SHA-256" />
-                  <Metric icon={Clock} label="Every claim" value="Timestamped" />
+                <div className="flex flex-col items-center justify-center">
+                  <div className="flex w-full justify-center gap-8">
+                    <Metric icon={Hash} label="Per-field" value="SHA-256" />
+                    <Metric icon={Clock} label="Every claim" value="Timestamped" />
+                  </div>
+                  <div className="relative mt-5 h-20 w-full max-w-md">
+                    <GatedEffect className="pointer-events-none absolute inset-0 opacity-65" rootMargin="300px">
+                      <Strands count={3} speed={0.4} glow={1.8} intensity={0.45} opacity={0.8} scale={1.6} />
+                    </GatedEffect>
+                  </div>
                 </div>
               </div>
             </MatrixPanel>
