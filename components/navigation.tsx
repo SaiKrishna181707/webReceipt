@@ -15,16 +15,8 @@ const navItems = [
   { label: 'Docs', href: '/docs' },
 ]
 
-/** Ties the hamburger to the sheet it opens. */
 const MOBILE_NAV_ID = 'wr-mobile-nav'
 
-/* ============================================================================
-   NAVIGATION
-
-   The header of a system, not a marketing site: the wordmark, a status
-   readout, and the routes as terminal commands. Hovering a route types a
-   prompt in front of it — the `>` is absolutely positioned so nothing shifts.
-   ========================================================================== */
 export function Navigation() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -32,12 +24,10 @@ export function Navigation() {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href)
 
-  // A route change should never leave the mobile sheet hanging open.
   useEffect(() => setOpen(false), [pathname])
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-matrix-400/12 bg-black/85 backdrop-blur-md">
-      {/* The header's own power rail. */}
       <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-matrix-rule opacity-40" />
 
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -48,11 +38,10 @@ export function Navigation() {
               aria-label="WebReceipt home"
               className="group flex shrink-0 items-center font-mono text-matrix-400/40"
             >
-              <WebReceiptLogo size={21} className="transition-transform duration-300 group-hover:-translate-y-px" />
+              <WebReceiptLogo size={27} className="transition-transform duration-300 group-hover:-translate-y-px" />
             </Link>
 
             <span className="hidden h-4 w-px bg-matrix-400/15 lg:block" aria-hidden />
-
             <SystemStatus label="System" value="Online" className="hidden lg:inline-flex" />
           </div>
 
@@ -68,21 +57,11 @@ export function Navigation() {
                     active ? 'text-matrix-300' : 'text-void-200 hover:text-matrix-200'
                   }`}
                 >
-                  <span
-                    aria-hidden
-                    className={`absolute -left-3 text-matrix-400 transition-opacity duration-200 ${
-                      active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    }`}
-                  >
+                  <span aria-hidden className={`absolute -left-3 text-matrix-400 transition-opacity duration-200 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     &gt;
                   </span>
                   {item.label}
-                  {active && (
-                    <span
-                      aria-hidden
-                      className="absolute -bottom-2 left-0 h-px w-full bg-matrix-400 shadow-[0_0_8px_rgba(51,255,102,.9)]"
-                    />
-                  )}
+                  {active && <span aria-hidden className="absolute -bottom-2 left-0 h-px w-full bg-matrix-400 shadow-[0_0_8px_rgba(51,255,102,.9)]" />}
                 </Link>
               )
             })}
@@ -107,14 +86,7 @@ export function Navigation() {
           </div>
         </div>
 
-        {/* The sheet collapses by max-height so it can animate, which leaves its
-            links laid out but invisible — so they also have to leave the tab
-            order and the a11y tree, or keyboard focus disappears into them. */}
-        <div
-          id={MOBILE_NAV_ID}
-          aria-hidden={!open}
-          className={`overflow-hidden transition-all duration-300 md:hidden ${open ? 'max-h-96 pb-4' : 'max-h-0'}`}
-        >
+        <div id={MOBILE_NAV_ID} aria-hidden={!open} className={`overflow-hidden transition-all duration-300 md:hidden ${open ? 'max-h-96 pb-4' : 'max-h-0'}`}>
           <div className="mt-1 flex flex-col">
             {navItems.map((item) => (
               <Link
@@ -122,23 +94,13 @@ export function Navigation() {
                 href={item.href}
                 tabIndex={open ? undefined : -1}
                 aria-current={isActive(item.href) ? 'page' : undefined}
-                className={`flex touch-target items-center gap-2 border-b border-matrix-400/8 font-mono text-[12px] uppercase tracking-[0.18em] transition-colors ${
-                  isActive(item.href) ? 'text-matrix-300' : 'text-void-200'
-                }`}
+                className={`flex touch-target items-center gap-2 border-b border-matrix-400/8 font-mono text-[12px] uppercase tracking-[0.18em] transition-colors ${isActive(item.href) ? 'text-matrix-300' : 'text-void-200'}`}
               >
-                <span aria-hidden className="text-matrix-400/60">
-                  &gt;
-                </span>
+                <span aria-hidden className="text-matrix-400/60">&gt;</span>
                 {item.label}
               </Link>
             ))}
-            <SystemLink
-              href="/console"
-              tone="matrix"
-              size="md"
-              className="mt-4 w-full"
-              tabIndex={open ? undefined : -1}
-            >
+            <SystemLink href="/console" tone="matrix" size="md" className="mt-4 w-full" tabIndex={open ? undefined : -1}>
               Launch console <ChevronRight size={13} aria-hidden />
             </SystemLink>
           </div>
