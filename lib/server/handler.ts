@@ -14,6 +14,7 @@ function classify(error: unknown): { status: number; code: string; message: stri
   // the stable contract between the request reader and route handler.
   if ([400, 413].includes(status) && ['invalid_json', 'body_too_large'].includes(code))
     return { status, code, message }
+  if (status === 429 && code === 'rate_limited') return { status, code, message }
   if (/Request body must be valid(?: UTF-8)? JSON|Request body must be a JSON object/i.test(message))
     return { status: 400, code: 'invalid_json', message }
   if (/Request body exceeds \d+ bytes/i.test(message))
@@ -32,6 +33,8 @@ function classify(error: unknown): { status: number; code: string; message: stri
     return { status: 502, code: 'public_fetch_failed', message }
   if (/Unknown public-web mutation/i.test(message))
     return { status: 400, code: 'invalid_mutation', message }
+  if (/Promise Diff contracts must belong to the same target URL|Promise Diff rejected a contract with an invalid seal/i.test(message))
+    return { status: 400, code: 'invalid_diff', message }
   if (/Operator authorization required/i.test(message)) return { status: 401, code: 'operator_required', message }
   if (/Another Bright Data operation is already running/i.test(message)) return { status: 409, code: 'live_operation_busy', message }
   if (/Need at least two stored observations/i.test(message)) return { status: 409, code: 'insufficient_history', message }
