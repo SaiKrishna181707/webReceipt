@@ -38,7 +38,7 @@ export function Navigation() {
               aria-label="WebReceipt home"
               className="group flex shrink-0 items-center font-mono text-matrix-400/40"
             >
-              <WebReceiptLogo size={27} className="transition-transform duration-300 group-hover:-translate-y-px" />
+              <WebReceiptLogo size={33} className="transition-transform duration-300 group-hover:-translate-y-px" />
             </Link>
 
             <span className="hidden h-4 w-px bg-matrix-400/15 lg:block" aria-hidden />

@@ -12,9 +12,9 @@ const TILES = Array.from({ length: 12 }, (_, index) => {
   const col = index % 4
   const row = Math.floor(index / 4)
   const vectors = [
-    [-8, -4, -5, .96], [4, -7, 4, .97], [9, -3, 6, .95], [7, 5, 4, .97],
-    [-9, 4, -4, .96], [2, 7, 3, .98], [-4, -8, -3, .96], [8, 7, 5, .97],
-    [-7, 3, -5, .95], [5, -5, 4, .97], [-6, 6, -4, .96], [9, 2, 6, .95],
+    [-14, -7, -7, .94], [8, -12, 6, .95], [16, -6, 9, .93], [12, 9, 7, .95],
+    [-16, 8, -7, .94], [4, 13, 5, .96], [-9, -14, -5, .94], [14, 13, 8, .95],
+    [-13, 6, -8, .93], [9, -10, 6, .95], [-11, 12, -6, .94], [16, 5, 8, .93],
   ] as const
   const [tx, ty, rotate, scale] = vectors[index]
   return { col, row, tx, ty, rotate, scale }
@@ -25,7 +25,7 @@ const TILES = Array.from({ length: 12 }, (_, index) => {
  * restrained set of puzzle-like tiles, then locks back into the normal mark.
  * The animation is CSS-only so it stays cheap compared with canvas effects.
  */
-export function WebReceiptLogo({ size = 27, className = '' }: LogoProps) {
+export function WebReceiptLogo({ size = 33, className = '' }: LogoProps) {
   const height = size * 1.6
 
   return (
@@ -60,8 +60,8 @@ export function WebReceiptLogo({ size = 27, className = '' }: LogoProps) {
       </span>
       <span aria-hidden className="wr-logo-sheen" />
       <style jsx>{`
-        .wr-logo-puzzle { contain: layout paint; }
-        .wr-logo-stage { filter: drop-shadow(0 0 10px rgba(51,255,102,.08)); }
+        .wr-logo-puzzle { contain:layout paint; }
+        .wr-logo-stage { filter:drop-shadow(0 0 12px rgba(51,255,102,.10)); }
         .wr-logo-tile {
           position:absolute;
           display:block;
@@ -74,19 +74,19 @@ export function WebReceiptLogo({ size = 27, className = '' }: LogoProps) {
           position:absolute;
           inset:0;
           pointer-events:none;
-          background:linear-gradient(108deg,transparent 32%,rgba(224,255,235,.12) 48%,transparent 62%);
+          background:linear-gradient(108deg,transparent 28%,rgba(224,255,235,.16) 48%,transparent 66%);
           animation:wr-logo-sheen 5s ease-in-out infinite;
           mix-blend-mode:screen;
         }
         @keyframes wr-logo-puzzle {
-          0%,72%,100% { transform:translate3d(0,0,0) rotate(0deg) scale(1); opacity:1; filter:none; }
-          78% { transform:translate3d(calc(var(--tx) * 1px),calc(var(--ty) * 1px),0) rotate(var(--rot)) scale(var(--scale)); opacity:.88; filter:brightness(1.15); }
-          87% { transform:translate3d(calc(var(--tx) * .45px),calc(var(--ty) * .45px),0) rotate(calc(var(--rot) * .45)) scale(1); opacity:1; }
-          94% { transform:translate3d(0,0,0) rotate(0deg) scale(1); opacity:1; filter:none; }
+          0%,70%,100% { transform:translate3d(0,0,0) rotate(0deg) scale(1); opacity:1; filter:none; }
+          76% { transform:translate3d(calc(var(--tx) * 1px),calc(var(--ty) * 1px),0) rotate(var(--rot)) scale(var(--scale)); opacity:.78; filter:brightness(1.18); }
+          85% { transform:translate3d(calc(var(--tx) * .38px),calc(var(--ty) * .38px),0) rotate(calc(var(--rot) * .38)) scale(1); opacity:1; }
+          93% { transform:translate3d(0,0,0) rotate(0deg) scale(1); opacity:1; filter:none; }
         }
         @keyframes wr-logo-sheen {
-          0%,62% { transform:translateX(-130%); opacity:0; }
-          72% { opacity:.25; }
+          0%,58% { transform:translateX(-130%); opacity:0; }
+          68% { opacity:.28; }
           88% { transform:translateX(130%); opacity:0; }
           100% { transform:translateX(130%); opacity:0; }
         }
