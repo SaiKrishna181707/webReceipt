@@ -8,6 +8,7 @@
 
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { SimulatorCollector } from '@/src/integrations/simulator.js'
+import { PublicWebCollector } from '@/src/integrations/public-web.js'
 import { JsonStore } from '@/src/services/store.js'
 
 interface EngineBundle {
@@ -17,7 +18,15 @@ interface EngineBundle {
   ready: Promise<void>
 }
 
-const globalRef = globalThis as unknown as { __webreceipt?: EngineBundle }
+interface PublicWebBundle {
+  collector: InstanceType<typeof PublicWebCollector>
+  service: InstanceType<typeof WebReceiptService>
+}
+
+const globalRef = globalThis as unknown as {
+  __webreceipt?: EngineBundle
+  __webreceiptPublicWeb?: PublicWebBundle
+}
 
 function createBundle(): EngineBundle {
   const store = new JsonStore()
@@ -31,11 +40,23 @@ function bundle(): EngineBundle {
   return globalRef.__webreceipt
 }
 
-/** Resolve the shared service after the JSON store has finished loading. */
+/** Resolve the shared simulator service after the JSON store has finished loading. */
 export async function getService() {
   const b = bundle()
   await b.ready
   return b.service
+}
+
+/** Resolve the hardened public-web service used for ordinary third-party URLs. */
+export async function getPublicWebService() {
+  const b = bundle()
+  await b.ready
+  if (!globalRef.__webreceiptPublicWeb) {
+    const collector = new PublicWebCollector()
+    const service = new WebReceiptService({ collector, store: b.store })
+    globalRef.__webreceiptPublicWeb = { collector, service }
+  }
+  return globalRef.__webreceiptPublicWeb.service
 }
 
 export async function getStore() {
