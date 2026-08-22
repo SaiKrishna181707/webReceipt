@@ -11,7 +11,7 @@ import {
   Radar,
   Terminal,
 } from 'lucide-react'
-import { PixelCard } from '@/components/effects/pixel-card'
+import PixelCard from '@/components/effects/pixel-card'
 import { SystemFooter } from '@/components/matrix/system-footer'
 import { SystemTicker } from '@/components/matrix/system-ticker'
 import {
