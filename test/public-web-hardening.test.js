@@ -41,6 +41,15 @@ test('resilient parser supports price microdata on non-meta elements', () => {
   assert.equal(observation.currency, 'USD');
 });
 
+test('resilient microdata parsing ignores unrelated numeric metadata', () => {
+  const html = enhancePublicCommerceHtml(
+    '<html><head><meta name="description" content="Compare over 2024 models"></head><body><span itemprop="price" content="19.99"></span><span itemprop="priceCurrency" content="USD"></span></body></html>',
+  );
+  const observation = extractPublicPageObservation(html, { sourceUrl: 'https://shop.example/widget' });
+  assert.equal(observation.checkout.finalTotal, 19.99);
+  assert.equal(observation.currency, 'USD');
+});
+
 test('resilient parser extracts commerce data from Next.js embedded JSON', () => {
   const html = enhancePublicCommerceHtml(`
     <html><head><title>Rendered Later</title></head><body><div id="__next"></div>

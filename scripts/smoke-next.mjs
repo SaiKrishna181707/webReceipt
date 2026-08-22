@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const OPERATOR_TOKEN = 'ci-operator-token-not-a-real-secret';
 const COLLECTOR_ID = 'c_mt3ha1iv1jgm8eg813';
+const DEMO_URL = 'https://demo.webreceipt.dev/hotel/ocean-house';
+const MUTATION = 'wrong-valid-total';
 
 async function freePort() {
   return new Promise((resolve, reject) => {
@@ -45,6 +47,14 @@ async function assertJsonError(response, expectedStatus, expectedCode, label) {
   await assertStatus(response, expectedStatus, label);
   const body = await response.json();
   assert(body.code === expectedCode, `${label} code ${body.code}, expected ${expectedCode}`);
+}
+
+async function postJson(path, body = {}, headers = {}) {
+  return fetch(`${base}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  });
 }
 
 async function malformedJson(path, headers = {}) {
@@ -91,19 +101,46 @@ try {
   assert(body.browserObserve?.enabled === true, 'browserObserve should be enabled when a token is present');
   assert(body.liveAccess?.protected === true, 'protected live access should report operator protection');
 
+  // Every user-facing route must render successfully from the production build.
+  for (const path of ['/', '/console', '/receipts', '/mutation-lab', '/docs']) {
+    response = await fetch(`${base}${path}`);
+    await assertStatus(response, 200, `page ${path}`);
+    const html = await response.text();
+    assert(/<!DOCTYPE html|<html/i.test(html), `page ${path} did not render HTML`);
+  }
+
   response = await fetch(`${base}/fixture/hotel`);
   await assertStatus(response, 200, 'fixture');
   const fixture = await response.text();
   assert(fixture.includes('Review final amount'), 'production fixture is missing V3 interaction drift');
 
-  response = await fetch(`${base}/api/observe`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ targetUrl: 'https://demo.webreceipt.dev/hotel/ocean-house', mutation: 'healthy' }),
-  });
-  await assertStatus(response, 200, 'simulator observe');
+  // Exercise the same backend sequence wired to the Console buttons.
+  response = await postJson('/api/observe', { targetUrl: DEMO_URL, mutation: 'healthy', autoHeal: false });
+  await assertStatus(response, 200, 'console observe');
   body = await response.json();
-  assert(body.integrity?.status === 'valid', `simulator integrity ${body.integrity?.status}`);
+  assert(body.integrity?.status === 'valid', `console observe integrity ${body.integrity?.status}`);
+
+  response = await postJson('/api/observe', { targetUrl: DEMO_URL, mutation: MUTATION, autoHeal: false });
+  await assertStatus(response, 200, 'console break');
+  body = await response.json();
+  assert(body.integrity?.status === 'invalid', `console break integrity ${body.integrity?.status}`);
+
+  response = await postJson('/api/heal', { targetUrl: DEMO_URL, mutation: MUTATION });
+  await assertStatus(response, 200, 'console heal');
+  body = await response.json();
+  assert(body.integrity?.status === 'valid', `console heal integrity ${body.integrity?.status}`);
+  assert(body.healed === true, 'console heal did not report a verified repair');
+
+  response = await postJson('/api/diff', { simulate: true, targetUrl: DEMO_URL });
+  await assertStatus(response, 200, 'console promise diff');
+  body = await response.json();
+  assert(Array.isArray(body.changes), 'console promise diff did not return changes');
+
+  response = await postJson('/api/reset');
+  await assertStatus(response, 200, 'console reset');
+  body = await response.json();
+  assert(Array.isArray(body.contracts) && body.contracts.length === 0, 'console reset did not clear contracts');
+  assert(Array.isArray(body.events) && body.events.length === 0, 'console reset did not clear events');
 
   for (const path of ['/api/observe', '/api/heal', '/api/diff', '/api/stress']) {
     response = await malformedJson(path);
@@ -127,11 +164,7 @@ try {
   // Protected live routes authorize before parsing. No operator header means a
   // stable 401 and must not reach Bright Data even with a syntactically valid body.
   for (const path of ['/api/brightdata/observe', '/api/brightdata/heal']) {
-    response = await fetch(`${base}${path}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: '{}',
-    });
+    response = await postJson(path);
     await assertJsonError(response, 401, 'operator_required', `${path} unauthorized`);
 
     // With the correct operator header, malformed JSON is rejected before the
