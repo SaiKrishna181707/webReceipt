@@ -81,6 +81,7 @@ const child = spawn(process.execPath, [nextBin, 'start', '-p', String(port), '-H
     // real upstream call. Every protected test below fails before getBrightDataService.
     BRIGHT_DATA_API_TOKEN: 'ci-dummy-bright-data-token',
     BRIGHT_DATA_COLLECTOR_ID: '',
+    BRIGHT_DATA_UNLOCKER_ZONE: '',
     WEBRECEIPT_OPERATOR_TOKEN: OPERATOR_TOKEN,
     WEBRECEIPT_ALLOW_UNPROTECTED_LIVE: 'false',
     WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE: 'false',
@@ -99,6 +100,9 @@ try {
   assert(body.mode === 'brightdata-ready', `expected brightdata-ready, got ${body.mode}`);
   assert(body.collectorId === COLLECTOR_ID, `expected fallback collector ${COLLECTOR_ID}, got ${body.collectorId}`);
   assert(body.browserObserve?.enabled === true, 'browserObserve should be enabled when a token is present');
+  assert(body.browserObserve?.directPublicTargets === true, 'direct public targets should always be enabled');
+  assert(body.browserObserve?.webUnlockerConfigured === false, 'Web Unlocker should not report configured without a zone');
+  assert(body.browserObserve?.arbitraryPublicTargets === false, 'arbitrary public fallback should stay disabled without token + zone + opt-in');
   assert(body.liveAccess?.protected === true, 'protected live access should report operator protection');
 
   // Every user-facing route must render successfully from the production build.

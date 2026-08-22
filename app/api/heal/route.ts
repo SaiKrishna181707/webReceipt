@@ -1,5 +1,5 @@
 import { getService } from '@/lib/server/service'
-import { getPublicWebCollector, getPublicWebService, isSimulatorTarget } from '@/lib/server/public-web'
+import { createPublicWebSession, isSimulatorTarget } from '@/lib/server/public-web'
 import { runSafely, readBody } from '@/lib/server/handler'
 import { withPublicScrapeLimit } from '@/lib/server/public-limit'
 
@@ -17,8 +17,9 @@ export async function POST(req: Request) {
       return service.observe({ targetUrl, mutation, autoHeal: true })
     }
     return withPublicScrapeLimit(req, async () => {
-      ;(await getPublicWebCollector()).reset()
-      const service = await getPublicWebService()
+      // The full break -> preview -> approve -> post-heal verification cycle
+      // stays inside one isolated collector instance for this request.
+      const { service } = await createPublicWebSession()
       return service.observe({ targetUrl, mutation, autoHeal: true })
     })
   })
