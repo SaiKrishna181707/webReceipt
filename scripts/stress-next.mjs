@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 const DEMO_URL = 'https://demo.webreceipt.dev/hotel/ocean-house';
 const MUTATION = 'wrong-valid-total';
 const ROUTES = ['/', '/console', '/receipts', '/mutation-lab', '/docs'];
+const devMode = process.argv.includes('--dev');
+const serverCommand = devMode ? 'dev' : 'start';
+const modeLabel = devMode ? 'dev' : 'production';
 
 async function freePort() {
   return new Promise((resolve, reject) => {
@@ -22,16 +25,16 @@ async function freePort() {
 }
 
 async function waitFor(url, child, logs) {
-  const deadline = Date.now() + 25_000;
+  const deadline = Date.now() + (devMode ? 45_000 : 25_000);
   while (Date.now() < deadline) {
-    if (child.exitCode != null) throw new Error(`Next server exited early (${child.exitCode})\n${logs.join('')}`);
+    if (child.exitCode != null) throw new Error(`Next ${modeLabel} server exited early (${child.exitCode})\n${logs.join('')}`);
     try {
       const response = await fetch(url);
       if (response.ok) return;
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error(`Next server did not become ready\n${logs.join('')}`);
+  throw new Error(`Next ${modeLabel} server did not become ready\n${logs.join('')}`);
 }
 
 function assert(condition, message) {
@@ -78,11 +81,11 @@ const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
 const nextBin = fileURLToPath(await import.meta.resolve('next/dist/bin/next'));
 const logs = [];
-const stateFile = path.join(os.tmpdir(), `webreceipt-stress-${process.pid}-${Date.now()}.json`);
-const child = spawn(process.execPath, [nextBin, 'start', '-p', String(port), '-H', '127.0.0.1'], {
+const stateFile = path.join(os.tmpdir(), `webreceipt-${modeLabel}-stress-${process.pid}-${Date.now()}.json`);
+const child = spawn(process.execPath, [nextBin, serverCommand, '-p', String(port), '-H', '127.0.0.1'], {
   env: {
     ...process.env,
-    NODE_ENV: 'production',
+    NODE_ENV: devMode ? 'development' : 'production',
     WEBRECEIPT_STATE_FILE: stateFile,
     PUBLIC_WEB_REQUESTS_PER_MINUTE: '500',
     PUBLIC_WEB_MAX_CONCURRENT: '16',
@@ -97,8 +100,9 @@ child.stderr.on('data', (chunk) => logs.push(chunk.toString()));
 try {
   await waitFor(`${base}/api/brightdata/health`, child, logs);
 
-  // 1) Hammer every user-facing route concurrently. This catches production
-  // rendering failures, static chunk issues and accidental server-only imports.
+  // 1) Hammer every user-facing route concurrently. Running this in both `next
+  // dev` and `next start` catches local on-demand compilation issues as well as
+  // production rendering/static chunk problems.
   const routeRequests = [];
   for (let round = 0; round < 20; round++) {
     for (const route of ROUTES) routeRequests.push(fetch(`${base}${route}`));
@@ -123,7 +127,7 @@ try {
   // reset bugs and store serialization races that a one-shot smoke test misses.
   for (let iteration = 1; iteration <= 8; iteration++) await fullConsoleCycle(base, iteration);
 
-  // 4) Exercise the Mutation Lab API through the built production server.
+  // 4) Exercise the Mutation Lab API through the local Next server.
   let response = await postJson(base, '/api/stress');
   let body = await readJson(response, 'mutation lab stress');
   assert(Number(body.total) > 0, 'mutation lab returned no mutation cases');
@@ -182,7 +186,7 @@ try {
   body = await readJson(response, 'post-stress observe');
   assert(body.integrity?.status === 'valid', 'post-stress observe was not valid');
 
-  console.log(`Next localhost stress: PASS (${routeResponses.length + observations.length + mixed.length + invalidResponses.length + 8 * 5 + 5} checked operations)`);
+  console.log(`Next localhost ${modeLabel} stress: PASS (${routeResponses.length + observations.length + mixed.length + invalidResponses.length + 8 * 5 + 5} checked operations)`);
 } finally {
   child.kill('SIGTERM');
   await new Promise((resolve) => {
