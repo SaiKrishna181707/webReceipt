@@ -15,6 +15,7 @@ import { GatedEffect } from '@/components/effects/gated-effect'
 import ParticleText from '@/components/effects/ParticleText'
 import PixelCard from '@/components/effects/pixel-card'
 import Strands from '@/components/effects/strands'
+import { SystemFooter } from '@/components/matrix/system-footer'
 import { SystemTicker } from '@/components/matrix/system-ticker'
 import {
   SystemLink,
@@ -206,9 +207,9 @@ export default function LandingPage() {
                     <Metric icon={Hash} label="Per-field" value="SHA-256" />
                     <Metric icon={Clock} label="Every claim" value="Timestamped" />
                   </div>
-                  <div className="relative mt-5 h-20 w-72 max-w-full">
-                    <GatedEffect className="pointer-events-none absolute inset-0 opacity-60" rootMargin="300px">
-                      <Strands count={1} speed={0.4} glow={1.7} intensity={0.42} opacity={0.78} scale={1.35} />
+                  <div className="relative mt-5 h-24 w-80 max-w-full">
+                    <GatedEffect className="pointer-events-none absolute inset-0 opacity-90" rootMargin="300px">
+                      <Strands count={1} speed={0.35} glow={2.0} intensity={0.7} opacity={0.9} scale={1.1} />
                     </GatedEffect>
                   </div>
                 </div>
@@ -223,6 +224,8 @@ export default function LandingPage() {
           <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink></div>
         </section>
       </div>
+
+      <SystemFooter />
     </div>
   )
 }
