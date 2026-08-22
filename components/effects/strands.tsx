@@ -142,14 +142,6 @@ export default function Strands({
     const ctn = ctnDom.current
     if (!ctn) return
 
-    // The evidence panel gives the explanatory copy the left half. Make the
-    // WebGL surface itself the right half so the shader's coordinate origin is
-    // the center of the metrics column, not the center of the whole panel.
-    ctn.style.left = '50%'
-    ctn.style.right = 'auto'
-    ctn.style.width = '50%'
-    ctn.style.clipPath = 'none'
-
     const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr: Math.min(window.devicePixelRatio || 1, 1.5) })
     const gl = renderer.gl
     gl.clearColor(0, 0, 0, 0)
