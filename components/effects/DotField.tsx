@@ -31,9 +31,9 @@ const DotField = memo(function DotField({
   glowRadius = 160,
   sparkle = false,
   waveAmplitude = 0,
-  gradientFrom = '#a855f7',
-  gradientTo = '#b497cf',
-  glowColor = '#a855f7',
+  gradientFrom = '#0b6b35',
+  gradientTo = '#7dffab',
+  glowColor = '#00ff66',
   paused = false,
 }: DotFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -50,7 +50,6 @@ const DotField = memo(function DotField({
     const container = containerRef.current
     const canvas = canvasRef.current
     if (!container || !canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -79,7 +78,6 @@ const DotField = memo(function DotField({
       const padX = (width - (cols - 1) * step) / 2
       const padY = (height - (rows - 1) * step) / 2
       const dots: Dot[] = []
-
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           const ax = padX + col * step
@@ -114,7 +112,6 @@ const DotField = memo(function DotField({
       const dt = Math.min((now - lastTime) / 16.67, 2)
       lastTime = now
       frame++
-
       if (!pausedRef.current) {
         const p = propsRef.current
         const mouse = mouseRef.current
@@ -123,22 +120,18 @@ const DotField = memo(function DotField({
         const radiusSq = radius * radius
         const dotR = p.dotRadius / 2
         const engagement = Math.min(mouse.speed / 5, 1)
-
         mouse.speed *= Math.pow(0.92, dt)
         ctx.clearRect(0, 0, width, height)
-
         const gradient = ctx.createLinearGradient(0, 0, width, height)
         gradient.addColorStop(0, p.gradientFrom)
         gradient.addColorStop(1, p.gradientTo)
         ctx.fillStyle = gradient
         ctx.beginPath()
-
         for (let i = 0; i < dots.length; i++) {
           const dot = dots[i]
           const dx = mouse.x - dot.ax
           const dy = mouse.y - dot.ay
           const distSq = dx * dx + dy * dy
-
           if (distSq < radiusSq && engagement > 0.01) {
             const dist = Math.sqrt(distSq)
             const influence = 1 - dist / radius
@@ -152,21 +145,17 @@ const DotField = memo(function DotField({
             dot.sx += (dot.ax - dot.sx) * 0.1 * dt
             dot.sy += (dot.ay - dot.sy) * 0.1 * dt
           }
-
           let x = dot.sx
           let y = dot.sy
           if (p.waveAmplitude > 0) {
             y += Math.sin(dot.ax * 0.03 + frame * 0.02) * p.waveAmplitude
             x += Math.cos(dot.ay * 0.03 + frame * 0.014) * p.waveAmplitude * 0.5
           }
-
           const r = p.sparkle && mouse.speed > 0.1 && i % 37 === frame % 37 ? dotR * 1.8 : dotR
           ctx.moveTo(x + r, y)
           ctx.arc(x, y, r, 0, Math.PI * 2)
         }
-
         ctx.fill()
-
         if (engagement > 0.01 && mouse.x > -100) {
           const glow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, p.glowRadius)
           glow.addColorStop(0, `${p.glowColor}55`)
@@ -175,7 +164,6 @@ const DotField = memo(function DotField({
           ctx.fillRect(mouse.x - p.glowRadius, mouse.y - p.glowRadius, p.glowRadius * 2, p.glowRadius * 2)
         }
       }
-
       raf = requestAnimationFrame(draw)
     }
 
@@ -185,7 +173,6 @@ const DotField = memo(function DotField({
     container.addEventListener('pointerleave', onPointerLeave, { passive: true })
     resize()
     raf = requestAnimationFrame(draw)
-
     return () => {
       cancelAnimationFrame(raf)
       resizeObserver.disconnect()
@@ -202,5 +189,4 @@ const DotField = memo(function DotField({
 })
 
 DotField.displayName = 'DotField'
-
 export default DotField
