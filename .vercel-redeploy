@@ -1,1 +1,1 @@
-UI restore checkpoint: deploy from restored main after reverting the accidental globals.css overwrite.
+UI restore checkpoint: masked hero heading + puzzle logo animation. Trigger production deploy from restored main.
