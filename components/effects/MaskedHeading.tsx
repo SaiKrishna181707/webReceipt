@@ -31,11 +31,7 @@ interface MaskedHeadingProps {
   fontWeight?: number
 }
 
-/**
- * React-Bits-style masked headline without a permanent animation loop.
- * The media is visible only through the glyphs, while a clipped wipe reveals
- * it on mount/view. Pointer parallax is event-driven so the hero stays cheap.
- */
+/** React-Bits-style masked headline with event-driven interaction instead of a permanent RAF loop. */
 export default function MaskedHeading({
   text,
   tag: Tag = 'h1',
@@ -68,15 +64,12 @@ export default function MaskedHeading({
   useEffect(() => {
     if (trigger !== 'view' || !rootRef.current) return
     const node = rootRef.current
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setActive(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.2 }
-    )
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setActive(true)
+        observer.disconnect()
+      }
+    }, { threshold: 0.2 })
     observer.observe(node)
     return () => observer.disconnect()
   }, [trigger])
@@ -84,7 +77,6 @@ export default function MaskedHeading({
   useEffect(() => {
     const node = rootRef.current
     if (!node || trigger !== 'hover') return
-
     const enter = () => setActive(true)
     const move = (event: PointerEvent) => {
       if (!parallax) return
@@ -94,7 +86,6 @@ export default function MaskedHeading({
       setOffset({ x: -x * parallax, y: -y * parallax })
     }
     const leave = () => setOffset({ x: 0, y: 0 })
-
     node.addEventListener('pointerenter', enter)
     node.addEventListener('pointermove', move, { passive: true })
     node.addEventListener('pointerleave', leave)
@@ -136,9 +127,7 @@ export default function MaskedHeading({
         '--mh-drift': `${drift}px`,
       } as React.CSSProperties}
     >
-      <span className="mh-base" aria-hidden>
-        {text}
-      </span>
+      <span className="mh-base" aria-hidden>{text}</span>
       {mediaSource && (
         <span className={`mh-reveal ${reveal === 'wipe' ? 'mh-reveal-wipe' : ''} ${reveal === 'fade' ? 'mh-reveal-fade' : ''}`} aria-hidden>
           <span
@@ -149,6 +138,81 @@ export default function MaskedHeading({
           </span>
         </span>
       )}
+      <style jsx>{`
+        .mh-root {
+          position:relative;
+          display:block;
+          width:100%;
+          margin:0;
+          overflow:hidden;
+          color:#e7fff0;
+          text-wrap:balance;
+          -webkit-font-smoothing:antialiased;
+        }
+        .mh-base {
+          display:block;
+          color:#e7fff0;
+          opacity:.92;
+          text-shadow:0 0 30px rgba(51,255,102,.10);
+          transition:opacity .45s ease;
+        }
+        .is-active .mh-base { opacity:.10; }
+        .mh-reveal {
+          position:absolute;
+          inset:0;
+          overflow:hidden;
+          pointer-events:none;
+          opacity:1;
+          clip-path:inset(0 0 0 0);
+          transform:translate3d(0,0,0);
+        }
+        .mh-reveal-wipe { clip-path:inset(0 100% 0 0); }
+        .is-active .mh-reveal-wipe {
+          animation:mh-wipe var(--mh-duration) cubic-bezier(.16,1,.3,1) forwards;
+        }
+        .mh-reveal-fade {
+          opacity:0;
+          transform:scale(1.035);
+        }
+        .is-active .mh-reveal-fade {
+          animation:mh-fade var(--mh-duration) cubic-bezier(.16,1,.3,1) forwards;
+        }
+        .mh-media {
+          position:absolute;
+          inset:-4%;
+          display:block;
+          color:transparent;
+          -webkit-text-fill-color:transparent;
+          background-position:center;
+          background-repeat:no-repeat;
+          background-size:cover;
+          background-clip:text;
+          -webkit-background-clip:text;
+          transform:translate3d(var(--mh-x),var(--mh-y),0) scale(var(--mh-scale));
+          filter:brightness(var(--mh-brightness)) saturate(var(--mh-saturation));
+          text-shadow:0 0 26px rgba(51,255,102,.16);
+          animation:mh-drift 8s ease-in-out infinite alternate;
+          will-change:transform;
+        }
+        .mh-media-gray { filter:brightness(var(--mh-brightness)) saturate(var(--mh-saturation)) grayscale(1); }
+        @keyframes mh-wipe {
+          0% { clip-path:inset(0 100% 0 0); }
+          100% { clip-path:inset(0 0 0 0); }
+        }
+        @keyframes mh-fade {
+          0% { opacity:0; transform:scale(1.035); }
+          100% { opacity:1; transform:scale(1); }
+        }
+        @keyframes mh-drift {
+          0% { margin-left:calc(var(--mh-drift) * -1); margin-top:calc(var(--mh-drift) * .35); }
+          100% { margin-left:var(--mh-drift); margin-top:calc(var(--mh-drift) * -.35); }
+        }
+        @media (prefers-reduced-motion:reduce) {
+          .mh-reveal-wipe,.mh-reveal-fade,.mh-media { animation:none; }
+          .mh-reveal { clip-path:inset(0); opacity:1; transform:none; }
+          .mh-media { transform:scale(var(--mh-scale)); }
+        }
+      `}</style>
     </Tag>
   )
 }
