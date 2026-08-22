@@ -91,12 +91,12 @@ const RED = {
  */
 const VOID = {
   100: '#e8ffee',
-  200: '#a9c9b1',
-  300: '#6f8f78',
-  400: '#4c6552',
-  500: '#334438',
-  600: '#1b2a1f',
-  700: '#101a13',
+  200: '#c2e5ca',
+  300: '#86ad91',
+  400: '#5e7b66',
+  500: '#3f5545',
+  600: '#25382a',
+  700: '#15231a',
   800: '#080d09',
   900: '#000000',
 }
@@ -110,31 +110,19 @@ const config: Config = {
         background: 'var(--bg)',
         foreground: 'var(--text)',
         border: 'var(--line)',
-
-        // ---- the system ------------------------------------------------
         matrix: { ...GREEN, DEFAULT: GREEN[400] },
         phosphor: { ...PHOSPHOR, DEFAULT: PHOSPHOR[400] },
         data: { ...TEAL, DEFAULT: TEAL[400] },
         warn: { ...AMBER, DEFAULT: AMBER[400] },
         alarm: { ...RED, DEFAULT: RED[400] },
-        // The void defaults to true black: the screen is black because it's off.
         void: { ...VOID, DEFAULT: VOID[900] },
       },
       fontFamily: {
-        // `--font-display` and `--font-mono` come from `next/font/google` in
-        // app/layout.tsx, which self-hosts both faces under hashed family
-        // names. The literals after each variable are the fallback chain, not
-        // the real font — nothing here can name "Inter" and expect a hit.
-        //
-        // Inter carries the headlines. The Matrix interface is typographically
-        // plain on purpose — the atmosphere comes from the code behind it.
         display: ['var(--font-display)', 'Inter', 'system-ui', 'sans-serif'],
         sans: ['var(--font-display)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        // Every piece of system information is monospaced.
         mono: ['var(--font-mono)', '"JetBrains Mono"', '"Fira Code"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        // A lit edge plus a short halo. Green light spills; it never fills.
         matrix: '0 0 0 1px rgba(51,255,102,.42), 0 0 16px -4px rgba(51,255,102,.5), 0 0 48px -18px rgba(51,255,102,.34)',
         'matrix-sm': '0 0 0 1px rgba(51,255,102,.34), 0 0 10px -3px rgba(51,255,102,.45)',
       },
