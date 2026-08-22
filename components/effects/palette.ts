@@ -43,8 +43,12 @@ export const EFFECT_RAMP: readonly string[] = Object.freeze([EFFECT_BRIGHT, EFFE
 /**
  * PixelCard takes its colours as one comma-joined string, not an array — that is
  * the upstream prop shape and it is left alone.
+ *
+ * The green cards use a deliberately dimmer pixel ramp so the animation supports
+ * the copy instead of competing with it. The brightest phosphor is reserved for
+ * borders, labels and other small accents where it remains easy to read.
  */
-export const EFFECT_PIXELS = `${EFFECT_BRIGHT},${EFFECT_MID},${EFFECT_DEEP}`
+export const EFFECT_PIXELS = '#1f9d45,#287d42,#0b3f20'
 
 /**
  * The alarm equivalent, for pixel fields inside red-toned panels — the failure
