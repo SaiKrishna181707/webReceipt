@@ -144,10 +144,12 @@ try {
   assert(mixed.length === 24, 'mixed load did not complete every request');
 
   // 6) Hostile/invalid pasted URLs must fail closed with a stable 400 instead of
-  // causing DNS access, internal network access or a generic 500.
+  // causing DNS access, internal network access or a generic 500. The controlled
+  // /fixture/hotel localhost URL is intentionally excluded because that one is
+  // the explicit local-development simulator target.
   const invalidTargets = [
     'ftp://example.com/file',
-    'http://127.0.0.1:3000/fixture/hotel',
+    'http://127.0.0.1:3000/product',
     'http://169.254.169.254/latest/meta-data',
     'http://203.0.113.10/product',
     'https://[::1]/product',
