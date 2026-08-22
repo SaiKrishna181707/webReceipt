@@ -81,7 +81,7 @@ export default function ConsolePage() {
 
   const runDiff = () =>
     run('diff', async () => {
-      const d = await api.diff({ simulate: true })
+      const d = await api.diff({ simulate: true, targetUrl: url })
       setDiff(d)
       toast.success(`${d.changes.length} promise changes detected`)
     })
