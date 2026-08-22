@@ -11,7 +11,7 @@ import {
   Radar,
   Terminal,
 } from 'lucide-react'
-import ParticleText from '@/components/effects/ParticleText'
+import StrokeText from '@/components/effects/StrokeText'
 import PixelCard from '@/components/effects/pixel-card'
 import { SystemFooter } from '@/components/matrix/system-footer'
 import { SystemTicker } from '@/components/matrix/system-ticker'
@@ -64,23 +64,20 @@ export default function LandingPage() {
               <SystemStatus label="Channel" value="Secure — established" />
             </div>
             <div className="mt-2 h-[300px] w-full max-w-4xl">
-              <ParticleText
+              <StrokeText
                 text={'PROOF OF\nPROMISE,\nSEALED IN CODE.'}
-                particleSize={2}
-                density={4}
-                color="#eafff1"
-                highlightColor="#00ff66"
-                scatter={180}
-                gatherDuration={1600}
-                stagger={420}
-                pointerRepel={40}
-                repelRadius={120}
-                idleDrift={0.7}
-                trigger="always"
-                fontSize="clamp(3rem, 12vw, 8rem)"
+                strokeColor="#33ff66"
+                fillColor="#e8ffee"
+                strokeWidth={1.4}
+                drawDuration={1.6}
+                fillDelay={0.2}
+                stagger={0.05}
+                ease="power2.out"
+                trigger="mount"
+                fillMode="wipe"
+                fontSize={128}
                 fontWeight={800}
-                fontFamily="inherit"
-                glow
+                letterSpacing={-4}
               />
             </div>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
