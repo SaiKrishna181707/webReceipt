@@ -206,9 +206,9 @@ export default function LandingPage() {
                     <Metric icon={Hash} label="Per-field" value="SHA-256" />
                     <Metric icon={Clock} label="Every claim" value="Timestamped" />
                   </div>
-                  <div className="relative mt-5 h-20 w-full max-w-md">
-                    <GatedEffect className="pointer-events-none absolute inset-0 opacity-65" rootMargin="300px">
-                      <Strands count={3} speed={0.4} glow={1.8} intensity={0.45} opacity={0.8} scale={1.6} />
+                  <div className="relative mt-5 h-20 w-72 max-w-full">
+                    <GatedEffect className="pointer-events-none absolute inset-0 opacity-60" rootMargin="300px">
+                      <Strands count={1} speed={0.4} glow={1.7} intensity={0.42} opacity={0.78} scale={1.35} />
                     </GatedEffect>
                   </div>
                 </div>
