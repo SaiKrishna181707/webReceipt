@@ -11,12 +11,11 @@ import {
   Radar,
   Terminal,
 } from 'lucide-react'
-import { WebReceiptLogo } from '@/components/brand/webreceipt-logo'
 import { GatedEffect } from '@/components/effects/gated-effect'
 import MagicRings from '@/components/effects/magic-rings'
+import ParticleText from '@/components/effects/ParticleText'
 import PixelCard from '@/components/effects/pixel-card'
 import Strands from '@/components/effects/strands'
-import { LogoSpider } from '@/components/matrix/logo-spider'
 import { SystemTicker } from '@/components/matrix/system-ticker'
 import {
   SystemLink,
@@ -125,21 +124,35 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-28 lg:px-8">
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-10 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-14 lg:px-8">
           <div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <Kicker tone="matrix">System / WebReceipt</Kicker>
               <SystemRail count={6} tone="matrix" className="opacity-70" />
               <SystemStatus label="Channel" value="Secure — established" />
             </div>
-            <div className="relative mt-7 inline-block">
-              <WebReceiptLogo size={30} flicker />
-              <LogoSpider className="-right-[68px] top-1/2 hidden -translate-y-1/2 sm:block" />
+            <div className="mt-2 h-[300px] w-full max-w-4xl">
+              <ParticleText
+                text={"PROOF OF
+PROMISE,
+SEALED IN CODE."}
+                particleSize={2}
+                density={4}
+                color="#eafff1"
+                highlightColor="#00ff66"
+                scatter={180}
+                gatherDuration={1600}
+                stagger={420}
+                pointerRepel={40}
+                repelRadius={120}
+                idleDrift={0.7}
+                trigger="hover"
+                fontSize="clamp(3rem, 12vw, 8rem)"
+                fontWeight={800}
+                fontFamily="inherit"
+                glow
+              />
             </div>
-            <h1 className="mt-6 font-bold uppercase leading-[0.98] tracking-[-0.02em] text-[clamp(2.1rem,6.4vw,4.25rem)]">
-              <span className="block phosphor-text">Proof of promise,</span>
-              <span className="block code-text">sealed in code.</span>
-            </h1>
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
               WebReceipt walks a public purchase journey, folds every price, fee and term into one canonical{' '}
               <span className="font-semibold text-void-100">Deal Contract</span>, and seals each claim with timestamped,
