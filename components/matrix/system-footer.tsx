@@ -12,7 +12,7 @@ const ROUTES = [
 /** The bottom of the home page: wordmark, routes, and runtime status. */
 export function SystemFooter() {
   return (
-    <footer className="relative !mt-0 -mb-20 border-t border-matrix-400/10 bg-transparent pt-8">
+    <footer className="relative !mt-0 -mb-52 border-t border-matrix-400/10 bg-transparent pt-8">
       <div className="mx-auto w-full px-0 pb-2">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-md">
