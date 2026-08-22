@@ -1,10 +1,11 @@
-import { getStore } from '@/lib/server/service'
-import { runSafely } from '@/lib/server/handler'
+import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Full persisted state: receipt history, orchestrator events, chaos runs.
+// Anonymous receipt/history state is stored per browser by lib/api.ts. A warm
+// serverless instance can serve multiple visitors, so never expose its internal
+// process-global orchestration ledger as a public cross-user history endpoint.
 export async function GET() {
-  return runSafely(async () => (await getStore()).state)
+  return NextResponse.json({ contracts: [], events: [], stressRuns: [] })
 }
