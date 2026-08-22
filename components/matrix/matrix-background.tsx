@@ -6,11 +6,11 @@ export function MatrixBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <DotField
-        dotRadius={1.5}
-        dotSpacing={14}
-        cursorRadius={220}
-        bulgeStrength={58}
-        glowRadius={58}
+        dotRadius={1.35}
+        dotSpacing={16}
+        cursorRadius={132}
+        bulgeStrength={28}
+        glowRadius={36}
         sparkle={false}
         waveAmplitude={0}
         gradientFrom="#08733a"
