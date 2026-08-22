@@ -26,7 +26,6 @@ export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: Lo
         viewBox="0 0 640 126"
         width="100%"
         height="100%"
-        viewBox="0 0 640 126"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
@@ -36,7 +35,6 @@ export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: Lo
           .wr-tile-glow { fill: none; stroke: rgba(51,255,102,.42); stroke-width: 5; opacity: .35; }
           .wr-symbol { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; fill: #f4fff6; }
           .wr-word { font-family: Georgia, 'Times New Roman', serif; font-size: 70px; font-weight: 600; fill: #f4fff6; letter-spacing: -3px; }
-          .wr-detail { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; fill: rgba(241,255,244,.9); }
           .wr-atomic { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; fill: rgba(241,255,244,.92); }
           .wr-logo { transform-origin: 320px 63px; }
           .webreceipt-logo-live .wr-logo { animation: wrBreath 4.8s ease-in-out infinite; }
