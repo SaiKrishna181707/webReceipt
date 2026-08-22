@@ -73,7 +73,6 @@ const DotField = memo(function DotField({
       width = rect.width
       height = rect.height
       dpr = Math.min(window.devicePixelRatio || 1, 1.25)
-
       canvas.width = Math.max(1, Math.floor(width * dpr))
       canvas.height = Math.max(1, Math.floor(height * dpr))
       canvas.style.width = `${width}px`
@@ -140,6 +139,20 @@ const DotField = memo(function DotField({
       dirty = true
     }
 
+    const settle = (dt: number, dots: Dot[]) => {
+      for (const index of active) {
+        const dot = dots[index]
+        if (!dot) continue
+        dot.sx += (dot.ax - dot.sx) * 0.18 * dt
+        dot.sy += (dot.ay - dot.sy) * 0.18 * dt
+        if (Math.abs(dot.sx - dot.ax) < 0.15 && Math.abs(dot.sy - dot.ay) < 0.15) {
+          dot.sx = dot.ax
+          dot.sy = dot.ay
+          active.delete(index)
+        }
+      }
+    }
+
     const draw = (now: number) => {
       const dt = Math.min((now - lastTime) / 33.33, 2)
       if (now - lastTime < 30) {
@@ -157,6 +170,7 @@ const DotField = memo(function DotField({
         const dotR = p.dotRadius / 2
         const hasPointer = mouse.x > -100
         const step = p.dotRadius + p.dotSpacing
+        const engagement = Math.min(mouse.speed / 5, 1)
 
         if (hasPointer) {
           const minX = Math.max(0, mouse.x - radius - step)
@@ -167,7 +181,6 @@ const DotField = memo(function DotField({
           const endCol = Math.min(cols - 1, Math.ceil((maxX + 2) / step))
           const startRow = Math.max(0, Math.floor((minY - 2) / step))
           const endRow = Math.min(rows - 1, Math.ceil((maxY + 2) / step))
-          const engagement = Math.min(mouse.speed / 5, 1)
 
           if (engagement > 0.01) {
             for (let row = startRow; row <= endRow; row++) {
@@ -192,42 +205,31 @@ const DotField = memo(function DotField({
                 dot.sy += (targetY - dot.sy) * 0.17 * dt
               }
             }
+          } else {
+            settle(dt, dots)
           }
+        } else {
+          settle(dt, dots)
         }
 
-        if (!hasPointer) {
-          for (const index of active) {
-            const dot = dots[index]
-            if (!dot) continue
-            dot.sx += (dot.ax - dot.sx) * 0.18 * dt
-            dot.sy += (dot.ay - dot.sy) * 0.18 * dt
-            if (Math.abs(dot.sx - dot.ax) < 0.15 && Math.abs(dot.sy - dot.ay) < 0.15) {
-              dot.sx = dot.ax
-              dot.sy = dot.ay
-              active.delete(index)
-            }
-          }
-        }
+        mouse.speed *= Math.pow(0.90, dt)
 
         ctx.clearRect(0, 0, width, height)
-
-        if (active.size) {
-          for (const index of active) {
-            const dot = dots[index]
-            if (!dot) continue
-            let x = dot.sx
-            let y = dot.sy
-            if (p.waveAmplitude > 0) {
-              y += Math.sin(dot.ax * 0.03 + now * 0.0012) * p.waveAmplitude
-              x += Math.cos(dot.ay * 0.03 + now * 0.0008) * p.waveAmplitude * 0.5
-            }
-            const dx = x - dot.ax
-            const dy = y - dot.ay
-            const displacement = Math.min(1, Math.hypot(dx, dy) / Math.max(p.bulgeStrength, 1))
-            const r = p.sparkle && mouse.speed > 0.1 && index % 37 === Math.floor(now / 33) % 37 ? dotR * 1.8 : dotR * (1 + displacement * 0.35)
-            ctx.fillStyle = p.gradientTo
-            ctx.fillRect(x - r, y - r, r * 2, r * 2)
+        for (const index of active) {
+          const dot = dots[index]
+          if (!dot) continue
+          let x = dot.sx
+          let y = dot.sy
+          if (p.waveAmplitude > 0) {
+            y += Math.sin(dot.ax * 0.03 + now * 0.0012) * p.waveAmplitude
+            x += Math.cos(dot.ay * 0.03 + now * 0.0008) * p.waveAmplitude * 0.5
           }
+          const dx = x - dot.ax
+          const dy = y - dot.ay
+          const displacement = Math.min(1, Math.hypot(dx, dy) / Math.max(p.bulgeStrength, 1))
+          const r = p.sparkle && mouse.speed > 0.1 && index % 37 === Math.floor(now / 33) % 37 ? dotR * 1.8 : dotR * (1 + displacement * 0.35)
+          ctx.fillStyle = p.gradientTo
+          ctx.fillRect(x - r, y - r, r * 2, r * 2)
         }
 
         if (hasPointer && active.size) {
@@ -242,17 +244,10 @@ const DotField = memo(function DotField({
           ctx.fill()
         }
 
-        if (!active.size) {
-          ctx.drawImage(baseCanvas, 0, 0, width, height)
-          dirty = false
-        } else {
-          // The base canvas is intentionally kept separate. Only the small
-          // interactive layer is repainted while the cursor is active.
-          ctx.globalCompositeOperation = 'destination-over'
-          ctx.drawImage(baseCanvas, 0, 0, width, height)
-          ctx.globalCompositeOperation = 'source-over'
-          dirty = hasPointer || active.size > 0
-        }
+        ctx.globalCompositeOperation = 'destination-over'
+        ctx.drawImage(baseCanvas, 0, 0, width, height)
+        ctx.globalCompositeOperation = 'source-over'
+        dirty = hasPointer || active.size > 0
       }
 
       raf = requestAnimationFrame(draw)
