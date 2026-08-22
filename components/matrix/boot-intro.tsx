@@ -8,41 +8,27 @@ const PORTRAIT = '/scofield.png'
 const FALLBACK = '/webreceipt-mark.svg'
 const EASE = 'cubic-bezier(0.23,1,0.32,1)'
 const EXIT_MS = 460
-const SEEN_KEY = 'wr:intro-seen'
 
-/** `open` holds the viewport, `leaving` runs the exit transition, `done` returns
- *  `null`. The third one matters: without it the overlay stays in the tree as a
- *  `role="dialog" aria-modal="true"` element at z-9999 for the rest of the
- *  session — invisible and pointer-transparent, but still telling assistive tech
- *  that a modal owns the page. */
 type Phase = 'open' | 'leaving' | 'done'
 
+/** Full-screen boot gate. It intentionally appears on every page load and
+ * remains visible until the visitor explicitly clicks/presses a key to enter. */
 export function BootIntro() {
   const rootRef = useRef<HTMLDivElement>(null)
   const trapped = useRef(false)
   const reduced = useReducedMotion()
   const [phase, setPhase] = useState<Phase>('open')
-  const [checked, setChecked] = useState(false)
   const [portraitSrc, setPortraitSrc] = useState(PORTRAIT)
-
-  /* The gate is only legible on the client, so the first paint always contains
-     the overlay and a returning visitor loses it again on the next frame. The
-     inverse — render nothing, add the overlay after mount — would flash the page
-     itself at every first-time visitor, which is the worse of the two flashes.
-
-     Read here, written on completion. Splitting the two directions means Strict
-     Mode's create/destroy/create can't race itself into skipping the intro. */
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem(SEEN_KEY) === '1') setPhase('done')
-    } catch {
-      /* storage blocked (private mode, hardened settings) — just play it */
-    }
-    setChecked(true)
-  }, [])
 
   const exit = useCallback(() => {
     setPhase((current) => (current === 'open' ? 'leaving' : current))
+  }, [])
+
+  // Warm the portrait immediately so the opening screen does not reveal the
+  // page while the image is still being fetched from the public assets folder.
+  useEffect(() => {
+    const preload = new window.Image()
+    preload.src = PORTRAIT
   }, [])
 
   useEffect(() => {
@@ -52,23 +38,11 @@ export function BootIntro() {
   }, [phase, reduced])
 
   useEffect(() => {
-    if (phase !== 'done') return
-    try {
-      sessionStorage.setItem(SEEN_KEY, '1')
-    } catch {
-      /* see above */
+    if (phase === 'done') {
+      if (trapped.current) document.getElementById('main')?.focus()
+      return
     }
-    // Only hand focus onward if we took it in the first place. A returning
-    // visitor never saw the overlay, and yanking their focus to <main> on every
-    // reload would be a regression, not a fix.
-    if (trapped.current) document.getElementById('main')?.focus()
-  }, [phase])
 
-  /* Derived from `phase` rather than set once at mount, so the lock cannot
-     outlive the overlay — including the case where the whole component unmounts
-     mid-transition. */
-  useEffect(() => {
-    if (phase === 'done') return
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
@@ -76,20 +50,12 @@ export function BootIntro() {
     }
   }, [phase])
 
-  /* Waits for `checked`. The overlay is in the very first commit so there is no
-     flash of the page, but the gate has not been read yet at that point — taking
-     focus there would move it for a returning visitor who never sees the intro,
-     pushing them past the skip link and the whole navigation. One frame later we
-     know whether this visitor is actually looking at an overlay. */
   useEffect(() => {
-    if (phase !== 'open' || !checked) return
+    if (phase !== 'open') return
     rootRef.current?.focus()
     trapped.current = true
 
     const onKey = (event: KeyboardEvent) => {
-      // The overlay holds no focusable children, so the trap reduces to "focus
-      // does not leave". Without this, Tab walks into the page behind it, which
-      // is scroll-locked and covered — reachable by keyboard, unreachable by eye.
       if (event.key === 'Tab') {
         event.preventDefault()
         return
@@ -102,7 +68,7 @@ export function BootIntro() {
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, checked, exit])
+  }, [phase, exit])
 
   if (phase === 'done') return null
 
@@ -135,8 +101,6 @@ export function BootIntro() {
             style={{ objectPosition: 'left bottom', filter: 'brightness(.92) contrast(1.06)' }}
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
-          {/* `bg-matrix-400/70`, not `bg-matrix/70`: the bare scale name compiles
-              to nothing, so this line was invisible. */}
           {!reduced && (
             <div className="absolute inset-x-0 top-0 h-px animate-scan bg-matrix-400/70" aria-hidden="true" />
           )}
