@@ -5,7 +5,6 @@ import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
 import ClickSpark from '@/components/effects/click-spark'
 import { MatrixBackground } from '@/components/matrix/matrix-background'
-import { CursorSmoke } from '@/components/matrix/cursor-smoke'
 import { BootIntro } from '@/components/matrix/boot-intro'
 import { SystemFooter } from '@/components/matrix/system-footer'
 
@@ -45,7 +44,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
 
         <MatrixBackground />
-        <CursorSmoke />
         <Navigation />
 
         {/* `tabIndex={-1}` makes this a focus target rather than a focus stop: the
@@ -54,9 +52,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             control that was activated, not on the whole page. */}
         <main id="main" tabIndex={-1} className="relative z-10 min-h-screen pt-16 outline-none">
           {/* Sparks on every click in the content region. The canvas is fixed and
-              pointer-transparent at z-[60], clear of CursorSmoke at z-[20], so it
-              changes nothing about the layout or the hit-testing below it.
-              `min-h-full` keeps the wrapper from collapsing shorter pages. */}
+              pointer-transparent, so it changes nothing about the layout or
+              hit-testing below it. */}
           <ClickSpark className="min-h-full">{children}</ClickSpark>
         </main>
 
