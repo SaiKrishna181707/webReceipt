@@ -1,4 +1,4 @@
-import { PublicWebCollector } from '@/src/integrations/public-web-resilient.js'
+import { PublicWebCollector } from '@/src/integrations/public-web-production.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import { getStore } from '@/lib/server/service'
 
@@ -33,15 +33,24 @@ export async function getPublicWebCollector() {
   return (await bundle()).collector
 }
 
+function parseTarget(rawUrl?: string): URL | null {
+  const value = String(rawUrl || '').trim()
+  if (!value) return null
+  try {
+    if (value.startsWith('//')) return new URL(`https:${value}`)
+    if (!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value)) return new URL(`https://${value}`)
+    return new URL(value)
+  } catch {
+    return null
+  }
+}
+
 export function isSimulatorTarget(rawUrl?: string): boolean {
   const value = String(rawUrl || '').trim()
   if (!value) return true
-  try {
-    const url = new URL(value)
-    const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
-    if (hostname === 'demo.webreceipt.dev') return true
-    return url.pathname === '/fixture/hotel' && ['localhost', '127.0.0.1', '::1'].includes(hostname)
-  } catch {
-    return false
-  }
+  const url = parseTarget(value)
+  if (!url) return false
+  const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
+  if (hostname === 'demo.webreceipt.dev') return true
+  return url.pathname === '/fixture/hotel' && ['localhost', '127.0.0.1', '::1'].includes(hostname)
 }
