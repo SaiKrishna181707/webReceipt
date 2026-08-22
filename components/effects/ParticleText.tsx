@@ -89,6 +89,7 @@ export default function ParticleText({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
       const fontPx = parseFontSize(fontSize, width)
+      const resolvedFontFamily = fontFamily === 'inherit' ? getComputedStyle(root).fontFamily : fontFamily
       const offscreen = document.createElement('canvas')
       offscreen.width = Math.max(1, Math.floor(width * dpr))
       offscreen.height = Math.max(1, Math.floor(height * dpr))
@@ -97,7 +98,7 @@ export default function ParticleText({
       octx.setTransform(dpr, 0, 0, dpr, 0, 0)
       octx.clearRect(0, 0, width, height)
       octx.fillStyle = '#fff'
-      octx.font = `${fontWeight} ${fontPx}px ${fontFamily}`
+      octx.font = `${fontWeight} ${fontPx}px ${resolvedFontFamily}`
       octx.textAlign = 'center'
       octx.textBaseline = 'middle'
 
