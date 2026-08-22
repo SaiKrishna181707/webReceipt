@@ -6,7 +6,6 @@ import { Navigation } from '@/components/navigation'
 import ClickSpark from '@/components/effects/click-spark'
 import { MatrixBackground } from '@/components/matrix/matrix-background'
 import { BootIntro } from '@/components/matrix/boot-intro'
-import { SystemFooter } from '@/components/matrix/system-footer'
 
 /* Both faces are self-hosted and preloaded at build time. They used to arrive
    via an `@import` at the top of globals.css, which is the worst case: an
@@ -58,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
 
         <div className="relative z-10">
-          <SystemFooter />
+          <div id="footer-slot" />
         </div>
 
         <div className="crt-overlay" aria-hidden />
