@@ -14,22 +14,27 @@ function classify(error: unknown): { status: number; code: string; message: stri
   // the stable contract between the request reader and route handler.
   if ([400, 413].includes(status) && ['invalid_json', 'body_too_large'].includes(code))
     return { status, code, message }
+  if (status === 429 && code === 'rate_limited') return { status, code, message }
   if (/Request body must be valid(?: UTF-8)? JSON|Request body must be a JSON object/i.test(message))
     return { status: 400, code: 'invalid_json', message }
   if (/Request body exceeds \d+ bytes/i.test(message))
     return { status: 413, code: 'body_too_large', message }
-  if (/valid URL|Only http|Credential-bearing|publicly reachable|private\/reserved|login\/private|public anonymous|Target hostname|Target must|requires targetUrl/i.test(message))
+  if (/valid URL|Only http|Credential-bearing|publicly reachable|private(?:\/| or )reserved|login\/private|public anonymous|Target hostname|Target must|requires targetUrl|requires a URL input/i.test(message))
     return { status: 400, code: 'invalid_target', message }
-  if (/No commerce price with an identifiable currency/i.test(message))
+  if (/No commerce price with an identifiable currency|No public price was found/i.test(message))
     return { status: 422, code: 'unsupported_page', message }
-  if (/Public page response exceeds \d+ bytes/i.test(message))
+  if (/currency could not be identified reliably/i.test(message))
+    return { status: 422, code: 'unsupported_page', message }
+  if (/Public page response exceeds \d+ bytes|Public page exceeds the \d+ byte capture limit/i.test(message))
     return { status: 413, code: 'upstream_too_large', message }
-  if (/Public page returned unsupported content type/i.test(message))
+  if (/Public page returned unsupported content type|Target returned unsupported content type/i.test(message))
     return { status: 415, code: 'unsupported_content', message }
-  if (/Public page fetch timed out/i.test(message))
+  if (/Public page (?:fetch|request) timed out/i.test(message))
     return { status: 504, code: 'public_fetch_timeout', message }
   if (/Public page (?:fetch failed|returned HTTP|redirect|exceeded)/i.test(message))
     return { status: 502, code: 'public_fetch_failed', message }
+  if (/Promise Diff (?:requires|contracts must|rejected|for public URLs)/i.test(message))
+    return { status: 400, code: 'invalid_diff', message }
   if (/Unknown public-web mutation/i.test(message))
     return { status: 400, code: 'invalid_mutation', message }
   if (/Operator authorization required/i.test(message)) return { status: 401, code: 'operator_required', message }
