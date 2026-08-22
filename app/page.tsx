@@ -68,8 +68,8 @@ export default function LandingPage() {
 
             <div className="mt-8 max-w-4xl">
               <h1 className="font-sans text-[clamp(3.25rem,7vw,6.9rem)] font-black uppercase leading-[0.86] tracking-[-0.055em]">
-                <span className="block text-void-50">No promises.</span>
-                <span className="block text-matrix-400 drop-shadow-[0_0_24px_rgba(51,255,102,.18)]">All evidence.</span>
+                <span className="block text-void-50">Proof of promise</span>
+                <span className="block text-matrix-400 drop-shadow-[0_0_24px_rgba(51,255,102,.18)]">sealed in code.</span>
               </h1>
               <div className="mt-5 h-px w-28 bg-matrix-400/70 shadow-[0_0_12px_rgba(51,255,102,.35)]" aria-hidden />
             </div>
