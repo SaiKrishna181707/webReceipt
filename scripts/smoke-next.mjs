@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import net from 'node:net';
+import { fileURLToPath } from 'node:url';
 
 const OPERATOR_TOKEN = 'ci-operator-token-not-a-real-secret';
 const COLLECTOR_ID = 'c_mt3ha1iv1jgm8eg813';
@@ -56,9 +57,13 @@ async function malformedJson(path, headers = {}) {
 
 const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
-const nextBin = await import.meta.resolve('next/dist/bin/next');
+// `fileURLToPath`, not `new URL(…).pathname`: on Windows the latter yields
+// "/D:/…" with a leading slash, which spawn resolves to "D:\D:\…" and fails.
+// CI is ubuntu-latest so it never saw this; a Windows checkout could not run
+// the smoke test at all.
+const nextBin = fileURLToPath(await import.meta.resolve('next/dist/bin/next'));
 const logs = [];
-const child = spawn(process.execPath, [new URL(nextBin).pathname, 'start', '-p', String(port), '-H', '127.0.0.1'], {
+const child = spawn(process.execPath, [nextBin, 'start', '-p', String(port), '-H', '127.0.0.1'], {
   env: {
     ...process.env,
     NODE_ENV: 'production',
