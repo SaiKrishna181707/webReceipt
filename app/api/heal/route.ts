@@ -1,5 +1,6 @@
 import { getPublicWebService, getService } from '@/lib/server/service'
 import { runSafely, readBody } from '@/lib/server/handler'
+import { withPublicScrapeLimit } from '@/lib/server/public-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -22,11 +23,20 @@ export async function POST(req: Request) {
   return runSafely(async () => {
     const body = await readBody(req)
     const targetUrl = (body.targetUrl as string) || undefined
-    const service = isDemoTarget(targetUrl) ? await getService() : await getPublicWebService()
-    return service.observe({
+    if (isDemoTarget(targetUrl)) {
+      const service = await getService()
+      return service.observe({
+        targetUrl,
+        mutation: (body.mutation as string) || 'wrong-valid-total',
+        autoHeal: true,
+      })
+    }
+
+    const service = await getPublicWebService()
+    return withPublicScrapeLimit(req, () => service.observe({
       targetUrl,
       mutation: (body.mutation as string) || 'wrong-valid-total',
       autoHeal: true,
-    })
+    }))
   })
 }
