@@ -78,10 +78,12 @@ function findMicrodata(html) {
   for (const tag of String(html).match(/<[^>]+>/g) || []) {
     const a = attrs(tag);
     const props = String(a.itemprop || '').toLowerCase().split(/\s+/);
-    const rawPrice = a.content ?? a.value ?? a['data-price'] ?? a['data-product-price'] ?? a['data-sale-price'];
+    const rawPrice = props.includes('price')
+      ? (a.content ?? a.value)
+      : (a['data-price'] ?? a['data-product-price'] ?? a['data-sale-price']);
     const embedded = rawPrice != null ? priceFromText(rawPrice) : null;
     if (embedded) return embedded;
-    if (amount == null && (props.includes('price') || rawPrice != null)) amount = numberFrom(rawPrice);
+    if (amount == null && rawPrice != null) amount = numberFrom(rawPrice);
     if (!currency && (props.includes('pricecurrency') || a['data-currency'] != null || a['data-price-currency'] != null)) {
       currency = currencyFrom(a.content ?? a.value ?? a['data-currency'] ?? a['data-price-currency']);
     }
@@ -207,9 +209,16 @@ export function enhancePublicCommerceHtml(html) {
     : `${injected}${value}`;
 }
 
+function enhanceResponse(response) {
+  return { ...response, html: enhancePublicCommerceHtml(response.html) };
+}
+
 export class PublicWebCollector extends BasePublicWebCollector {
   async requestHtml(rawUrl) {
-    const response = await super.requestHtml(rawUrl);
-    return { ...response, html: enhancePublicCommerceHtml(response.html) };
+    return enhanceResponse(await super.requestHtml(rawUrl));
+  }
+
+  async requestBrightDataHtml(rawUrl) {
+    return enhanceResponse(await super.requestBrightDataHtml(rawUrl));
   }
 }
