@@ -1,16 +1,15 @@
-import { getStore, getSimulator } from '@/lib/server/service'
-import { getPublicWebCollector } from '@/lib/server/public-web'
+import { getSimulator } from '@/lib/server/service'
 import { runSafely } from '@/lib/server/handler'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Clear stored receipts/events and all in-memory repair state so both the
-// deterministic demo and arbitrary public-URL flow can restart cleanly.
+// Browser-visible history is cleared locally by lib/api. Reset only the
+// deterministic simulator state; never erase a process-global ledger that may
+// contain another visitor's internal engine records.
 export async function POST() {
   return runSafely(async () => {
     getSimulator().reset()
-    ;(await getPublicWebCollector()).reset()
-    return (await getStore()).reset()
+    return { contracts: [], events: [], stressRuns: [] }
   })
 }
