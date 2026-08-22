@@ -42,8 +42,22 @@ function rememberObservation(result: ObserveResult, action: 'observe' | 'heal' =
   addClientEvent(state, action === 'heal' ? 'heal' : status === 'invalid' ? 'integrity' : 'success', action === 'heal' ? (result.healed ? 'Verified repair completed' : 'Repair run completed') : status === 'invalid' ? 'Observation detected a contract integrity failure' : 'Public observation sealed', { targetUrl: result.contract.targetUrl, status, contractHash: result.contract.contractHash })
   writeClientState(state)
 }
-function isDemoTarget(value?: string): boolean { if (!value) return false; try { return new URL(value).hostname === 'demo.webreceipt.dev' } catch { return false } }
-function sameTarget(left: string, right: string): boolean { try { const a = new URL(left); const b = new URL(right); a.hash = ''; b.hash = ''; return a.toString() === b.toString() } catch { return left === right } }
+function clientUrl(value?: string): URL | null {
+  const raw = String(value || '').trim()
+  if (!raw) return null
+  try {
+    if (raw.startsWith('//')) return new URL(`https:${raw}`)
+    if (!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(raw)) return new URL(`https://${raw}`)
+    return new URL(raw)
+  } catch { return null }
+}
+function isDemoTarget(value?: string): boolean { return clientUrl(value)?.hostname.toLowerCase() === 'demo.webreceipt.dev' }
+function sameTarget(left: string, right: string): boolean {
+  const a = clientUrl(left); const b = clientUrl(right)
+  if (!a || !b) return left === right
+  a.hash = ''; b.hash = ''
+  return a.toString() === b.toString()
+}
 async function liveClientDiff(targetUrl: string): Promise<DiffResult> {
   let state = readClientState(); let matches = state.contracts.filter((entry) => sameTarget(entry.contract.targetUrl, targetUrl))
   if (matches.length < 2) {
