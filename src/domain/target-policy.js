@@ -76,13 +76,16 @@ export function assertPublicTarget(rawUrl, { allowLocal = false } = {}) {
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Only http(s) public web URLs are allowed.');
   if (url.username || url.password) throw new Error('Credential-bearing URLs are not allowed.');
   if (!url.hostname) throw new Error('Target URL must include a hostname.');
+  // Preserve the long-standing private-target failure contract first. Besides
+  // keeping error handling stable, this ensures localhost/metadata targets are
+  // classified as private regardless of which port the caller supplied.
+  if (!allowLocal && isPrivateNetworkHost(url.hostname)) throw new Error('Live web mode only accepts publicly reachable targets, not localhost/private network addresses.');
   // Anonymous production scraping should not be usable as a generic TCP proxy
   // into services exposed on unusual ports. Local simulator fixtures are the
   // only exception because local development commonly runs on an ephemeral port.
   if (!allowLocal && url.port && !((url.protocol === 'http:' && url.port === '80') || (url.protocol === 'https:' && url.port === '443'))) {
     throw new Error('Only http(s) public web URLs on standard ports 80 and 443 are allowed.');
   }
-  if (!allowLocal && isPrivateNetworkHost(url.hostname)) throw new Error('Live web mode only accepts publicly reachable targets, not localhost/private network addresses.');
   if (pathLooksPrivate(url.pathname)) throw new Error('Target looks login/private. WebReceipt only processes public anonymous pages.');
   url.hash = '';
   return url.toString();
