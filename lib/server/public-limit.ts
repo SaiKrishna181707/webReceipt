@@ -1,9 +1,10 @@
 type RateBucket = { count: number; resetAt: number }
 type PublicLimitGlobal = { __webreceiptPublicRate?: Map<string, RateBucket>; __webreceiptPublicActive?: number }
 const globalRef = globalThis as unknown as PublicLimitGlobal
+function positiveInt(name: string, fallback: number): number { const value = Number(process.env[name]); return Number.isInteger(value) && value > 0 ? value : fallback }
 const WINDOW_MS = 60_000
-const REQUESTS_PER_WINDOW = 12
-const MAX_CONCURRENT = 1
+const REQUESTS_PER_WINDOW = positiveInt('PUBLIC_WEB_REQUESTS_PER_MINUTE', 12)
+const MAX_CONCURRENT = positiveInt('PUBLIC_WEB_MAX_CONCURRENT', 4)
 function fail(message: string): never { const error = new Error(message) as Error & { status?: number; code?: string }; error.status = 429; error.code = 'rate_limited'; throw error }
 function clientKey(req: Request): string { return req.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip')?.trim() || 'anonymous' }
 function rateMap(): Map<string, RateBucket> { if (!globalRef.__webreceiptPublicRate) globalRef.__webreceiptPublicRate = new Map(); return globalRef.__webreceiptPublicRate }
