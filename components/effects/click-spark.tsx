@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createPortal, useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useReducedMotion } from '@/components/matrix/use-reduced-motion'
 import { EFFECT_BRIGHT } from './palette'
 
