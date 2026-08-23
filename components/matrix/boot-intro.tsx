@@ -93,6 +93,11 @@ export function BootIntro() {
 
       <div className="relative z-[2] mx-auto h-full max-w-[1500px] px-6 md:px-0">
         <div className="absolute inset-y-0 left-0 w-full md:w-[58%]">
+          {/* Plain <img> on purpose: the onError swap to FALLBACK is the whole
+              degradation story for this asset, and next/image intercepts
+              loading so that handler stops being the reliable signal. It is one
+              decorative frame in an intro overlay, not a content image. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={portraitSrc}
             alt="Michael Scofield intro portrait"

@@ -17,3 +17,8 @@ venv/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Local scratch temp dir. On Windows, `next build`'s trace collector globs the
+# shared user TEMP dir and dies on any subdirectory it cannot read; pointing
+# TMP/TEMP here avoids that. Not needed in CI or on Vercel.
+.build-tmp/

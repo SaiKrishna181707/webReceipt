@@ -227,6 +227,11 @@ export default function Strands({
       if (ctn.contains(gl.canvas)) ctn.removeChild(gl.canvas)
       gl.getExtension('WEBGL_lose_context')?.loseContext()
     }
+    /* Init-once: the deps this rule wants are shader uniforms read at setup.
+       Listing them would tear down and rebuild the WebGL context on every prop
+       change instead of animating through it. Same pattern as magic-rings and
+       pixel-card. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return <div ref={ctnDom} className={`relative h-full w-full bg-transparent ${className}`} style={style} />
