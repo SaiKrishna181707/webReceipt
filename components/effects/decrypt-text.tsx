@@ -15,9 +15,9 @@ export function DecryptText({ text, className = '', delay = 0 }: DecryptTextProp
 
   useEffect(() => {
     let frame = 0
-    let animationTimer: ReturnType<typeof setInterval> | undefined
-    let restartTimer: ReturnType<typeof setTimeout> | undefined
-    let startTimer: ReturnType<typeof setTimeout> | undefined
+    let animationTimer: number | undefined
+    let restartTimer: number | undefined
+    let startTimer: number | undefined
 
     const decrypt = () => {
       frame = 0
