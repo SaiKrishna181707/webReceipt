@@ -1,5 +1,5 @@
 import { getService } from '@/lib/server/service'
-import { isSimulatorTarget } from '@/lib/server/public-web'
+import { createControlledProductSession, isControlledProductTarget, isSimulatorTarget } from '@/lib/server/public-web'
 import { runSafely, readBody } from '@/lib/server/handler'
 
 export const runtime = 'nodejs'
@@ -18,6 +18,11 @@ export async function POST(req: Request) {
     const body = await readBody(req)
     const targetUrl = optionalString(body.targetUrl, 'targetUrl')
     const mutation = optionalString(body.mutation, 'mutation') || 'wrong-valid-total'
+
+    if (isControlledProductTarget(targetUrl)) {
+      const { service } = await createControlledProductSession()
+      return service.observe({ targetUrl, mutation, autoHeal: true })
+    }
 
     if (!isSimulatorTarget(targetUrl)) {
       throw new Error(
