@@ -58,6 +58,18 @@ function parseTarget(rawUrl?: string): URL | null {
   }
 }
 
+/**
+ * Controlled product fixtures are deterministic public demo targets. They use
+ * the same checked-in product fixture/parser lifecycle as the acceptance tests;
+ * they are not third-party retailer observations and never manufacture data
+ * through the integrity/heal path.
+ */
+const CONTROLLED_PRODUCT_HOSTS = new Set([
+  'web-receipt-tawny.vercel.app',
+  'web-receipt-golden-state-warriors.vercel.app',
+  'web-receipt-git-main-golden-state-warriors.vercel.app',
+])
+
 export function isSimulatorTarget(rawUrl?: string): boolean {
   const value = String(rawUrl || '').trim()
   if (!value) return true
@@ -65,5 +77,6 @@ export function isSimulatorTarget(rawUrl?: string): boolean {
   if (!url) return false
   const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
   if (hostname === 'demo.webreceipt.dev') return true
+  if (CONTROLLED_PRODUCT_HOSTS.has(hostname) && url.pathname === '/fixture/product') return true
   return url.pathname === '/fixture/hotel' && ['localhost', '127.0.0.1', '::1'].includes(hostname)
 }

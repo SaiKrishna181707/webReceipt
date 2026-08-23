@@ -2,11 +2,9 @@ export function renderProductFixture(version = 'v1') {
   const isV2 = version === 'v2';
   if (!['v1', 'v2'].includes(version)) throw new Error(`Unsupported product fixture version: ${version}`);
 
-  // V1: `.total-price` means the actual payable total.
-  // V2: the website redesign legitimately reuses `.total-price` for the product
-  // price while the real payable total moves to a new semantic container. The
-  // unchanged V1 scraper therefore still extracts a valid number, but assigns it
-  // the wrong meaning — the semantic-drift failure WebReceipt is designed to catch.
+  // The fixture has two internal render states for deterministic testing. The
+  // public page intentionally presents one product journey; the state change is
+  // an internal website redesign used by the semantic-drift simulation.
   const totalMarkup = isV2
     ? `<div class="legacy redesigned-product-price"><span>Product price</span><strong class="total-price">₹12,999</strong></div>
        <div class="actual-total redesigned-total" data-testid="order-total"><span>Final total</span><strong><span class="currency-symbol">₹</span><span class="major">13,499</span></strong></div>`
@@ -15,11 +13,10 @@ export function renderProductFixture(version = 'v1') {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nike Pegasus Demo — WebReceipt Controlled Fixture</title>
 <style>
-  body{margin:0;background:#f4f4f2;color:#171717;font-family:system-ui,sans-serif}.wrap{max-width:980px;margin:56px auto;padding:0 24px}.tag{font-size:12px;text-transform:uppercase;letter-spacing:.13em;color:#666}.grid{display:grid;grid-template-columns:1.08fr .92fr;gap:28px}.hero,.box{background:#fff;border:1px solid #deded8;border-radius:18px;padding:28px}.hero h1{font-size:40px;line-height:1.05;margin:8px 0}.price{font-size:34px;font-weight:900}.claim{display:inline-block;background:#eef7e8;padding:8px 10px;border-radius:9px;margin:7px 5px 0 0}.row,.actual-total,.legacy{display:flex;justify-content:space-between;gap:20px;padding:13px 0;border-bottom:1px solid #ecece7}.actual-total{font-size:22px;border:0;padding-top:22px}.legacy{color:#5f675f}.terms{margin-top:22px}.version{position:fixed;right:16px;top:16px;background:#171717;color:#fff;padding:8px 10px;border-radius:8px;font-size:11px}.cta{margin-top:22px;border:0;border-radius:12px;background:#171717;color:#fff;padding:13px 18px;font-weight:800;cursor:pointer}.step{margin-top:14px;font-size:13px;color:#697069}.box[hidden]{display:none}.notice{font-size:13px;color:#5f695f;margin-top:12px}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0 4px;font-size:13px}.meta span{border:1px solid #ecece7;border-radius:9px;padding:9px}
+  body{margin:0;background:#f4f4f2;color:#171717;font-family:system-ui,sans-serif}.wrap{max-width:980px;margin:56px auto;padding:0 24px}.tag{font-size:12px;text-transform:uppercase;letter-spacing:.13em;color:#666}.grid{display:grid;grid-template-columns:1.08fr .92fr;gap:28px}.hero,.box{background:#fff;border:1px solid #deded8;border-radius:18px;padding:28px}.hero h1{font-size:40px;line-height:1.05;margin:8px 0}.price{font-size:34px;font-weight:900}.claim{display:inline-block;background:#eef7e8;padding:8px 10px;border-radius:9px;margin:7px 5px 0 0}.row,.actual-total,.legacy{display:flex;justify-content:space-between;gap:20px;padding:13px 0;border-bottom:1px solid #ecece7}.actual-total{font-size:22px;border:0;padding-top:22px}.legacy{color:#5f675f}.terms{margin-top:22px}.cta{margin-top:22px;border:0;border-radius:12px;background:#171717;color:#fff;padding:13px 18px;font-weight:800;cursor:pointer}.step{margin-top:14px;font-size:13px;color:#697069}.box[hidden]{display:none}.notice{font-size:13px;color:#5f695f;margin-top:12px}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0 4px;font-size:13px}.meta span{border:1px solid #ecece7;border-radius:9px;padding:9px}
   @media(max-width:760px){.grid{grid-template-columns:1fr}.wrap{margin:30px auto}.hero h1{font-size:34px}}
 </style></head>
 <body>
-  <div class="version">product fixture ${version}</div>
   <div class="wrap"><div class="grid">
     <section class="hero" data-testid="offer-panel" data-fixture-kind="product">
       <div class="tag">WebReceipt-controlled public product fixture</div>
