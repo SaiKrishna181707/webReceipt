@@ -228,6 +228,8 @@ npm run lint
 npm run build
 npm run smoke:next
 ```
+<img width="2048" height="1066" alt="image" src="https://github.com/user-attachments/assets/d396ed2b-dd37-47e9-a0b1-1c82bbf50100" />
+
 
 The semantic-drift regression tests preserve the essential invariant:
 
