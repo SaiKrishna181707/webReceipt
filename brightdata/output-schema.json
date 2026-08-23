@@ -1,6 +1,7 @@
 {
   "type": "object",
   "fields": {
+    "recordType": {"type": "text", "active": true, "required": true, "pii": false, "description": "deal_contract for a complete checkout journey, product_observation for an offer-only product page."},
     "subject": {"type": "text", "active": true, "required": true, "pii": false, "description": "Human-readable public offer identity."},
     "targetUrl": {"type": "url", "active": true, "required": true, "pii": false},
     "observedAt": {"type": "date", "active": true, "required": true, "format": {"preset": "iso"}, "pii": false},
@@ -8,6 +9,27 @@
     "currency": {"type": "text", "active": true, "required": true, "pii": false},
     "collectorVersion": {"type": "text", "active": true, "required": true, "pii": false},
     "worker": {"type": "text", "active": true, "required": true, "pii": false},
+    "product": {
+      "type": "object", "active": true, "required": false,
+      "fields": {
+        "name": {"type": "text", "active": true, "required": true},
+        "brand": {"type": "text", "active": true, "required": false},
+        "model": {"type": "text", "active": true, "required": false},
+        "sku": {"type": "text", "active": true, "required": false}
+      }
+    },
+    "commercial": {
+      "type": "object", "active": true, "required": false,
+      "fields": {
+        "productPrice": {"type": "number", "active": true, "required": true, "description": "Price of the product itself, not shipping or another fee."},
+        "currency": {"type": "text", "active": true, "required": true},
+        "shippingFee": {"type": "number", "active": true, "required": false},
+        "taxes": {"type": "number", "active": true, "required": false},
+        "otherFees": {"type": "number", "active": true, "required": false},
+        "discount": {"type": "number", "active": true, "required": false},
+        "finalTotal": {"type": "number", "active": true, "required": false, "description": "Only present when the page explicitly provides a final payable total."}
+      }
+    },
     "offer": {
       "type": "object", "active": true, "required": true,
       "fields": {
@@ -16,7 +38,7 @@
       }
     },
     "checkout": {
-      "type": "object", "active": true, "required": true,
+      "type": "object", "active": true, "required": false,
       "fields": {
         "basePrice": {"type": "number", "active": true, "required": true},
         "feeItems": {
@@ -35,7 +57,7 @@
       }
     },
     "terms": {
-      "type": "object", "active": true, "required": true,
+      "type": "object", "active": true, "required": false,
       "fields": {
         "cancellation": {"type": "text", "active": true, "required": true},
         "refundability": {"type": "text", "active": true, "required": true},
