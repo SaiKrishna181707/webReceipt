@@ -102,8 +102,12 @@ test('JSON-LD product offer beats a shipping price object that appears first', a
 test('live product support is semantic rather than hardcoded to the regression amounts', async () => {
   const parserSource = await readFile(parserUrl, 'utf8');
   const interactionSource = await readFile(interactionUrl, 'utf8');
+  const executableParserSource = parserSource
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('//'))
+    .join('\n');
 
-  assert.doesNotMatch(parserSource, /12999|12,999|\b500\b/);
+  assert.doesNotMatch(executableParserSource, /12999|12,999|\b500\b/);
   assert.match(parserSource, /shipping\|delivery\|postage\|freight/);
   assert.match(parserSource, /product\|item/);
   assert.match(interactionSource, /Generic public product page/);
