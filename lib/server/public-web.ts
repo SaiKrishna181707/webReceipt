@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { PublicWebCollector } from '@/src/integrations/public-web-live.js'
+import { SimulatorCollector } from '@/src/integrations/simulator.js'
 import { securePublicFetch } from '@/src/integrations/pinned-public-fetch.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
 import type { Anomaly, DealContract, Integrity, StoreState, StressRun } from '@/lib/types'
@@ -46,6 +47,20 @@ export async function createPublicWebSession(): Promise<PublicWebSession> {
   return { collector, service }
 }
 
+/**
+ * The deployed /fixture/product route is a controlled WebReceipt replay, but its
+ * hostname is a normal public Vercel hostname. Use a request-scoped simulator
+ * collector with a non-simulator kind so the orchestrator does not reject that
+ * public hostname while preserving the exact fixture parser/heal lifecycle.
+ */
+export async function createControlledProductSession() {
+  const store = new RequestStore()
+  const collector = new SimulatorCollector()
+  collector.kind = 'controlled'
+  const service = new WebReceiptService({ collector, store })
+  return { collector, service }
+}
+
 function parseTarget(rawUrl?: string): URL | null {
   const value = String(rawUrl || '').trim()
   if (!value) return null
@@ -58,18 +73,23 @@ function parseTarget(rawUrl?: string): URL | null {
   }
 }
 
-/**
- * Controlled product fixtures are deterministic public demo targets. They use
- * the same checked-in product fixture/parser lifecycle as the acceptance tests;
- * they are not third-party retailer observations and never manufacture data
- * through the integrity/heal path.
- */
 const CONTROLLED_PRODUCT_HOSTS = new Set([
   'web-receipt-tawny.vercel.app',
   'web-receipt-golden-state-warriors.vercel.app',
   'web-receipt-git-main-golden-state-warriors.vercel.app',
 ])
 
+export function isControlledProductTarget(rawUrl?: string): boolean {
+  const url = parseTarget(rawUrl)
+  if (!url) return false
+  const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
+  return CONTROLLED_PRODUCT_HOSTS.has(hostname) && url.pathname === '/fixture/product'
+}
+
+/**
+ * Simulator-only targets that the long-lived local service is allowed to run.
+ * Public Vercel product fixtures are handled by createControlledProductSession.
+ */
 export function isSimulatorTarget(rawUrl?: string): boolean {
   const value = String(rawUrl || '').trim()
   if (!value) return true
@@ -77,6 +97,5 @@ export function isSimulatorTarget(rawUrl?: string): boolean {
   if (!url) return false
   const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
   if (hostname === 'demo.webreceipt.dev') return true
-  if (CONTROLLED_PRODUCT_HOSTS.has(hostname) && url.pathname === '/fixture/product') return true
   return url.pathname === '/fixture/hotel' && ['localhost', '127.0.0.1', '::1'].includes(hostname)
 }
