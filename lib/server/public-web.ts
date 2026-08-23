@@ -78,7 +78,6 @@ const CONTROLLED_PRODUCT_HOSTS = new Set([
   'web-receipt-golden-state-warriors.vercel.app',
   'web-receipt-git-main-golden-state-warriors.vercel.app',
 ])
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
 
 export function isControlledProductTarget(rawUrl?: string): boolean {
   const url = parseTarget(rawUrl)
@@ -98,6 +97,5 @@ export function isSimulatorTarget(rawUrl?: string): boolean {
   if (!url) return false
   const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
   if (hostname === 'demo.webreceipt.dev') return true
-  if (url.pathname === '/fixture/product' && LOCAL_HOSTS.has(hostname)) return true
-  return url.pathname === '/fixture/hotel' && LOCAL_HOSTS.has(hostname)
+  return url.pathname === '/fixture/hotel' && ['localhost', '127.0.0.1', '::1'].includes(hostname)
 }
