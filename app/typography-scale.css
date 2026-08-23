@@ -1,0 +1,87 @@
+/* ============================================================================
+   WEBRECEIPT UI SCALE
+
+   A deliberately small readability pass across every route. The layout,
+   spacing system, and visual language stay unchanged; only the typography
+   gets a little more presence so cards and panels do not feel undersized on
+   a normal desktop viewport.
+   ========================================================================== */
+
+body {
+  font-size: 16px;
+}
+
+.sys-label {
+  font-size: 11px;
+}
+
+/* Shared component sizing: these selectors catch the fixed Tailwind text
+   tokens used throughout the application without changing component logic. */
+[class~="text-[10px]"] {
+  font-size: 11px !important;
+}
+
+[class~="text-[11px]"] {
+  font-size: 12px !important;
+}
+
+[class~="text-[12px]"] {
+  font-size: 13px !important;
+}
+
+[class~="text-[12.5px]"] {
+  font-size: 13.5px !important;
+}
+
+[class~="text-[13px]"] {
+  font-size: 14px !important;
+}
+
+[class~="text-[14px]"] {
+  font-size: 15px !important;
+}
+
+[class~="text-[14.5px]"] {
+  font-size: 15.5px !important;
+}
+
+[class~="text-[15px]"] {
+  font-size: 16px !important;
+}
+
+[class~="text-[16px]"] {
+  font-size: 17px !important;
+}
+
+[class~="text-[18px]"] {
+  font-size: 19px !important;
+}
+
+[class~="text-[20px]"] {
+  font-size: 21px !important;
+}
+
+[class~="text-[24px]"] {
+  font-size: 26px !important;
+}
+
+[class~="text-[26px]"] {
+  font-size: 28px !important;
+}
+
+/* Buttons have their own size tokens in matrix-ui.tsx. Keep them slightly
+   larger without changing their physical height, so the controls remain
+   compact rather than becoming bulky. */
+.sys-btn {
+  font-size: 13px !important;
+}
+
+@media (min-width: 640px) {
+  [class~="sm:text-[30px]"] {
+    font-size: 32px !important;
+  }
+
+  [class~="sm:text-[32px]"] {
+    font-size: 34px !important;
+  }
+}
