@@ -88,8 +88,8 @@ export default function LandingPage() {
               wrong-but-valid extraction after a page changes, and makes every repair prove itself before the result is trusted.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Open live demo <ChevronRight size={16} aria-hidden /></SystemLink>
-              <SystemLink href="/fixture/product?version=v1" tone="void" size="lg" scan>Open controlled fixture</SystemLink>
+              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Open console <ChevronRight size={16} aria-hidden /></SystemLink>
+              <SystemLink href="/fixture/product?version=v1" tone="void" size="lg" scan>Open reproducible demo</SystemLink>
             </div>
             <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
               {[['11', 'integrity checks'], ['SHA-256', 'per evidence field'], ['1', 'canonical contract']].map(([v, k]) => (
@@ -121,7 +121,7 @@ export default function LandingPage() {
               </ol>
               <div className="relative z-[1] flex items-center gap-2 border-t border-matrix-400/12 px-5 py-3">
                 <Radar size={12} className="text-matrix-400" aria-hidden />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Controlled demo · reproducible commerce journey</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Reproducible demo · controlled commerce journey</span>
               </div>
             </div>
           </Reveal>
@@ -214,7 +214,7 @@ export default function LandingPage() {
         <section className="space-y-6 pb-4 text-center">
           <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the semantic-drift loop</span> <span className="code-text">in two minutes</span></h2>
           <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe a controlled commerce contract, introduce a meaning change, verify the repair, rerun the journey, and diff the promise over time.</p>
-          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Open live demo <ChevronRight size={16} aria-hidden /></SystemLink></div>
+          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Open console <ChevronRight size={16} aria-hidden /></SystemLink></div>
         </section>
 
         <SystemFooter />
