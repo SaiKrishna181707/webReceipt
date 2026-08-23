@@ -28,26 +28,26 @@ import {
 } from '@/components/matrix/matrix-ui'
 
 const STAGES = [
-  { n: 1, title: 'Observe', body: 'Traverse the public journey and capture every displayed price, fee and term.', tone: 'data' },
+  { n: 1, title: 'Observe', body: 'Traverse a public commerce journey and capture every displayed price, fee and term.', tone: 'data' },
   { n: 2, title: 'Compile', body: 'Fold the observations into one canonical Deal Contract.', tone: 'phosphor' },
-  { n: 3, title: 'Verify', body: 'Run 11 integrity checks; flag wrong-but-valid drift.', tone: 'matrix' },
+  { n: 3, title: 'Verify', body: 'Run deterministic integrity checks and flag wrong-but-valid semantic drift.', tone: 'matrix' },
   { n: 4, title: 'Heal', body: 'Propose a repair, verify the preview against invariants, then deploy.', tone: 'matrix' },
-  { n: 5, title: 'Diff', body: 'Compare contracts over time to expose changed promises.', tone: 'data' },
+  { n: 5, title: 'Diff', body: 'Compare contracts over time to expose changed commercial promises.', tone: 'data' },
 ] as const
 
 const PROBLEMS = [
-  ['Product economics drift', 'A Nike Pegasus 41 is ₹12,999, but mandatory ₹500 shipping makes the payable total ₹13,499. The distinction has to survive the scrape.'],
-  ['Wrong-but-valid extraction', 'A redesign keeps returning ₹12,999 from `.total-price`, but that selector now means product price — not the ₹13,499 final total.'],
-  ['Screenshots aren’t evidence', 'A PNG can’t prove when it was taken or that it wasn’t edited. Claims need cryptographic provenance.'],
+  ['Commercial terms drift', 'A displayed price can stay the same while shipping, taxes, cancellation rules or other mandatory terms change. The distinction has to survive the scrape.'],
+  ['Wrong-but-valid extraction', 'A redesign can leave a selector returning a perfectly valid number even though that selector now represents a different business meaning.'],
+  ['Screenshots aren’t evidence', 'A PNG cannot prove when it was taken or whether it was edited. Claims need cryptographic provenance and a verifiable chain of evidence.'],
 ] as const
 
 const CAPABILITIES: [typeof FileText, MatrixTone, string, string, string][] = [
-  [FileText, 'phosphor', 'Deal Contract', 'One canonical schema compiled from any site — advertised price, checkout breakdown, fees, taxes, and terms.', '/docs'],
-  [ShieldCheck, 'matrix', 'Contract Integrity Engine', 'Eleven deterministic checks catch semantic drift like 12999 + 500 + 0 ≠ 12999 — not just null selectors.', '/docs'],
-  [ScanSearch, 'warn', 'Deal Anomalies', 'Surfaces observed price increases and mandatory charges as reported facts — observed, never adjudicated.', '/console'],
-  [GitCompare, 'data', 'Promise Diff', 'git diff for commercial promises: watch “Free cancellation” turn into “Non-refundable” across time.', '/console'],
-  [Wrench, 'matrix', 'Self-Healing', 'When a redesign breaks extraction, an AI repair is proposed — then verified against contract invariants before deploy.', '/console'],
-  [Fingerprint, 'data', 'Tamper-Evident Evidence', 'Every field carries a SHA-256 hash; the whole contract is sealed, so any change is detectable.', '/receipts'],
+  [FileText, 'phosphor', 'Deal Contract', 'One canonical schema compiled from public commerce journeys — prices, checkout breakdowns, fees, taxes and terms.', '/docs'],
+  [ShieldCheck, 'matrix', 'Contract Integrity Engine', 'Eleven deterministic checks catch semantic drift and arithmetic contradictions — not just missing selectors.', '/docs'],
+  [ScanSearch, 'warn', 'Observed Anomalies', 'Surface observed price changes and mandatory charges as reported facts — observed, never adjudicated.', '/console'],
+  [GitCompare, 'data', 'Promise Diff', 'Compare commercial promises over time: pricing, fees, cancellation terms and other conditions.', '/console'],
+  [Wrench, 'matrix', 'Self-Healing', 'When extraction breaks after a redesign, a repair can be proposed and verified against the contract before deployment.', '/console'],
+  [Fingerprint, 'data', 'Tamper-Evident Evidence', 'Every field carries a SHA-256 hash; the whole contract is sealed so changes are detectable.', '/receipts'],
 ]
 
 export default function LandingPage() {
@@ -73,7 +73,7 @@ export default function LandingPage() {
                   <DecryptText text="PROOF OF" delay={120} />
                 </span>
                 <span className="block text-void-50">
-                  <DecryptText text="PROMISE SEALED" delay={360} />
+                  <DecryptText text="PROMISES SEALED" delay={360} />
                 </span>
                 <span className="block text-matrix-400 drop-shadow-[0_0_24px_rgba(51,255,102,.18)]">
                   <DecryptText text="IN CODE._" delay={600} />
@@ -83,15 +83,13 @@ export default function LandingPage() {
             </div>
 
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
-              WebReceipt turns a public purchase journey into one canonical <span className="font-semibold text-void-100">Deal Contract</span>{' '}
-              with timestamped, tamper-evident evidence. The judge demo follows a controlled Nike Pegasus 41 product:
-              ₹12,999 product price + ₹500 shipping = ₹13,499 final total. After a redesign, the same scraper still gets
-              a valid ₹12,999 number from the same selector — but that number now has the wrong meaning. WebReceipt catches
-              the contradiction and makes the repair prove itself before trusting it.
+              WebReceipt turns public commerce journeys into one canonical <span className="font-semibold text-void-100">Deal Contract</span>{' '}
+              with timestamped, tamper-evident evidence. It preserves the meaning behind prices, fees and terms, detects
+              wrong-but-valid extraction after a page changes, and makes every repair prove itself before the result is trusted.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch Nike demo <ChevronRight size={16} aria-hidden /></SystemLink>
-              <SystemLink href="/fixture/product?version=v1" tone="void" size="lg" scan>Open product fixture</SystemLink>
+              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Open live demo <ChevronRight size={16} aria-hidden /></SystemLink>
+              <SystemLink href="/fixture/product?version=v1" tone="void" size="lg" scan>Open controlled fixture</SystemLink>
             </div>
             <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
               {[['11', 'integrity checks'], ['SHA-256', 'per evidence field'], ['1', 'canonical contract']].map(([v, k]) => (
@@ -107,7 +105,7 @@ export default function LandingPage() {
             <div className="terminal terminal-phosphor">
               <div className="terminal-bar">
                 <Terminal size={12} className="text-matrix-400" aria-hidden />
-                <span className="sys-label flex-1">webreceipt · nike semantic drift</span>
+                <span className="sys-label flex-1">webreceipt · semantic drift</span>
                 <SystemStatus label="" value="Ready" className="!text-[9px]" />
               </div>
               <ol className="relative z-[1] space-y-3 px-5 py-5">
@@ -123,7 +121,7 @@ export default function LandingPage() {
               </ol>
               <div className="relative z-[1] flex items-center gap-2 border-t border-matrix-400/12 px-5 py-3">
                 <Radar size={12} className="text-matrix-400" aria-hidden />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Judge demo: controlled Nike product fixture</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Controlled demo · reproducible commerce journey</span>
               </div>
             </div>
           </Reveal>
@@ -134,7 +132,7 @@ export default function LandingPage() {
 
       <div className="mx-auto max-w-7xl space-y-24 px-4 pt-20 pb-0 sm:px-6 lg:px-8">
         <section className="space-y-10">
-          <SectionHead kicker="The problem" tone="alarm" title="The scraper can succeed and still be wrong." desc="Product pages mutate. A selector can keep returning a clean, plausible number after the business meaning behind that number has changed." />
+          <SectionHead kicker="The problem" tone="alarm" title="The scraper can succeed and still be wrong." desc="Commerce pages mutate. A selector can keep returning a clean, plausible value after the business meaning behind that value has changed." />
           <div className="grid gap-6 md:grid-cols-3">
             {PROBLEMS.map(([title, body], i) => (
               <Reveal key={title} delay={i * 110}>
@@ -151,7 +149,7 @@ export default function LandingPage() {
         </section>
 
         <section className="space-y-10">
-          <SectionHead kicker="Subsystems" title="A self-healing consumer evidence engine" desc="Every capability is wired into the same canonical Deal Contract, so extraction, verification and diffing all speak one economic language." />
+          <SectionHead kicker="Subsystems" title="A self-healing commerce evidence engine" desc="Every capability is wired into the same canonical Deal Contract, so extraction, verification and diffing all speak one economic language." />
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {CAPABILITIES.map(([Icon, tone, title, body, href], i) => (
               <Reveal key={title} delay={i * 80}>
@@ -176,9 +174,6 @@ export default function LandingPage() {
             {STAGES.map((s, i) => (
               <Reveal key={s.n} delay={i * 90}>
                 <MatrixPanel tone={s.tone} className="h-full">
-                  {/* Every STAGES tone is data/phosphor/matrix, so this card is
-                      always the matrix variant. The previous `s.tone === 'alarm'`
-                      test could never be true and rendered nothing different. */}
                   <PixelCard variant="matrix" className="h-full p-5">
                     <SystemRail count={4} tone={s.tone} />
                     <div className="mt-3 flex items-baseline gap-2">
@@ -217,9 +212,9 @@ export default function LandingPage() {
         </section>
 
         <section className="space-y-6 pb-4 text-center">
-          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the Nike drift loop</span> <span className="code-text">in two minutes</span></h2>
-          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe the ₹13,499 product contract, redesign the page so the stale selector reports ₹12,999 as final total, verify the repair, rerun, and diff the promise.</p>
-          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch Nike demo <ChevronRight size={16} aria-hidden /></SystemLink></div>
+          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the semantic-drift loop</span> <span className="code-text">in two minutes</span></h2>
+          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe a controlled commerce contract, introduce a meaning change, verify the repair, rerun the journey, and diff the promise over time.</p>
+          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Open live demo <ChevronRight size={16} aria-hidden /></SystemLink></div>
         </section>
 
         <SystemFooter />
