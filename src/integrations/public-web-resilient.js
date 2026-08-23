@@ -1,4 +1,10 @@
 import { PublicWebCollector as BasePublicWebCollector } from './public-web.js';
+import {
+  AMOUNT_PATTERN,
+  CURRENCY_PATTERN,
+  SUPPORTED_CURRENCY_CODES,
+  decodeHtmlEntities,
+} from './html-text.js';
 
 const SYMBOLS = new Map([
   ['₹', 'INR'], ['Rs', 'INR'], ['Rs.', 'INR'],
@@ -6,26 +12,13 @@ const SYMBOLS = new Map([
   ['€', 'EUR'], ['£', 'GBP'], ['¥', 'JPY'],
   ['A$', 'AUD'], ['AU$', 'AUD'], ['C$', 'CAD'], ['CA$', 'CAD'], ['S$', 'SGD'], ['SG$', 'SGD'],
 ]);
-const CODES = new Set(['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'AED', 'SGD']);
-const CURRENCY = '(?:INR|USD|EUR|GBP|JPY|AUD|CAD|AED|SGD|US\\$|A\\$|AU\\$|C\\$|CA\\$|S\\$|SG\\$|Rs\\.?|₹|\\$|€|£|¥)';
-const AMOUNT = '(?:[0-9]{1,3}(?:[ ,.]?[0-9]{3})*(?:[.,][0-9]{1,2})?|[0-9]+(?:[.,][0-9]{1,2})?)';
 const PRICE_KEYS = ['finalPrice', 'currentPrice', 'salePrice', 'discountedPrice', 'lowPrice', 'price'];
 const PRICE_HINT = /\b(?:total|price|sale|now|from|starting|deal|offer|pay)\b/i;
-
-function decode(value) {
-  return String(value || '')
-    .replace(/&nbsp;|&#160;|\u00a0/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;|&#34;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
-}
 
 function attrs(tag) {
   const out = {};
   for (const match of String(tag).matchAll(/([:\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) {
-    out[match[1].toLowerCase()] = decode(match[2] ?? match[3] ?? match[4] ?? '');
+    out[match[1].toLowerCase()] = decodeHtmlEntities(match[2] ?? match[3] ?? match[4] ?? '');
   }
   return out;
 }
@@ -45,25 +38,25 @@ function numberFrom(value) {
 }
 
 function currencyFrom(value) {
-  const raw = decode(value).trim();
+  const raw = decodeHtmlEntities(value).trim();
   const upper = raw.toUpperCase();
-  if (CODES.has(upper)) return upper;
+  if (SUPPORTED_CURRENCY_CODES.has(upper)) return upper;
   if (/^RS\.?$/i.test(raw)) return 'INR';
   return SYMBOLS.get(raw) || null;
 }
 
 function priceFromText(value) {
-  const text = decode(value).replace(/\s+/g, ' ').trim();
+  const text = decodeHtmlEntities(value).replace(/\s+/g, ' ').trim();
   if (!text) return null;
 
-  const before = new RegExp(`(${CURRENCY})\\s*(${AMOUNT})(?![0-9A-Za-z])`, 'i').exec(text);
+  const before = new RegExp(`(${CURRENCY_PATTERN})\\s*(${AMOUNT_PATTERN})(?![0-9A-Za-z])`, 'i').exec(text);
   if (before) {
     const amount = numberFrom(before[2]);
     const currency = currencyFrom(before[1]);
     if (amount != null && currency) return { amount, currency };
   }
 
-  const after = new RegExp(`(${AMOUNT})\\s*(${CURRENCY})(?![A-Za-z])`, 'i').exec(text);
+  const after = new RegExp(`(${AMOUNT_PATTERN})\\s*(${CURRENCY_PATTERN})(?![A-Za-z])`, 'i').exec(text);
   if (after) {
     const amount = numberFrom(after[1]);
     const currency = currencyFrom(after[2]);
@@ -145,7 +138,7 @@ function findJsonPrice(root) {
 function findEmbeddedJson(html) {
   for (const match of String(html).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const attributes = attrs(`<script ${match[1] || ''}>`);
-    const body = decode(match[2]).trim();
+    const body = decodeHtmlEntities(match[2]).trim();
     if (!body) continue;
     const type = String(attributes.type || '').toLowerCase();
     const isJson = type.includes('json') || attributes.id === '__NEXT_DATA__' || /^[\[{]/.test(body);
@@ -177,7 +170,7 @@ function findEmbeddedJson(html) {
 }
 
 function findVisiblePrice(html) {
-  const text = decode(String(html || '')
+  const text = decodeHtmlEntities(String(html || '')
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
     .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')

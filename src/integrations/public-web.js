@@ -1,10 +1,13 @@
 import { assertPublicNetworkTarget, assertPublicTarget } from '../domain/target-policy.js';
+import { SUPPORTED_CURRENCY_CODES, decodeHtmlEntities } from './html-text.js';
 
 const DEFAULT_MAX_BYTES = 2_000_000;
 const DEFAULT_TIMEOUT_MS = 20_000;
 const MAX_REDIRECTS = 5;
+// Deliberately narrower than SUPPORTED_CURRENCY_CODES: this base layer only
+// recognises unambiguous single-character symbols. The resilient layer adds the
+// ambiguous ones (Rs, US$, A$ ...) along with the disambiguation to justify them.
 const SYMBOL_CURRENCIES = new Map([['₹', 'INR'], ['$', 'USD'], ['€', 'EUR'], ['£', 'GBP'], ['¥', 'JPY']]);
-const SUPPORTED_CURRENCIES = new Set(['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'AED', 'SGD']);
 
 function envNumber(name, fallback) {
   const value = Number(process.env[name]);
@@ -15,20 +18,8 @@ function enabled(name) {
   return /^(1|true|yes)$/i.test(String(process.env[name] || '').trim());
 }
 
-function decodeEntities(value) {
-  return String(value || '')
-    .replace(/&nbsp;|&#160;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;|&#34;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
-}
-
 function normalizeSpace(value) {
-  return decodeEntities(value).replace(/\s+/g, ' ').trim();
+  return decodeHtmlEntities(value).replace(/\s+/g, ' ').trim();
 }
 
 function htmlToText(html) {
@@ -44,7 +35,7 @@ function htmlToText(html) {
 function parseAttributes(tag) {
   const out = {};
   for (const match of String(tag).matchAll(/([:\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) {
-    out[match[1].toLowerCase()] = decodeEntities(match[2] ?? match[3] ?? match[4] ?? '');
+    out[match[1].toLowerCase()] = decodeHtmlEntities(match[2] ?? match[3] ?? match[4] ?? '');
   }
   return out;
 }
@@ -63,7 +54,7 @@ function metaMap(html) {
 function readJsonLd(html) {
   const values = [];
   for (const match of String(html).matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
-    const raw = decodeEntities(match[1]).trim();
+    const raw = decodeHtmlEntities(match[1]).trim();
     if (!raw) continue;
     try { values.push(JSON.parse(raw)); } catch { /* malformed JSON-LD is ignored */ }
   }
@@ -99,7 +90,7 @@ function numberFrom(value) {
 
 function currencyFrom(value) {
   const raw = normalizeSpace(value).toUpperCase();
-  if (SUPPORTED_CURRENCIES.has(raw)) return raw;
+  if (SUPPORTED_CURRENCY_CODES.has(raw)) return raw;
   return SYMBOL_CURRENCIES.get(String(value || '').trim()) || null;
 }
 

@@ -163,19 +163,19 @@ class rather than six.
 | `use-reduced-motion.ts` | Live `prefers-reduced-motion` subscription. **Every JS or WebGL loop must ask this** — a stylesheet cannot reach a `requestAnimationFrame` callback. |
 | `matrix-scan.tsx` | The visible half: sweeping line, digital noise, terminal readout. Renders nothing when idle. |
 | `boot-intro.tsx` | The opening sequence (§5). |
-| `logo-spider.tsx` | The crawler beside the wordmark. Pure CSS, no JS, no re-render. |
 | `system-ticker.tsx` | A slow marquee of what the system *is* — static capability labels, never a live reading. |
 | `system-footer.tsx` | The bottom of the system, including what this build actually runs against. |
 
-The resident guide (`guide-character.tsx` / `guide-portrait.tsx`) and the fullscreen
-crawler swarm (`spiders.tsx`) were both removed. `logo-spider.tsx` is the one crawler
-that remains, and it is scoped to the wordmark.
+The resident guide (`guide-character.tsx` / `guide-portrait.tsx`), the fullscreen
+crawler swarm (`spiders.tsx`) and the wordmark crawler (`logo-spider.tsx`) have all
+been removed. `logo-spider.tsx` outlived the others only as a component that
+returned `null` and was imported nowhere, so it went too.
 
 ### The effect layer — [components/effects/](components/effects)
 
 WebGL, on [ogl](https://github.com/oframe/ogl) rather than three.js — 423 KB
 unpacked against 23 MB, for shaders this small. `ogl` ships untranspiled ESM, which
-is why `next.config.js` lists it in `transpilePackages`; without that the build
+is why `next.config.mjs` lists it in `transpilePackages`; without that the build
 fails on its `import` syntax.
 
 | File | Role |
@@ -386,38 +386,39 @@ but the scan line is dropped and the exit is instantaneous instead of 460ms.
 
 ## 6. Image assets
 
-The Next app uses three files from `public/`, and every one of them is referenced:
+`public/` holds two files, and both are referenced:
 
 | File | Used by | Fallback |
 | --- | --- | --- |
 | `scofield.png` | the opening sequence, whole figure, `object-fit: contain`, `object-position: left bottom` | `webreceipt-mark.svg` |
-| `ChatGPT_Image_Aug_21,_2026,_10_14_22_AM.png` | the hero wordmark in `webreceipt-logo.tsx` | `webreceipt-mark.svg` |
-| `webreceipt-mark.svg` | the fallback for both of the above | — |
+| `webreceipt-mark.svg` | the `onError` fallback for the above | — |
 
-Both raster images are graded to sit in the environment rather than on top of it
-(`brightness(.92) contrast(1.06)` for the figure), and both `<img>` tags carry an
-`onError` handler, so a missing file degrades to the mark instead of an alt-text box.
+Both are loaded by `components/matrix/boot-intro.tsx` and nothing else. The figure
+is graded to sit in the environment rather than on top of it
+(`brightness(.92) contrast(1.06)`), and its `<img>` carries an `onError` handler, so
+a missing file degrades to the mark instead of an alt-text box.
 
-The wordmark is that raster crop, positioned by offsets inside an
-`overflow-hidden` box. `globals.css` used to also carry a full CSS lockup
-(`.wr-logo` / `.wr-tile*` / `.wr-word*` / `.wr-flicker` — two element tiles with
-atomic numbers, sized in `em`), built as a replacement for the crop. The crop was
-kept, so the lockup had no call site and has been removed; it is in git history if
-that call is ever revisited. **One loose end:** `webreceipt-logo.tsx` applies
-`wr-logo-spotlight`, which nothing defines. It is inert — the visible treatment comes
-from the Tailwind classes beside it — but it is a dangling name, not a hook.
+The hero wordmark is **not** a raster crop. `components/brand/webreceipt-logo.tsx`
+draws it as inline SVG and scopes its own `.wr-logo` rules in a styled-jsx block, so
+it has no asset dependency and nothing for `globals.css` to define. Three earlier
+approaches are in git history if any is worth revisiting: a raster crop
+(`ChatGPT_Image_Aug_21,_2026,_10_14_22_AM.png`, positioned by offsets inside an
+`overflow-hidden` box), a full CSS lockup (`.wr-logo` / `.wr-tile*` / `.wr-word*` /
+`.wr-flicker` in `globals.css`), and a `wr-logo-spotlight` hook that was applied but
+never defined. None of them survive in the tree.
 
-The resident guide component (`guide-character.tsx` / `guide-portrait.tsx`) was
-removed, so `public/guide/` is no longer rendered by anything. The files are kept as
-the provenance record for that original artwork.
+`public/guide/` and its `guide.png` went with the resident guide components
+(`guide-character.tsx` / `guide-portrait.tsx`); the artwork is in git history.
 
-> **`public/` is not the Next app's territory alone.** `index.html`, `app.js` and
-> `styles.css` are the **sponsor harness operator UI** — `src/server.js` serves them
-> at `/` via `staticFile()`, the `Dockerfile` copies the whole directory, and
-> `test/http.test.js` asserts `HEAD /` returns 200 `text/html`. They look
-> unreferenced to a grep of `app/` and `components/` because the path is joined at
-> runtime. **Do not delete anything in `public/` on the strength of a reference
-> search over the Next tree.** Run `npm run verify` first; it will catch you.
+> **`public/` is not the Next app's territory alone.** `src/server.js:142` still
+> serves the directory at `/` via `staticFile()`, and the `Dockerfile` still copies
+> the whole thing, so a path can be joined at runtime and look unreferenced to a grep
+> of `app/` and `components/`. The sponsor harness's own operator UI (`index.html`,
+> `app.js`, `styles.css`, `hackathon.css`) used to live here and has been removed — it
+> hardcoded a collector ID that never existed, and `test/http.test.js` now asserts
+> `HEAD /` returns **404** to keep it from coming back. **Do not delete anything in
+> `public/` on the strength of a reference search over the Next tree.** Run
+> `npm run verify` first; it will catch you.
 
 ---
 

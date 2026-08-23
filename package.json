@@ -2,6 +2,7 @@
   "name": "webreceipt",
   "version": "2.0.0",
   "private": true,
+  "type": "module",
   "description": "WebReceipt — Proof of Promise: a self-healing consumer evidence engine for the mutable web.",
   "scripts": {
     "dev": "next dev",
@@ -9,6 +10,7 @@
     "start": "next start",
     "start:brightdata": "node src/server.js",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "smoke:next": "node scripts/smoke-next.mjs",
     "stress:dev": "node scripts/stress-next.mjs --dev",
@@ -34,6 +36,8 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3"

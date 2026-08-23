@@ -3,19 +3,22 @@ import {
   PublicWebCollector as ResilientPublicWebCollector,
   enhancePublicCommerceHtml,
 } from './public-web-resilient.js';
+import {
+  AMOUNT_PATTERN,
+  CURRENCY_PATTERN,
+  SUPPORTED_CURRENCY_CODES,
+  decodeHtmlEntities,
+} from './html-text.js';
 
 const MAX_REDIRECTS = 5;
 const UNLOCKER_ENDPOINT = 'https://api.brightdata.com/request';
 const BROWSER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
-const CURRENCY = '(?:INR|USD|EUR|GBP|JPY|AUD|CAD|AED|SGD|US\\$|A\\$|AU\\$|C\\$|CA\\$|S\\$|SG\\$|Rs\\.?|₹|\\$|€|£|¥)';
-const AMOUNT = '(?:[0-9]{1,3}(?:[ ,.]?[0-9]{3})*(?:[.,][0-9]{1,2})?|[0-9]+(?:[.,][0-9]{1,2})?)';
 const PRIORITY_LABELS = [
   ['grand total', 50], ['order total', 49], ['final total', 48], ['checkout total', 47],
   ['total due', 46], ['amount due', 45], ['payable', 44], ['sale price', 38],
   ['current price', 37], ['deal price', 36], ['our price', 35], ['special price', 34],
   ['pay now', 33], ['now', 30],
 ];
-const BASE_CURRENCIES = new Set(['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'AED', 'SGD']);
 const ISO_CURRENCY_CODES = new Set(`
   AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BRL BSD BTN BWP BYN BZD
   CAD CDF CHF CLP CNY COP CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD
@@ -25,7 +28,7 @@ const ISO_CURRENCY_CODES = new Set(`
   SRD SSP STN SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD UYU UZS VES VND VUV WST XAF
   XCD XOF XPF YER ZAR ZMW ZWL
 `.trim().split(/\s+/));
-const FALLBACK_CURRENCIES = [...ISO_CURRENCY_CODES].filter((code) => !BASE_CURRENCIES.has(code));
+const FALLBACK_CURRENCIES = [...ISO_CURRENCY_CODES].filter((code) => !SUPPORTED_CURRENCY_CODES.has(code));
 const FALLBACK_CODE_PATTERN = FALLBACK_CURRENCIES.join('|');
 const REGIONAL_SYMBOLS = [
   ['CN¥', 'CNY'], ['HK$', 'HKD'], ['NZ$', 'NZD'], ['MX$', 'MXN'],
@@ -60,18 +63,8 @@ function canExtract(html, sourceUrl) {
   return Boolean(probeExtraction(html, sourceUrl));
 }
 
-function decodeEntities(value) {
-  return String(value || '')
-    .replace(/&nbsp;|&#160;|\u00a0/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;|&#34;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
-}
-
 function visibleText(html) {
-  return decodeEntities(String(html || '')
+  return decodeHtmlEntities(String(html || '')
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
     .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
@@ -88,7 +81,7 @@ function escapeRegex(value) {
 function normalizeCurrency(value) {
   const raw = String(value || '').trim();
   const upper = raw.toUpperCase();
-  if (BASE_CURRENCIES.has(upper)) return upper;
+  if (SUPPORTED_CURRENCY_CODES.has(upper)) return upper;
   if (/^RS\.?$/i.test(raw) || raw === '₹') return 'INR';
   if (raw === '$' || /^US\$$/i.test(raw)) return 'USD';
   if (raw === '€') return 'EUR';
@@ -107,8 +100,8 @@ function findPriorityPrice(html) {
   for (const [label, score] of PRIORITY_LABELS) {
     const prefix = escapeRegex(label);
     const patterns = [
-      new RegExp(`\\b${prefix}\\b\\s*[:=–—-]?\\s*(${CURRENCY})\\s*(${AMOUNT})(?![0-9A-Za-z])`, 'ig'),
-      new RegExp(`\\b${prefix}\\b\\s*[:=–—-]?\\s*(${AMOUNT})\\s*(${CURRENCY})(?![A-Za-z])`, 'ig'),
+      new RegExp(`\\b${prefix}\\b\\s*[:=–—-]?\\s*(${CURRENCY_PATTERN})\\s*(${AMOUNT_PATTERN})(?![0-9A-Za-z])`, 'ig'),
+      new RegExp(`\\b${prefix}\\b\\s*[:=–—-]?\\s*(${AMOUNT_PATTERN})\\s*(${CURRENCY_PATTERN})(?![A-Za-z])`, 'ig'),
     ];
     for (let order = 0; order < patterns.length; order++) {
       for (const match of text.matchAll(patterns[order])) {
@@ -142,7 +135,7 @@ export function enhanceProductionCommerceHtml(html) {
 function parseAttributes(tag) {
   const out = {};
   for (const match of String(tag).matchAll(/([:\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) {
-    out[match[1].toLowerCase()] = decodeEntities(match[2] ?? match[3] ?? match[4] ?? '');
+    out[match[1].toLowerCase()] = decodeHtmlEntities(match[2] ?? match[3] ?? match[4] ?? '');
   }
   return out;
 }
@@ -195,8 +188,8 @@ function findRegionalSymbolPrice(html) {
   for (const [symbol, currency] of REGIONAL_SYMBOLS) {
     const escaped = escapeRegex(symbol);
     patterns.push(
-      { regex: new RegExp(`${escaped}\\s*(${AMOUNT})`, 'gi'), currencyAt: 0, amountAt: 1, fixedCurrency: currency },
-      { regex: new RegExp(`(${AMOUNT})\\s*${escaped}`, 'gi'), currencyAt: 0, amountAt: 1, fixedCurrency: currency },
+      { regex: new RegExp(`${escaped}\\s*(${AMOUNT_PATTERN})`, 'gi'), currencyAt: 0, amountAt: 1, fixedCurrency: currency },
+      { regex: new RegExp(`(${AMOUNT_PATTERN})\\s*${escaped}`, 'gi'), currencyAt: 0, amountAt: 1, fixedCurrency: currency },
     );
   }
   return bestFallbackTextMatch(text, patterns);
@@ -240,8 +233,8 @@ function findFallbackCodePrice(html) {
   const text = visibleText(html);
   if (!text) return null;
   return bestFallbackTextMatch(text, [
-    { regex: new RegExp(`\\b(${FALLBACK_CODE_PATTERN})\\b\\s*(${AMOUNT})`, 'gi'), currencyAt: 1, amountAt: 2 },
-    { regex: new RegExp(`(${AMOUNT})\\s*\\b(${FALLBACK_CODE_PATTERN})\\b`, 'gi'), currencyAt: 2, amountAt: 1 },
+    { regex: new RegExp(`\\b(${FALLBACK_CODE_PATTERN})\\b\\s*(${AMOUNT_PATTERN})`, 'gi'), currencyAt: 1, amountAt: 2 },
+    { regex: new RegExp(`(${AMOUNT_PATTERN})\\s*\\b(${FALLBACK_CODE_PATTERN})\\b`, 'gi'), currencyAt: 2, amountAt: 1 },
   ]);
 }
 

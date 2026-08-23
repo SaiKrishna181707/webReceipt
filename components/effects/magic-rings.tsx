@@ -309,7 +309,14 @@ export default function MagicRings({
       burstRef.current = 1
     }
 
-    if (wantsPointerRef.current) {
+    /* Captured into the effect scope so the cleanup below removes exactly the
+       listeners this run added. The ref is written once at mount and never
+       again, so this is the same value either way -- but reading it twice makes
+       react-hooks/exhaustive-deps flag a staleness hazard that would be real if
+       anything ever did start updating it. */
+    const pointerEnabled = wantsPointerRef.current
+
+    if (pointerEnabled) {
       mount.addEventListener('mousemove', onMouseMove)
       mount.addEventListener('mouseenter', onMouseEnter)
       mount.addEventListener('mouseleave', onMouseLeave)
@@ -397,7 +404,7 @@ export default function MagicRings({
       ro.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
       media.removeEventListener?.('change', onMotionPref)
-      if (wantsPointerRef.current) {
+      if (pointerEnabled) {
         mount.removeEventListener('mousemove', onMouseMove)
         mount.removeEventListener('mouseenter', onMouseEnter)
         mount.removeEventListener('mouseleave', onMouseLeave)

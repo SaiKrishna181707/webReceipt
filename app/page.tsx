@@ -176,6 +176,9 @@ export default function LandingPage() {
             {STAGES.map((s, i) => (
               <Reveal key={s.n} delay={i * 90}>
                 <MatrixPanel tone={s.tone} className="h-full">
+                  {/* Every STAGES tone is data/phosphor/matrix, so this card is
+                      always the matrix variant. The previous `s.tone === 'alarm'`
+                      test could never be true and rendered nothing different. */}
                   <PixelCard variant="matrix" className="h-full p-5">
                     <SystemRail count={4} tone={s.tone} />
                     <div className="mt-3 flex items-baseline gap-2">

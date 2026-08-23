@@ -4,7 +4,10 @@ This is the terminal sequence for the real sponsor-backed demo after the WebRece
 
 The sponsor harness is `src/server.js`, launched by `npm run start:brightdata` or by the provided Dockerfile. The current Next.js UI is simulator-backed and does not expose the `/api/fixture/break` or `/api/fixture/reset` endpoints used below.
 
-The official Bright Data CLI executable is `bdata`.
+`@brightdata/cli` installs two interchangeable executables — `brightdata` and
+`bdata` — both pointing at the same entrypoint. This runbook uses `bdata`
+throughout. Captured evidence in `evidence/` shows both names because the
+operator used them interchangeably; they are the same tool, not two tools.
 
 ## 1. Authenticate
 
