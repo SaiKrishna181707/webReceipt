@@ -19,7 +19,7 @@ export function renderProductFixture(version = 'v1') {
 <body>
   <div class="wrap"><div class="grid">
     <section class="hero" data-testid="offer-panel" data-fixture-kind="product">
-      <div class="tag">WebReceipt-controlled public commerce fixture</div>
+      <div class="tag">WebReceipt-controlled public product fixture</div>
       <h1 data-testid="offer-name">Example Store · Wireless Studio Headphones</h1>
       <div class="price" data-testid="advertised-price">₹12,999</div>
       <div class="meta">
