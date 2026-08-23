@@ -117,7 +117,7 @@ export function scrapeProductControlledFixture({
 
   return {
     recordType: 'deal_contract',
-    dealId: 'deal_nike_pegasus_demo',
+    dealId: 'deal_example_store_semantic_drift',
     subject,
     targetUrl,
     observedAt: OBSERVED_AT,
