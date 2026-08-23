@@ -175,7 +175,7 @@ export default function LandingPage() {
             {STAGES.map((s, i) => (
               <Reveal key={s.n} delay={i * 90}>
                 <MatrixPanel tone={s.tone} className="h-full">
-                  <PixelCard variant={s.tone === 'alarm' ? 'alarm' : 'matrix'} className="h-full p-5">
+                  <PixelCard variant="matrix" className="h-full p-5">
                     <SystemRail count={4} tone={s.tone} />
                     <div className="mt-3 flex items-baseline gap-2">
                       <span className="font-mono text-[11px] tabular-nums text-void-400">{String(s.n).padStart(2, '0')}</span>
