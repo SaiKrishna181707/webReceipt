@@ -7,8 +7,8 @@ interface LogoProps {
 }
 
 /**
- * Breaking-Bad-inspired periodic-table wordmark with a neon phosphor treatment.
- * The entire mark is rendered as inline SVG so it stays sharp at every size.
+ * Breaking-Bad-inspired periodic-table wordmark with a restrained neon treatment.
+ * The glow stays close to the tile edges so the mark remains crisp and readable.
  */
 export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: LogoProps) {
   const height = size * 0.88
@@ -30,18 +30,9 @@ export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: Lo
         aria-hidden="true"
       >
         <defs>
-          <filter id="wrNeon" x="-35%" y="-35%" width="170%" height="170%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
-            <feFlood floodColor="#33ff66" floodOpacity="0.95" />
-            <feComposite in2="blur" operator="in" />
-            <feMerge>
-              <feMergeNode />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="wrNeonSoft" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="7" result="blur" />
-            <feFlood floodColor="#33ff66" floodOpacity="0.42" />
+          <filter id="wrNeonSoft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.4" result="blur" />
+            <feFlood floodColor="#33ff66" floodOpacity="0.24" />
             <feComposite in2="blur" operator="in" />
           </filter>
         </defs>
@@ -55,15 +46,14 @@ export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: Lo
           .wr-tile-glow {
             fill: none;
             stroke: #33ff66;
-            stroke-width: 8;
-            opacity: .38;
+            stroke-width: 4;
+            opacity: .2;
             filter: url(#wrNeonSoft);
           }
           .wr-symbol {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
             fill: #f1fff5;
-            filter: url(#wrNeon);
           }
           .wr-word {
             font-family: Georgia, 'Times New Roman', serif;
@@ -95,8 +85,8 @@ export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: Lo
             50% { transform: translateY(-1px) scale(1.006); }
           }
           @keyframes wrGlow {
-            0%,100% { opacity: .28; }
-            50% { opacity: .7; }
+            0%,100% { opacity: .14; }
+            50% { opacity: .28; }
           }
           @keyframes wrFlicker {
             0%, 92%, 100% { opacity: 1; }
@@ -116,14 +106,14 @@ export function WebReceiptLogo({ size = 54, flicker = true, className = '' }: Lo
 
         <g className="wr-logo">
           <rect className="wr-tile-glow" x="3" y="3" width="118" height="118" rx="1" />
-          <rect className="wr-tile" x="6" y="6" width="112" height="112" rx="1" filter="url(#wrNeon)" />
+          <rect className="wr-tile" x="6" y="6" width="112" height="112" rx="1" />
           <text className="wr-atomic" x="94" y="21" textAnchor="end">74</text>
           <text className="wr-symbol" x="62" y="91" fontSize="72" textAnchor="middle">W</text>
 
           <text className="wr-word" x="128" y="91">eb</text>
 
           <rect className="wr-tile-glow" x="226" y="3" width="118" height="118" rx="1" />
-          <rect className="wr-tile" x="229" y="6" width="112" height="112" rx="1" filter="url(#wrNeon)" />
+          <rect className="wr-tile" x="229" y="6" width="112" height="112" rx="1" />
           <text className="wr-atomic" x="317" y="21" textAnchor="end">75</text>
           <text className="wr-symbol" x="285" y="91" fontSize="72" textAnchor="middle">R</text>
 
