@@ -16,6 +16,7 @@ import { EvidenceDrawer } from '@/components/product/evidence-drawer'
 import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
 
 const WEBSITE_REDESIGN = 'wrong-valid-total'
+const CONTROLLED_COLLECTOR_ID = 'c_webreceipt_demo'
 
 type Phase = 'idle' | 'observed' | 'broken' | 'healed'
 
@@ -103,11 +104,11 @@ export default function ConsolePage() {
 
   const finalState = busy === 'heal' ? 'healing' : phase === 'broken' ? 'failed' : 'ok'
   const totalEvidence = result?.contract.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
-  const fixtureState = phase === 'broken' || phase === 'healed' ? 'Redesigned journey semantics' : 'Original journey semantics'
+  const isControlledDemo = result?.contract.collector.id === CONTROLLED_COLLECTOR_ID
+  const semanticControlsEnabled = isControlledDemo === true
 
-  /** What the console reports about itself, driven by real state — not decoration. */
   const statusValue =
-    busy ? 'Executing' : phase === 'broken' ? 'Integrity failure' : phase === 'idle' ? 'Awaiting command' : 'Contract sealed'
+    busy ? 'Executing' : phase === 'broken' ? 'Integrity failure' : phase === 'idle' ? 'Awaiting URL' : 'Contract sealed'
   const statusTone: MatrixTone = phase === 'broken' && !busy ? 'alarm' : busy ? 'warn' : 'matrix'
 
   return (
@@ -119,16 +120,15 @@ export default function ConsolePage() {
           <SystemStatus label="State" value={statusValue} tone={statusTone} />
         </div>
         <h1 className="mt-3 font-mono text-[22px] font-semibold uppercase tracking-[0.04em] text-void-100 sm:text-[26px]">
-          <span className="sys-prompt">Semantic drift, end to end</span>
+          <span className="sys-prompt">Public commerce observation</span>
         </h1>
         <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-void-200">
-          WebReceipt observes a public commerce journey and compiles its prices, fees and terms into one Deal Contract.
-          Then the page can change while the scraper keeps the same selector. The selector may still return a valid value — but
-          it can represent a different business meaning. WebReceipt catches the contradiction, verifies the repair preview,
-          approves it, and trusts the result only after a fresh scrape passes again.
+          Enter any public URL to capture its visible commercial information and compile a canonical Deal Contract.
+          Prices, fees and terms are preserved with evidence so changes in business meaning can be detected instead of silently accepted.
+          The semantic-drift repair controls are available only when the selected target is a controlled replay.
         </p>
         <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-void-400">
-          Public URL input · deterministic controlled replay for the repair demo · wrong values come from changed markup, never field injection
+          Public URL input · observe first · controlled replay controls appear only for the reproducible demo target
         </p>
       </header>
 
@@ -146,16 +146,11 @@ export default function ConsolePage() {
               onChange={(e) => setUrl(e.target.value)}
               spellCheck={false}
               className="flex-1 bg-transparent font-mono text-[13px] text-void-100 outline-none placeholder:text-void-400"
-              placeholder="Enter a public URL to observe…"
+              placeholder="Enter any public URL…"
             />
           </label>
           <SystemButton onClick={reset} disabled={!!busy} tone="void" size="md">
-            {busy === 'reset' ? (
-              <Loader2 size={14} className="animate-spin" aria-hidden />
-            ) : (
-              <RotateCcw size={14} aria-hidden />
-            )}{' '}
-            Reset
+            {busy === 'reset' ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <RotateCcw size={14} aria-hidden />} Reset
           </SystemButton>
         </div>
       </div>
@@ -174,36 +169,36 @@ export default function ConsolePage() {
         />
         <ActionButton
           n={2}
-          label="Change page semantics"
-          hint="Same selector, different meaning"
+          label="Simulate semantic drift"
+          hint="Controlled replay only"
           icon={Zap}
           tone="alarm"
           onClick={breakIt}
           busy={busy === 'break'}
           done={phase === 'broken' || phase === 'healed'}
-          disabled={!!busy || phase === 'idle'}
+          disabled={!!busy || phase === 'idle' || !semanticControlsEnabled}
         />
         <ActionButton
           n={3}
-          label="Repair the scraper"
-          hint="Preview → 11/11 → approve → rerun"
+          label="Repair extraction"
+          hint="Preview → verify → approve → rerun"
           icon={Wrench}
           tone="matrix"
           onClick={heal}
           busy={busy === 'heal'}
           done={phase === 'healed'}
-          disabled={!!busy || phase !== 'broken'}
+          disabled={!!busy || phase !== 'broken' || !semanticControlsEnabled}
         />
         <ActionButton
           n={4}
-          label="Promise Diff"
-          hint="Diff the commercial promise over time"
+          label="Compare promises"
+          hint="Compare the contract over time"
           icon={GitCompare}
           tone="data"
           onClick={runDiff}
           busy={busy === 'diff'}
           done={!!diff}
-          disabled={!!busy || phase === 'idle'}
+          disabled={!!busy || phase === 'idle' || !semanticControlsEnabled}
         />
       </div>
 
@@ -312,13 +307,7 @@ function ActionButton({
             boxShadow: done ? `0 0 18px -6px ${accent}` : `inset 0 0 16px -9px ${accent}`,
           }}
         >
-          {busy ? (
-            <Loader2 size={15} className="animate-spin" aria-hidden />
-          ) : done ? (
-            <Check size={15} aria-hidden />
-          ) : (
-            <Icon size={15} aria-hidden />
-          )}
+          {busy ? <Loader2 size={15} className="animate-spin" aria-hidden /> : done ? <Check size={15} aria-hidden /> : <Icon size={15} aria-hidden />}
         </span>
       </div>
       <div className="font-mono text-[12.5px] uppercase tracking-[0.08em] text-void-100">{label}</div>
@@ -333,10 +322,9 @@ function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
       <div className="sun-disc mx-auto mb-5 grid h-14 w-14 place-items-center text-matrix-300">
         <Play size={20} aria-hidden />
       </div>
-      <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Awaiting command</h3>
+      <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Ready for a URL</h3>
       <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
-        Enter a public URL and run <span className="font-mono text-matrix-300">Observe journey</span> to compile a Deal Contract
-        with tamper-evident evidence for every claim.
+        Enter any public URL and run <span className="font-mono text-matrix-300">Observe journey</span> to compile a Deal Contract with tamper-evident evidence for every claim.
       </p>
       <SystemButton onClick={onStart} disabled={busy} tone="matrix" size="lg" variant="solid">
         {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />} Observe journey
