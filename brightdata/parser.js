@@ -1,7 +1,7 @@
 // WebReceipt custom Scraper Studio Browser Worker parser.
 //
 // The parser deliberately supports two page families:
-// 1. the controlled WebReceipt fixture, where `.total-price` is kept as the
+// 1. controlled WebReceipt fixtures, where `.total-price` is kept as the
 //    historical V1 selector so Fixture V2 can demonstrate real semantic drift;
 // 2. arbitrary public commerce/product pages, where candidate prices are ranked
 //    by semantic context so shipping/tax/fee amounts are not mistaken for the
@@ -57,13 +57,21 @@ const fixtureAdvertised = firstText('[data-testid="advertised-price"]');
 // CONTROLLED FIXTURE MODE
 // Keep this path stable. The semantic failure is intentionally produced by the
 // changed webpage meaning in Fixture V2, not by mutating a parsed value later.
+// Both the legacy hotel fixture and the Nike-style product fixture use this same
+// custom parser path and the same historical `.total-price` V1 selector.
 // ---------------------------------------------------------------------------
 if (fixtureSubject || fixtureAdvertised) {
+  const productFixture = Boolean(
+    firstText('[data-testid="product-brand"]')
+    || firstText('[data-testid="shipping-fee"]'),
+  );
   const subject = fixtureSubject || source;
   const advertised = money('[data-testid="advertised-price"]');
   const base = money('[data-testid="base-price"]');
-  const propertyFee = money('.fee-property');
-  const serviceFee = money('.fee-service');
+  const primaryFeeSelector = productFixture ? '[data-testid="shipping-fee"]' : '.fee-property';
+  const secondaryFeeSelector = productFixture ? '[data-testid="other-fee"]' : '.fee-service';
+  const primaryFee = money(primaryFeeSelector);
+  const secondaryFee = money(secondaryFeeSelector);
   const tax = money('[data-testid="tax"]');
   const finalTotal = money('.total-price'); // deliberate wrong-but-valid failure after V2 redesign
   const offerScreenshot = screenshotRef('offer_screenshot', 'offer_screenshot');
@@ -73,6 +81,22 @@ if (fixtureSubject || fixtureAdvertised) {
   const refundabilityText = firstText('#refundability');
   const paymentText = firstText('#payment-timing');
   const inclusionText = firstText('#inclusions');
+  const collectorVersion = productFixture ? 'webreceipt-custom-product-fixture-v1' : 'webreceipt-custom-v1';
+  const feeItems = productFixture
+    ? [
+        {label: 'Shipping', amount: primaryFee, required: true},
+        {label: 'Other mandatory fees', amount: secondaryFee, required: true},
+      ]
+    : [
+        {label: 'Property fee', amount: primaryFee, required: true},
+        {label: 'Service fee', amount: secondaryFee, required: true},
+      ];
+  const product = productFixture ? {
+    name: subject,
+    brand: firstText('[data-testid="product-brand"]'),
+    model: firstText('[data-testid="product-model"]'),
+    sku: firstText('[data-testid="product-sku"]'),
+  } : null;
 
   return {
     recordType: 'deal_contract',
@@ -81,19 +105,28 @@ if (fixtureSubject || fixtureAdvertised) {
     observedAt: now,
     locale: 'en-IN',
     currency: 'INR',
-    collectorVersion: 'webreceipt-custom-v1',
+    collectorVersion,
     worker: 'browser',
+    ...(productFixture ? {
+      product,
+      commercial: {
+        productPrice: advertised,
+        currency: 'INR',
+        shippingFee: primaryFee,
+        taxes: tax,
+        otherFees: secondaryFee,
+        discount: 0,
+        finalTotal,
+      },
+    } : {}),
     offer: {
       advertisedPrice: advertised,
       claims,
     },
     checkout: {
       basePrice: base,
-      feeItems: [
-        {label: 'Property fee', amount: propertyFee, required: true},
-        {label: 'Service fee', amount: serviceFee, required: true},
-      ],
-      mandatoryFees: Number(propertyFee || 0) + Number(serviceFee || 0),
+      feeItems,
+      mandatoryFees: Number(primaryFee || 0) + Number(secondaryFee || 0),
       taxes: tax,
       optionalAddons: 0,
       discounts: 0,
@@ -106,45 +139,45 @@ if (fixtureSubject || fixtureAdvertised) {
       inclusions: [stripLabel(inclusionText, 'Includes')].filter(Boolean),
     },
     journey: [
-      {label: 'Offer', url: source, displayedPrice: advertised, evidenceId: 'ev_offer'},
-      {label: 'Checkout', url: source, displayedPrice: finalTotal, evidenceId: 'ev_total'},
+      {label: productFixture ? 'Product' : 'Offer', url: source, displayedPrice: advertised, evidenceId: 'ev_offer'},
+      {label: productFixture ? 'Order summary' : 'Checkout', url: source, displayedPrice: finalTotal, evidenceId: 'ev_total'},
     ],
     evidence: [
       {
         id: 'ev_offer', field: 'offer.advertisedPrice', sourceUrl: source,
         capturedText: firstText('[data-testid="advertised-price"]'),
         domPath: '[data-testid="advertised-price"]', screenshotRef: offerScreenshot,
-        journeyStep: 1, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+        journeyStep: 1, observedAt: now, collectorVersion,
       },
       {
         id: 'ev_base', field: 'checkout.basePrice', sourceUrl: source,
         capturedText: firstText('[data-testid="base-price"]'),
         domPath: '[data-testid="base-price"]', screenshotRef: checkoutScreenshot,
-        journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+        journeyStep: 2, observedAt: now, collectorVersion,
       },
       {
         id: 'ev_fees', field: 'checkout.mandatoryFees', sourceUrl: source,
-        capturedText: `${firstText('.fee-property')} + ${firstText('.fee-service')}`,
-        domPath: '.fee-property,.fee-service', screenshotRef: checkoutScreenshot,
-        journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+        capturedText: `${firstText(primaryFeeSelector)} + ${firstText(secondaryFeeSelector)}`,
+        domPath: `${primaryFeeSelector},${secondaryFeeSelector}`, screenshotRef: checkoutScreenshot,
+        journeyStep: 2, observedAt: now, collectorVersion,
       },
       {
         id: 'ev_tax', field: 'checkout.taxes', sourceUrl: source,
         capturedText: firstText('[data-testid="tax"]'),
         domPath: '[data-testid="tax"]', screenshotRef: checkoutScreenshot,
-        journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+        journeyStep: 2, observedAt: now, collectorVersion,
       },
       {
         id: 'ev_total', field: 'checkout.finalTotal', sourceUrl: source,
-        capturedText: firstText('.total-price'), domPath: '.total-price',
+        capturedText: firstText('.legacy') || firstText('.total-price'), domPath: '.total-price',
         screenshotRef: checkoutScreenshot, journeyStep: 2, observedAt: now,
-        collectorVersion: 'webreceipt-custom-v1',
+        collectorVersion,
       },
       {
         id: 'ev_cancel', field: 'terms.cancellation', sourceUrl: source,
         capturedText: cancellationText, domPath: '#cancellation',
         screenshotRef: checkoutScreenshot, journeyStep: 2, observedAt: now,
-        collectorVersion: 'webreceipt-custom-v1',
+        collectorVersion,
       },
     ],
   };
