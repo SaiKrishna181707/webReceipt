@@ -19,7 +19,7 @@ test('fresh console is generic, empty, and separates live observation from the d
 });
 
 test('controlled semantic-drift fixture is retailer-neutral', () => {
-  assert.match(fixtureSource, /WebReceipt-controlled public commerce fixture/);
+  assert.match(fixtureSource, /WebReceipt-controlled public product fixture/);
   assert.match(fixtureSource, /Example Store/);
   assert.doesNotMatch(fixtureSource, /Nike|Amazon/i);
   assert.match(fixtureSource, /class="total-price">₹12,999/);
