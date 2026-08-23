@@ -324,17 +324,31 @@ priceSelectors.forEach((selector) => {
   });
 });
 
-// Last-resort visible-text scan. All money mentions are ranked by the local text
-// around them, so a delivery amount cannot win merely because it appears before
-// the product price.
+// Last-resort visible-text scan. Each amount gets sentence/clause-local context;
+// this avoids a nearby shipping label contaminating a separate product price.
 const bodyText = firstText('body');
 const visibleMoney = /(?:₹|Rs\.?|INR|USD|US\$|\$|EUR|€|GBP|£|JPY|¥|AED|SGD)\s*[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?|[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?\s*(?:INR|USD|EUR|GBP|JPY|AED|SGD)/gi;
+const localMoneyContext = (text, index, length) => {
+  const startMarkers = ['.', '!', '?', '\n', '|', '•', '·'];
+  const endMarkers = startMarkers;
+  let start = Math.max(0, index - 120);
+  let end = Math.min(text.length, index + length + 120);
+  for (const marker of startMarkers) {
+    const found = text.lastIndexOf(marker, index - 1);
+    if (found >= 0) start = Math.max(start, found + 1);
+  }
+  for (const marker of endMarkers) {
+    const found = text.indexOf(marker, index + length);
+    if (found >= 0) end = Math.min(end, found);
+  }
+  return text.slice(start, end).trim();
+};
 for (const match of bodyText.matchAll(visibleMoney)) {
   const captured = match[0];
   const amount = parseMoney(captured);
   const currency = currencyFrom(captured, metaCurrency);
   const index = match.index || 0;
-  const context = bodyText.slice(Math.max(0, index - 100), Math.min(bodyText.length, index + captured.length + 100));
+  const context = localMoneyContext(bodyText, index, captured.length);
   addCandidate({ amount, currency, captured, selector: 'visible text', context });
 }
 
