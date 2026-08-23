@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
+<rect width="1536" height="1024" fill="white"/>
+<g fill="none" stroke="#111" stroke-width="2">
+  <rect x="36" y="150" width="178" height="300" stroke-dasharray="8 6"/>
+  <rect x="270" y="150" width="180" height="300"/>
+  <rect x="510" y="150" width="180" height="300"/>
+  <rect x="750" y="150" width="180" height="300"/>
+  <rect x="1080" y="150" width="210" height="300"/>
+  <rect x="1350" y="150" width="150" height="300"/>
+  <rect x="340" y="480" width="790" height="280" stroke-dasharray="8 6"/>
+  <rect x="65" y="790" width="1400" height="125"/>
+  <rect x="330" y="940" width="880" height="55" stroke-dasharray="8 6"/>
+  <path d="M214 300h56M450 300h60M690 300h60M930 300h150M1290 300h60"/>
+  <path d="M258 292l12 8-12 8M498 292l12 8-12 8M738 292l12 8-12 8M1068 292l12 8-12 8M1338 292l12 8-12 8"/>
+  <path d="M930 355h95v125M1025 480v28M1025 508l-8-12M1025 508l8-12" stroke-dasharray="7 5"/>
+  <path d="M430 760v45M820 760v45M1110 650v-200" stroke-dasharray="7 5"/>
+  <path d="M430 805h170M820 805h170M1110 650h0"/>
+  <path d="M588 805l-10-7v14M978 805l-10-7v14M1110 450l-7 10h14"/>
+  <rect x="355" y="525" width="205" height="190"/>
+  <rect x="620" y="525" width="205" height="190"/>
+  <rect x="885" y="525" width="205" height="190"/>
+</g>
+<g font-family="Arial, Helvetica, sans-serif" fill="#111" text-anchor="middle">
+  <text x="768" y="55" font-size="34" font-weight="700">WEBRECEIPT SYSTEM ARCHITECTURE</text>
+  <text x="768" y="92" font-size="19">End-to-end pipeline for extracting, validating, healing, and delivering trustworthy web data.</text>
+  <text x="125" y="190" font-size="20" font-weight="700">DATA SOURCES</text>
+  <text x="125" y="245" font-size="18">Websites</text><text x="125" y="272" font-size="16">(E-commerce,</text><text x="125" y="296" font-size="16">Marketplaces,</text><text x="125" y="320" font-size="16">Retail Sites,</text><text x="125" y="344" font-size="16">etc.)</text>
+  <text x="360" y="190" font-size="20" font-weight="700">1. WEB SCRAPER</text><text x="360" y="245" font-size="18">Extracts raw</text><text x="360" y="270" font-size="18">data from</text><text x="360" y="295" font-size="18">web pages</text>
+  <text x="600" y="190" font-size="20" font-weight="700">2. CONTRACT</text><text x="600" y="216" font-size="20" font-weight="700">GENERATOR</text><text x="600" y="270" font-size="18">Structures</text><text x="600" y="295" font-size="18">extracted data</text><text x="600" y="320" font-size="18">into a Deal</text><text x="600" y="345" font-size="18">Contract</text>
+  <text x="840" y="190" font-size="20" font-weight="700">3. INTEGRITY</text><text x="840" y="216" font-size="20" font-weight="700">ENGINE</text><text x="840" y="270" font-size="17">Performs semantic</text><text x="840" y="294" font-size="17">and consistency</text><text x="840" y="318" font-size="17">checks (meaning</text><text x="840" y="342" font-size="17">validation)</text>
+  <text x="1185" y="190" font-size="20" font-weight="700">6. VERIFIED DATA</text><text x="1185" y="216" font-size="20" font-weight="700">DELIVERY</text><text x="1185" y="270" font-size="17">Delivers genuine,</text><text x="1185" y="294" font-size="17">verified data</text><text x="1185" y="318" font-size="17">to the user</text>
+  <text x="1425" y="190" font-size="20" font-weight="700">USER</text><text x="1425" y="275" font-size="17">Receives</text><text x="1425" y="300" font-size="17">verified,</text><text x="1425" y="325" font-size="17">trustworthy</text><text x="1425" y="350" font-size="17">data</text>
+  <text x="1010" y="285" font-size="18" font-weight="700">VALID</text><text x="1010" y="375" font-size="18" font-weight="700">INVALID</text>
+  <text x="735" y="505" font-size="20" font-weight="700">AUTO-HEALING &amp; RECOVERY LOOP</text>
+  <text x="457" y="555" font-size="18" font-weight="700">4. BRIGHT DATA</text><text x="457" y="580" font-size="18" font-weight="700">AUTO-HEALING</text><text x="457" y="630" font-size="16">Diagnoses issue and</text><text x="457" y="653" font-size="16">automatically repairs</text><text x="457" y="676" font-size="16">/ reconfigures the</text><text x="457" y="699" font-size="16">scraper</text>
+  <text x="722" y="555" font-size="18" font-weight="700">5. RE-EXTRACTION</text><text x="722" y="630" font-size="16">Runs the scraper</text><text x="722" y="653" font-size="16">again to extract</text><text x="722" y="676" font-size="16">fresh data</text>
+  <text x="987" y="555" font-size="18" font-weight="700">5b. INTEGRITY</text><text x="987" y="580" font-size="18" font-weight="700">ENGINE (RECHECK)</text><text x="987" y="630" font-size="16">Validates the new</text><text x="987" y="653" font-size="16">data against the</text><text x="987" y="676" font-size="16">contract again</text>
+  <text x="768" y="815" font-size="20" font-weight="700">ARCHITECTURE SUMMARY</text>
+  <text x="150" y="860" font-size="16">Extracts data</text><text x="150" y="882" font-size="16">from the web</text>
+  <text x="430" y="850" font-size="16">Defines what</text><text x="430" y="872" font-size="16">each data point</text><text x="430" y="894" font-size="16">is expected to mean</text>
+  <text x="715" y="850" font-size="16">Checks if the data</text><text x="715" y="872" font-size="16">matches the expected</text><text x="715" y="894" font-size="16">meaning (semantic validation)</text>
+  <text x="1010" y="850" font-size="16">Auto-heals and</text><text x="1010" y="872" font-size="16">re-extracts if there</text><text x="1010" y="894" font-size="16">is a semantic mismatch</text>
+  <text x="1300" y="850" font-size="16">Delivers only</text><text x="1300" y="872" font-size="16">verified, trustworthy</text><text x="1300" y="894" font-size="16">data to the user</text>
+  <text x="768" y="963" font-size="16">PRINCIPLE: WebReceipt does not just capture data. It verifies what the data means.</text>
+  <text x="768" y="985" font-size="18" font-weight="700">Value can be correct, but meaning can be wrong.</text>
+</g>
+</svg>
