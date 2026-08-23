@@ -1,3 +1,5 @@
+import { AMOUNT_PATTERN, decodeHtmlEntities } from './html-text.js';
+
 const CURRENCIES = new Map([
   ['₹', 'INR'], ['RS', 'INR'], ['RS.', 'INR'], ['INR', 'INR'],
   ['$', 'USD'], ['US$', 'USD'], ['USD', 'USD'],
@@ -7,21 +9,10 @@ const CURRENCIES = new Map([
   ['R$', 'BRL'], ['BRL', 'BRL'], ['KRW', 'KRW'], ['₩', 'KRW'],
 ]);
 
-const CURRENCY_PATTERN = '(?:INR|USD|EUR|GBP|JPY|AUD|CAD|AED|SGD|BRL|KRW|US\\$|AU?\\$|CA?\\$|SG?\\$|Rs\\.?|₹|\\$|€|£|¥|R\\$|₩)';
-const AMOUNT_PATTERN = '(?:[0-9]{1,3}(?:[ ,.]?[0-9]{3})*(?:[.,][0-9]{1,2})?|[0-9]+(?:[.,][0-9]{1,2})?)';
-
-function decode(value) {
-  return String(value || '')
-    .replace(/&nbsp;|&#160;|\u00a0/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;|&#34;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)));
-}
+const COMMERCE_CURRENCY_PATTERN = '(?:INR|USD|EUR|GBP|JPY|AUD|CAD|AED|SGD|BRL|KRW|US\\$|AU?\\$|CA?\\$|SG?\\$|Rs\\.?|₹|\\$|€|£|¥|R\\$|₩)';
 
 export function visibleCommerceText(html) {
-  return decode(String(html || '')
+  return decodeHtmlEntities(String(html || '')
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
     .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
@@ -96,12 +87,12 @@ export function visiblePriceCandidates(html, { productDetail = false } = {}) {
   const text = visibleCommerceText(html);
   if (!text) return [];
   const headingRaw = String(html || '').match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || '';
-  const heading = decode(headingRaw.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  const heading = decodeHtmlEntities(headingRaw.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
   const headingIndex = productDetail && heading ? text.indexOf(heading) : -1;
   const headingEnd = headingIndex >= 0 ? headingIndex + heading.length : -1;
   const patterns = [
-    { regex: new RegExp(`(${CURRENCY_PATTERN})\\s*(${AMOUNT_PATTERN})(?![0-9A-Za-z])`, 'gi'), currency: 1, amount: 2 },
-    { regex: new RegExp(`(${AMOUNT_PATTERN})\\s*(${CURRENCY_PATTERN})(?![A-Za-z0-9])`, 'gi'), currency: 2, amount: 1 },
+    { regex: new RegExp(`(${COMMERCE_CURRENCY_PATTERN})\\s*(${AMOUNT_PATTERN})(?![0-9A-Za-z])`, 'gi'), currency: 1, amount: 2 },
+    { regex: new RegExp(`(${AMOUNT_PATTERN})\\s*(${COMMERCE_CURRENCY_PATTERN})(?![A-Za-z0-9])`, 'gi'), currency: 2, amount: 1 },
   ];
   const byKey = new Map();
   for (const pattern of patterns) {
