@@ -75,6 +75,7 @@ if (fixtureSubject || fixtureAdvertised) {
   const inclusionText = firstText('#inclusions');
 
   return {
+    recordType: 'deal_contract',
     subject,
     targetUrl: source,
     observedAt: now,
@@ -151,11 +152,10 @@ if (fixtureSubject || fixtureAdvertised) {
 
 // ---------------------------------------------------------------------------
 // GENERIC PUBLIC COMMERCE MODE
-// Never use "the first currency value" as the product price. Every candidate is
-// scored from its semantic context. Shipping, delivery, tax, fee, EMI/monthly,
-// savings and list/MRP values are penalized; Product/Offer/current/sale price
-// evidence is preferred. Amount is only a final tie-breaker, never a hardcoded
-// Nike-specific rule.
+// A product page is an OFFER observation, not automatically a checkout. We
+// extract the product price and any other amount only when its semantic role is
+// explicit. Missing shipping/tax/final-total fields stay absent instead of being
+// synthesized as zero or copied from the product price.
 // ---------------------------------------------------------------------------
 const CURRENCY_SYMBOLS = new Map([
   ['₹', 'INR'], ['RS', 'INR'], ['RS.', 'INR'], ['INR', 'INR'],
@@ -187,12 +187,11 @@ const semanticScore = (context) => {
   if (/itemprop\s*[:=]?\s*price|product:price|product-price|product_price/.test(text)) score += 100;
   if (/\b(product|item)\s+price\b|\b(current|sale|deal|our|special|offer)\s+price\b/.test(text)) score += 75;
   else if (/\bprice\b/.test(text)) score += 28;
-  if (/\b(final|grand|order|checkout)\s+total\b|\btotal\s+due\b|\bamount\s+due\b/.test(text)) score += 45;
   if (/\bproduct\b|\bsku\b|\bvariant\b|\boffer\b/.test(text)) score += 16;
 
-  if (/shipping|delivery|postage|freight/.test(text) && !/\b(final|grand|order|checkout)\s+total\b/.test(text)) score -= 140;
-  if (/\b(?:tax|taxes|gst|vat|service\s*fee|handling\s*fee|platform\s*fee|convenience\s*fee|fee)\b/.test(text)
-      && !/\b(final|grand|order|checkout)\s+total\b/.test(text)) score -= 120;
+  if (/shipping|delivery|postage|freight/.test(text)) score -= 140;
+  if (/\b(?:tax|taxes|gst|vat|service\s*fee|handling\s*fee|platform\s*fee|convenience\s*fee|fee)\b/.test(text)) score -= 120;
+  if (/\b(?:final|grand|order|checkout)\s+total\b|\btotal\s+due\b|\bamount\s+due\b/.test(text)) score -= 80;
   if (/\b(?:emi|installment|instalment|monthly|per\s+month|\/month|month)\b/.test(text)) score -= 95;
   if (/\b(?:mrp|list\s*price|original\s*price|regular\s*price|was\s+price|compare\s+at)\b/.test(text)) score -= 55;
   if (/\b(?:save|savings|discount|coupon|cashback|reward)\b/.test(text)) score -= 70;
@@ -203,14 +202,16 @@ const candidates = [];
 const addCandidate = ({ amount, currency, captured, selector, context, boost = 0 }) => {
   const numeric = Number(amount);
   if (!Number.isFinite(numeric) || numeric <= 0 || !currency) return;
-  const score = semanticScore(context) + boost;
+  const normalizedContext = String(context || '');
+  const score = semanticScore(normalizedContext) + boost;
   const fingerprint = `${numeric}|${currency}|${selector}|${String(captured || '').trim()}`;
   if (candidates.some((item) => item.fingerprint === fingerprint)) return;
   candidates.push({
     amount: numeric,
     currency,
     captured: String(captured || `${currency} ${numeric}`).trim(),
-    selector: selector || null,
+    selector: selector || 'unknown',
+    context: normalizedContext,
     score,
     fingerprint,
   });
@@ -239,8 +240,8 @@ if (metaPrice != null && metaCurrency) {
 }
 
 // JSON-LD / embedded product data. Keep the object path in the semantic context,
-// which lets shippingRate.price lose to Product.offers.price without assuming a
-// specific website or numeric value.
+// which lets shippingDetails.price lose to Product.offers.price without assuming
+// a site-specific selector or numeric value.
 const jsonScripts = $('script[type="application/ld+json"]').toArray();
 const walkJson = (value, path = [], inheritedCurrency = null) => {
   if (Array.isArray(value)) {
@@ -324,8 +325,8 @@ priceSelectors.forEach((selector) => {
 });
 
 // Last-resort visible-text scan. All money mentions are ranked by the local text
-// around them, so "Delivery ₹500" cannot win merely because it appears before
-// "Product price ₹12,999".
+// around them, so a delivery amount cannot win merely because it appears before
+// the product price.
 const bodyText = firstText('body');
 const visibleMoney = /(?:₹|Rs\.?|INR|USD|US\$|\$|EUR|€|GBP|£|JPY|¥|AED|SGD)\s*[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?|[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?\s*(?:INR|USD|EUR|GBP|JPY|AED|SGD)/gi;
 for (const match of bodyText.matchAll(visibleMoney)) {
@@ -343,22 +344,66 @@ if (!selected || selected.score < 0) {
   throw new Error('No semantically credible product price was found on this public page.');
 }
 
+const roleCandidate = (pattern) => candidates
+  .filter((item) => item.currency === selected.currency && pattern.test(String(item.context || '').toLowerCase()))
+  .sort((a, b) => b.score - a.score || b.amount - a.amount)[0] || null;
+const shipping = roleCandidate(/shipping|delivery|postage|freight/);
+const taxes = roleCandidate(/\b(?:tax|taxes|gst|vat)\b/);
+const finalTotal = roleCandidate(/\b(?:final|grand|order|checkout)\s+total\b|\btotal\s+due\b|\bamount\s+due\b/);
+const discount = roleCandidate(/\b(?:discount|coupon|cashback|savings?)\b/);
+
 const subject = firstText('h1')
   || firstAttr('meta[property="og:title"]', 'content')
   || firstText('title')
   || source;
-const pageText = bodyText || subject;
-const firstStatement = (pattern, fallback) => {
-  const parts = String(pageText).split(/(?<=[.!?])\s+|\s*[|•·]\s*/).map((part) => part.trim()).filter(Boolean);
-  return parts.find((part) => pattern.test(part) && part.length <= 300) || fallback;
-};
-const cancellationText = firstStatement(/\b(return|returns|cancell?ation|cancel)\b/i, 'Not stated on the observed public product page.');
-const refundabilityText = firstStatement(/\b(refund|refundable|non-refundable|returns?)\b/i, 'Not stated on the observed public product page.');
-const paymentText = firstStatement(/\b(pay now|payment|charged|billing|checkout)\b/i, 'Not stated on the observed public product page.');
+const brand = firstAttr('meta[property="product:brand"]', 'content')
+  || firstText('[itemprop="brand"]')
+  || firstAttr('[itemprop="brand"]', 'content');
+const model = firstText('[itemprop="model"]') || firstAttr('[itemprop="model"]', 'content');
+const sku = firstText('[itemprop="sku"]') || firstAttr('[itemprop="sku"]', 'content');
 const offerScreenshot = screenshotRef('offer_screenshot', 'offer_screenshot');
-const collectorVersion = 'webreceipt-custom-commerce-v2';
+const collectorVersion = 'webreceipt-custom-commerce-v3';
+
+const product = { name: subject };
+if (brand) product.brand = brand;
+if (model) product.model = model;
+if (sku) product.sku = sku;
+
+const commercial = {
+  productPrice: selected.amount,
+  currency: selected.currency,
+};
+if (shipping) commercial.shippingFee = shipping.amount;
+if (taxes) commercial.taxes = taxes.amount;
+if (discount) commercial.discount = discount.amount;
+if (finalTotal) commercial.finalTotal = finalTotal.amount;
+
+const evidence = [
+  {
+    id: 'ev_product_price', field: 'commercial.productPrice', sourceUrl: source,
+    capturedText: selected.captured, domPath: selected.selector,
+    screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
+  },
+  {
+    id: 'ev_offer', field: 'offer.advertisedPrice', sourceUrl: source,
+    capturedText: selected.captured, domPath: selected.selector,
+    screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
+  },
+];
+const addRoleEvidence = (id, field, item) => {
+  if (!item) return;
+  evidence.push({
+    id, field, sourceUrl: source, capturedText: item.captured, domPath: item.selector,
+    screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
+  });
+};
+addRoleEvidence('ev_shipping', 'commercial.shippingFee', shipping);
+addRoleEvidence('ev_tax', 'commercial.taxes', taxes);
+addRoleEvidence('ev_discount', 'commercial.discount', discount);
+addRoleEvidence('ev_final_total', 'commercial.finalTotal', finalTotal);
 
 return {
+  recordType: 'product_observation',
   subject,
   targetUrl: source,
   observedAt: now,
@@ -366,49 +411,14 @@ return {
   currency: selected.currency,
   collectorVersion,
   worker: 'browser',
+  product,
+  commercial,
   offer: {
     advertisedPrice: selected.amount,
     claims: [],
   },
-  checkout: {
-    basePrice: selected.amount,
-    feeItems: [],
-    mandatoryFees: 0,
-    taxes: 0,
-    optionalAddons: 0,
-    discounts: 0,
-    finalTotal: selected.amount,
-  },
-  terms: {
-    cancellation: cancellationText,
-    refundability: refundabilityText,
-    paymentTiming: paymentText,
-    inclusions: [],
-  },
   journey: [
-    {label: 'Product page', url: source, displayedPrice: selected.amount, evidenceId: 'ev_offer'},
-    {label: 'Observed product price', url: source, displayedPrice: selected.amount, evidenceId: 'ev_total'},
+    {label: 'Public product page', url: source, displayedPrice: selected.amount, evidenceId: 'ev_product_price'},
   ],
-  evidence: [
-    {
-      id: 'ev_offer', field: 'offer.advertisedPrice', sourceUrl: source,
-      capturedText: selected.captured, domPath: selected.selector,
-      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
-    },
-    {
-      id: 'ev_base', field: 'checkout.basePrice', sourceUrl: source,
-      capturedText: selected.captured, domPath: selected.selector,
-      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
-    },
-    {
-      id: 'ev_total', field: 'checkout.finalTotal', sourceUrl: source,
-      capturedText: selected.captured, domPath: selected.selector,
-      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
-    },
-    {
-      id: 'ev_cancel', field: 'terms.cancellation', sourceUrl: source,
-      capturedText: cancellationText, domPath: null,
-      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
-    },
-  ],
+  evidence,
 };
