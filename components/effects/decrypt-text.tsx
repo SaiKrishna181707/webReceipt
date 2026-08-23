@@ -15,6 +15,9 @@ export function DecryptText({ text, className = '', delay = 0 }: DecryptTextProp
 
   useEffect(() => {
     let frame = 0
+    // `window.setInterval`/`setTimeout` return a numeric handle in the browser.
+    // `ReturnType<typeof setInterval>` resolves to NodeJS.Timeout here because
+    // @types/node is in scope, which does not match what these calls return.
     let animationTimer: number | undefined
     let restartTimer: number | undefined
     let startTimer: number | undefined

@@ -49,10 +49,11 @@ test('HTTP health, observe, export and stress flows work end-to-end with securit
   const health = await response.json();
   assert.equal(health.liveAccess.configured, false);
 
+  // `src/server.js` is an API-only Bright Data harness. The legacy static UI in
+  // public/ was removed because it hardcoded a non-existent collector ID and an
+  // export link that only this server implements. Assert it stays removed.
   response = await fetch(`http://127.0.0.1:${port}/`, {method:'HEAD'});
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get('content-type'), /text\/html/);
-  assert.ok(Number(response.headers.get('content-length')) > 0);
+  assert.equal(response.status, 404);
 
   response = await fetch(`http://127.0.0.1:${port}/api/reset`, { method: 'POST', headers: {'content-type':'application/json'}, body: '{}' });
   assert.equal(response.status, 200);

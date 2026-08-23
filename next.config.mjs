@@ -9,6 +9,9 @@
  * Strict Mode is on deliberately. It double-invokes effects in development,
  * which for a WebGL layer means create → dispose → create — exactly the cycle
  * that exposes a missing GL cleanup before it becomes a leak in production.
+ *
+ * There is deliberately no `typescript.ignoreBuildErrors` escape hatch here: a
+ * type error must fail `npm run build` rather than ship silently.
  */
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -16,4 +19,4 @@ const nextConfig = {
   transpilePackages: ['ogl'],
 }
 
-module.exports = nextConfig
+export default nextConfig
