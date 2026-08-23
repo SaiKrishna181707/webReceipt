@@ -1,14 +1,17 @@
 // WebReceipt custom Scraper Studio Browser Worker parser.
 //
-// IMPORTANT DEMO PROPERTY:
-// The initial production parser intentionally uses `.total-price` as finalTotal.
-// Fixture V1: `.total-price` means the amount due (correct).
-// Fixture V2: `.total-price` still matches, but now means SUBTOTAL (silently wrong).
-// The true total is moved/restructured and split across child nodes. WebReceipt's
-// semantic contract catches the plausible wrong value, then verifies the
-// Scraper Studio repair preview before approving it.
+// The parser deliberately supports two page families:
+// 1. the controlled WebReceipt fixture, where `.total-price` is kept as the
+//    historical V1 selector so Fixture V2 can demonstrate real semantic drift;
+// 2. arbitrary public commerce/product pages, where candidate prices are ranked
+//    by semantic context so shipping/tax/fee amounts are not mistaken for the
+//    product price simply because they appear first in the DOM.
 
 const firstText = (selector) => $(selector).first().text_sane();
+const firstAttr = (selector, name) => {
+  const node = $(selector).first();
+  return node && typeof node.attr === 'function' ? String(node.attr(name) || '').trim() : '';
+};
 
 const parseMoney = (value) => {
   let raw = String(value || '').replace(/\s+/g, '').replace(/[^0-9,.-]/g, '');
@@ -47,91 +50,365 @@ const screenshotRef = (field, fallback) => {
 const stripLabel = (value, label) => String(value || '').replace(new RegExp(`^${label}:\\s*`, 'i'), '').trim();
 const now = new Date().toISOString();
 const source = location.href;
-const subject = firstText('[data-testid="offer-name"]') || source;
-const advertised = money('[data-testid="advertised-price"]');
-const base = money('[data-testid="base-price"]');
-const propertyFee = money('.fee-property');
-const serviceFee = money('.fee-service');
-const tax = money('[data-testid="tax"]');
-const finalTotal = money('.total-price'); // deliberate wrong-but-valid failure after V2 redesign
+const fixtureSubject = firstText('[data-testid="offer-name"]');
+const fixtureAdvertised = firstText('[data-testid="advertised-price"]');
+
+// ---------------------------------------------------------------------------
+// CONTROLLED FIXTURE MODE
+// Keep this path stable. The semantic failure is intentionally produced by the
+// changed webpage meaning in Fixture V2, not by mutating a parsed value later.
+// ---------------------------------------------------------------------------
+if (fixtureSubject || fixtureAdvertised) {
+  const subject = fixtureSubject || source;
+  const advertised = money('[data-testid="advertised-price"]');
+  const base = money('[data-testid="base-price"]');
+  const propertyFee = money('.fee-property');
+  const serviceFee = money('.fee-service');
+  const tax = money('[data-testid="tax"]');
+  const finalTotal = money('.total-price'); // deliberate wrong-but-valid failure after V2 redesign
+  const offerScreenshot = screenshotRef('offer_screenshot', 'offer_screenshot');
+  const checkoutScreenshot = screenshotRef('checkout_screenshot', 'checkout_screenshot');
+  const claims = $('.claim').toArray().map((el) => $(el).text_sane()).filter(Boolean);
+  const cancellationText = firstText('#cancellation');
+  const refundabilityText = firstText('#refundability');
+  const paymentText = firstText('#payment-timing');
+  const inclusionText = firstText('#inclusions');
+
+  return {
+    subject,
+    targetUrl: source,
+    observedAt: now,
+    locale: 'en-IN',
+    currency: 'INR',
+    collectorVersion: 'webreceipt-custom-v1',
+    worker: 'browser',
+    offer: {
+      advertisedPrice: advertised,
+      claims,
+    },
+    checkout: {
+      basePrice: base,
+      feeItems: [
+        {label: 'Property fee', amount: propertyFee, required: true},
+        {label: 'Service fee', amount: serviceFee, required: true},
+      ],
+      mandatoryFees: Number(propertyFee || 0) + Number(serviceFee || 0),
+      taxes: tax,
+      optionalAddons: 0,
+      discounts: 0,
+      finalTotal,
+    },
+    terms: {
+      cancellation: stripLabel(cancellationText, 'Cancellation'),
+      refundability: stripLabel(refundabilityText, 'Refundability'),
+      paymentTiming: stripLabel(paymentText, 'Payment'),
+      inclusions: [stripLabel(inclusionText, 'Includes')].filter(Boolean),
+    },
+    journey: [
+      {label: 'Offer', url: source, displayedPrice: advertised, evidenceId: 'ev_offer'},
+      {label: 'Checkout', url: source, displayedPrice: finalTotal, evidenceId: 'ev_total'},
+    ],
+    evidence: [
+      {
+        id: 'ev_offer', field: 'offer.advertisedPrice', sourceUrl: source,
+        capturedText: firstText('[data-testid="advertised-price"]'),
+        domPath: '[data-testid="advertised-price"]', screenshotRef: offerScreenshot,
+        journeyStep: 1, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+      },
+      {
+        id: 'ev_base', field: 'checkout.basePrice', sourceUrl: source,
+        capturedText: firstText('[data-testid="base-price"]'),
+        domPath: '[data-testid="base-price"]', screenshotRef: checkoutScreenshot,
+        journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+      },
+      {
+        id: 'ev_fees', field: 'checkout.mandatoryFees', sourceUrl: source,
+        capturedText: `${firstText('.fee-property')} + ${firstText('.fee-service')}`,
+        domPath: '.fee-property,.fee-service', screenshotRef: checkoutScreenshot,
+        journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+      },
+      {
+        id: 'ev_tax', field: 'checkout.taxes', sourceUrl: source,
+        capturedText: firstText('[data-testid="tax"]'),
+        domPath: '[data-testid="tax"]', screenshotRef: checkoutScreenshot,
+        journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+      },
+      {
+        id: 'ev_total', field: 'checkout.finalTotal', sourceUrl: source,
+        capturedText: firstText('.total-price'), domPath: '.total-price',
+        screenshotRef: checkoutScreenshot, journeyStep: 2, observedAt: now,
+        collectorVersion: 'webreceipt-custom-v1',
+      },
+      {
+        id: 'ev_cancel', field: 'terms.cancellation', sourceUrl: source,
+        capturedText: cancellationText, domPath: '#cancellation',
+        screenshotRef: checkoutScreenshot, journeyStep: 2, observedAt: now,
+        collectorVersion: 'webreceipt-custom-v1',
+      },
+    ],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// GENERIC PUBLIC COMMERCE MODE
+// Never use "the first currency value" as the product price. Every candidate is
+// scored from its semantic context. Shipping, delivery, tax, fee, EMI/monthly,
+// savings and list/MRP values are penalized; Product/Offer/current/sale price
+// evidence is preferred. Amount is only a final tie-breaker, never a hardcoded
+// Nike-specific rule.
+// ---------------------------------------------------------------------------
+const CURRENCY_SYMBOLS = new Map([
+  ['₹', 'INR'], ['RS', 'INR'], ['RS.', 'INR'], ['INR', 'INR'],
+  ['$', 'USD'], ['USD', 'USD'], ['US$', 'USD'],
+  ['€', 'EUR'], ['EUR', 'EUR'], ['£', 'GBP'], ['GBP', 'GBP'],
+  ['¥', 'JPY'], ['JPY', 'JPY'], ['AED', 'AED'], ['SGD', 'SGD'],
+]);
+
+const currencyFrom = (value, fallback = null) => {
+  const raw = String(value || '').trim();
+  if (!raw) return fallback;
+  const upper = raw.toUpperCase();
+  if (CURRENCY_SYMBOLS.has(upper)) return CURRENCY_SYMBOLS.get(upper);
+  for (const [symbol, code] of CURRENCY_SYMBOLS.entries()) {
+    if (raw.includes(symbol) || upper.includes(symbol)) return code;
+  }
+  return fallback;
+};
+
+const elementAttr = (el, name) => {
+  const node = $(el);
+  return node && typeof node.attr === 'function' ? String(node.attr(name) || '').trim() : '';
+};
+
+const semanticScore = (context) => {
+  const text = String(context || '').toLowerCase();
+  let score = 10;
+
+  if (/itemprop\s*[:=]?\s*price|product:price|product-price|product_price/.test(text)) score += 100;
+  if (/\b(product|item)\s+price\b|\b(current|sale|deal|our|special|offer)\s+price\b/.test(text)) score += 75;
+  else if (/\bprice\b/.test(text)) score += 28;
+  if (/\b(final|grand|order|checkout)\s+total\b|\btotal\s+due\b|\bamount\s+due\b/.test(text)) score += 45;
+  if (/\bproduct\b|\bsku\b|\bvariant\b|\boffer\b/.test(text)) score += 16;
+
+  if (/shipping|delivery|postage|freight/.test(text) && !/\b(final|grand|order|checkout)\s+total\b/.test(text)) score -= 140;
+  if (/\b(?:tax|taxes|gst|vat|service\s*fee|handling\s*fee|platform\s*fee|convenience\s*fee|fee)\b/.test(text)
+      && !/\b(final|grand|order|checkout)\s+total\b/.test(text)) score -= 120;
+  if (/\b(?:emi|installment|instalment|monthly|per\s+month|\/month|month)\b/.test(text)) score -= 95;
+  if (/\b(?:mrp|list\s*price|original\s*price|regular\s*price|was\s+price|compare\s+at)\b/.test(text)) score -= 55;
+  if (/\b(?:save|savings|discount|coupon|cashback|reward)\b/.test(text)) score -= 70;
+  return score;
+};
+
+const candidates = [];
+const addCandidate = ({ amount, currency, captured, selector, context, boost = 0 }) => {
+  const numeric = Number(amount);
+  if (!Number.isFinite(numeric) || numeric <= 0 || !currency) return;
+  const score = semanticScore(context) + boost;
+  const fingerprint = `${numeric}|${currency}|${selector}|${String(captured || '').trim()}`;
+  if (candidates.some((item) => item.fingerprint === fingerprint)) return;
+  candidates.push({
+    amount: numeric,
+    currency,
+    captured: String(captured || `${currency} ${numeric}`).trim(),
+    selector: selector || null,
+    score,
+    fingerprint,
+  });
+};
+
+// Strongest source: standard product-price metadata.
+const metaPrice = parseMoney(
+  firstAttr('meta[property="product:price:amount"]', 'content')
+  || firstAttr('meta[property="og:price:amount"]', 'content')
+  || firstAttr('meta[itemprop="price"]', 'content')
+);
+const metaCurrency = currencyFrom(
+  firstAttr('meta[property="product:price:currency"]', 'content')
+  || firstAttr('meta[property="og:price:currency"]', 'content')
+  || firstAttr('meta[itemprop="priceCurrency"]', 'content')
+);
+if (metaPrice != null && metaCurrency) {
+  addCandidate({
+    amount: metaPrice,
+    currency: metaCurrency,
+    captured: `${metaCurrency} ${metaPrice}`,
+    selector: 'meta product price',
+    context: 'itemprop price product:price product price',
+    boost: 100,
+  });
+}
+
+// JSON-LD / embedded product data. Keep the object path in the semantic context,
+// which lets shippingRate.price lose to Product.offers.price without assuming a
+// specific website or numeric value.
+const jsonScripts = $('script[type="application/ld+json"]').toArray();
+const walkJson = (value, path = [], inheritedCurrency = null) => {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => walkJson(item, path.concat(String(index)), inheritedCurrency));
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+  const nodeCurrency = currencyFrom(
+    value.priceCurrency || value.currency || value.currencyCode || value.currency_code,
+    inheritedCurrency,
+  );
+  const type = Array.isArray(value['@type']) ? value['@type'].join(' ') : String(value['@type'] || '');
+  for (const key of ['finalPrice', 'currentPrice', 'salePrice', 'discountedPrice', 'lowPrice', 'price']) {
+    if (!(key in value)) continue;
+    const raw = value[key] && typeof value[key] === 'object'
+      ? (value[key].amount ?? value[key].value ?? value[key].price)
+      : value[key];
+    const amount = parseMoney(raw);
+    const nestedCurrency = value[key] && typeof value[key] === 'object'
+      ? currencyFrom(value[key].currency || value[key].priceCurrency, nodeCurrency)
+      : nodeCurrency;
+    if (amount != null && nestedCurrency) {
+      const context = `${path.join(' ')} ${type} ${key}`;
+      addCandidate({
+        amount,
+        currency: nestedCurrency,
+        captured: `${nestedCurrency} ${amount}`,
+        selector: 'script[type="application/ld+json"]',
+        context,
+        boost: /product|offer/i.test(type) ? 80 : 20,
+      });
+    }
+  }
+  Object.entries(value).forEach(([key, child]) => {
+    if (child && typeof child === 'object') walkJson(child, path.concat(key), nodeCurrency);
+  });
+};
+jsonScripts.forEach((el) => {
+  const raw = $(el).text_sane();
+  if (!raw) return;
+  try { walkJson(JSON.parse(raw), ['jsonld']); } catch { /* malformed JSON-LD is not trusted */ }
+});
+
+// DOM candidates from common semantic price hooks. We examine every candidate;
+// no `.first()` decision is allowed to decide the business meaning.
+const priceSelectors = [
+  '[itemprop="price"]',
+  '[data-product-price]',
+  '[data-sale-price]',
+  '[data-price]',
+  '[data-testid*="price"]',
+  '[class*="price"]',
+  '[id*="price"]',
+  '[class*="amount"]',
+  '[id*="amount"]',
+];
+priceSelectors.forEach((selector) => {
+  $(selector).toArray().forEach((el) => {
+    const text = $(el).text_sane();
+    const rawAmount = elementAttr(el, 'content')
+      || elementAttr(el, 'data-product-price')
+      || elementAttr(el, 'data-sale-price')
+      || elementAttr(el, 'data-price')
+      || text;
+    const amount = parseMoney(rawAmount);
+    const context = [
+      selector,
+      text,
+      elementAttr(el, 'itemprop'),
+      elementAttr(el, 'data-testid'),
+      elementAttr(el, 'class'),
+      elementAttr(el, 'id'),
+      elementAttr(el, 'aria-label'),
+    ].filter(Boolean).join(' ');
+    const currency = currencyFrom(
+      elementAttr(el, 'data-currency') || elementAttr(el, 'data-price-currency') || text,
+      metaCurrency,
+    );
+    addCandidate({ amount, currency, captured: text || rawAmount, selector, context });
+  });
+});
+
+// Last-resort visible-text scan. All money mentions are ranked by the local text
+// around them, so "Delivery ₹500" cannot win merely because it appears before
+// "Product price ₹12,999".
+const bodyText = firstText('body');
+const visibleMoney = /(?:₹|Rs\.?|INR|USD|US\$|\$|EUR|€|GBP|£|JPY|¥|AED|SGD)\s*[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?|[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?\s*(?:INR|USD|EUR|GBP|JPY|AED|SGD)/gi;
+for (const match of bodyText.matchAll(visibleMoney)) {
+  const captured = match[0];
+  const amount = parseMoney(captured);
+  const currency = currencyFrom(captured, metaCurrency);
+  const index = match.index || 0;
+  const context = bodyText.slice(Math.max(0, index - 100), Math.min(bodyText.length, index + captured.length + 100));
+  addCandidate({ amount, currency, captured, selector: 'visible text', context });
+}
+
+candidates.sort((a, b) => b.score - a.score || b.amount - a.amount);
+const selected = candidates[0];
+if (!selected || selected.score < 0) {
+  throw new Error('No semantically credible product price was found on this public page.');
+}
+
+const subject = firstText('h1')
+  || firstAttr('meta[property="og:title"]', 'content')
+  || firstText('title')
+  || source;
+const pageText = bodyText || subject;
+const firstStatement = (pattern, fallback) => {
+  const parts = String(pageText).split(/(?<=[.!?])\s+|\s*[|•·]\s*/).map((part) => part.trim()).filter(Boolean);
+  return parts.find((part) => pattern.test(part) && part.length <= 300) || fallback;
+};
+const cancellationText = firstStatement(/\b(return|returns|cancell?ation|cancel)\b/i, 'Not stated on the observed public product page.');
+const refundabilityText = firstStatement(/\b(refund|refundable|non-refundable|returns?)\b/i, 'Not stated on the observed public product page.');
+const paymentText = firstStatement(/\b(pay now|payment|charged|billing|checkout)\b/i, 'Not stated on the observed public product page.');
 const offerScreenshot = screenshotRef('offer_screenshot', 'offer_screenshot');
-const checkoutScreenshot = screenshotRef('checkout_screenshot', 'checkout_screenshot');
-const claims = $('.claim').toArray().map((el) => $(el).text_sane()).filter(Boolean);
-const cancellationText = firstText('#cancellation');
-const refundabilityText = firstText('#refundability');
-const paymentText = firstText('#payment-timing');
-const inclusionText = firstText('#inclusions');
+const collectorVersion = 'webreceipt-custom-commerce-v2';
 
 return {
   subject,
   targetUrl: source,
   observedAt: now,
-  locale: 'en-IN',
-  currency: 'INR',
-  collectorVersion: 'webreceipt-custom-v1',
+  locale: selected.currency === 'INR' ? 'en-IN' : 'en',
+  currency: selected.currency,
+  collectorVersion,
   worker: 'browser',
   offer: {
-    advertisedPrice: advertised,
-    claims,
+    advertisedPrice: selected.amount,
+    claims: [],
   },
   checkout: {
-    basePrice: base,
-    feeItems: [
-      {label: 'Property fee', amount: propertyFee, required: true},
-      {label: 'Service fee', amount: serviceFee, required: true},
-    ],
-    mandatoryFees: Number(propertyFee || 0) + Number(serviceFee || 0),
-    taxes: tax,
+    basePrice: selected.amount,
+    feeItems: [],
+    mandatoryFees: 0,
+    taxes: 0,
     optionalAddons: 0,
     discounts: 0,
-    finalTotal,
+    finalTotal: selected.amount,
   },
   terms: {
-    cancellation: stripLabel(cancellationText, 'Cancellation'),
-    refundability: stripLabel(refundabilityText, 'Refundability'),
-    paymentTiming: stripLabel(paymentText, 'Payment'),
-    inclusions: [stripLabel(inclusionText, 'Includes')].filter(Boolean),
+    cancellation: cancellationText,
+    refundability: refundabilityText,
+    paymentTiming: paymentText,
+    inclusions: [],
   },
   journey: [
-    {label: 'Offer', url: source, displayedPrice: advertised, evidenceId: 'ev_offer'},
-    {label: 'Checkout', url: source, displayedPrice: finalTotal, evidenceId: 'ev_total'},
+    {label: 'Product page', url: source, displayedPrice: selected.amount, evidenceId: 'ev_offer'},
+    {label: 'Observed product price', url: source, displayedPrice: selected.amount, evidenceId: 'ev_total'},
   ],
   evidence: [
     {
       id: 'ev_offer', field: 'offer.advertisedPrice', sourceUrl: source,
-      capturedText: firstText('[data-testid="advertised-price"]'),
-      domPath: '[data-testid="advertised-price"]', screenshotRef: offerScreenshot,
-      journeyStep: 1, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+      capturedText: selected.captured, domPath: selected.selector,
+      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
     },
     {
       id: 'ev_base', field: 'checkout.basePrice', sourceUrl: source,
-      capturedText: firstText('[data-testid="base-price"]'),
-      domPath: '[data-testid="base-price"]', screenshotRef: checkoutScreenshot,
-      journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
-    },
-    {
-      id: 'ev_fees', field: 'checkout.mandatoryFees', sourceUrl: source,
-      capturedText: `${firstText('.fee-property')} + ${firstText('.fee-service')}`,
-      domPath: '.fee-property,.fee-service', screenshotRef: checkoutScreenshot,
-      journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
-    },
-    {
-      id: 'ev_tax', field: 'checkout.taxes', sourceUrl: source,
-      capturedText: firstText('[data-testid="tax"]'),
-      domPath: '[data-testid="tax"]', screenshotRef: checkoutScreenshot,
-      journeyStep: 2, observedAt: now, collectorVersion: 'webreceipt-custom-v1',
+      capturedText: selected.captured, domPath: selected.selector,
+      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
     },
     {
       id: 'ev_total', field: 'checkout.finalTotal', sourceUrl: source,
-      capturedText: firstText('.total-price'), domPath: '.total-price',
-      screenshotRef: checkoutScreenshot, journeyStep: 2, observedAt: now,
-      collectorVersion: 'webreceipt-custom-v1',
+      capturedText: selected.captured, domPath: selected.selector,
+      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
     },
     {
       id: 'ev_cancel', field: 'terms.cancellation', sourceUrl: source,
-      capturedText: cancellationText, domPath: '#cancellation',
-      screenshotRef: checkoutScreenshot, journeyStep: 2, observedAt: now,
-      collectorVersion: 'webreceipt-custom-v1',
+      capturedText: cancellationText, domPath: null,
+      screenshotRef: offerScreenshot, journeyStep: 1, observedAt: now, collectorVersion,
     },
   ],
 };
