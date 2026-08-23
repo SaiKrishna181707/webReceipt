@@ -1,4 +1,4 @@
-import type { ObserveResult, DiffResult, StressRun, StoreState, WebReceiptEvent } from './types'
+import type { ObservationResult, ObserveResult, DiffResult, StressRun, StoreState, WebReceiptEvent } from './types'
 
 const CLIENT_STATE_KEY = 'webreceipt:state:v2'
 const MAX_CLIENT_CONTRACTS = 16
@@ -35,11 +35,22 @@ function eventId(): string { try { return globalThis.crypto?.randomUUID?.() ?? `
 function addClientEvent(state: StoreState, type: string, message: string, meta: Record<string, unknown> = {}) {
   const event: WebReceiptEvent = { id: eventId(), type, message, meta, at: new Date().toISOString() }; state.events.unshift(event); state.events = state.events.slice(0, MAX_CLIENT_EVENTS)
 }
-function rememberObservation(result: ObserveResult, action: 'observe' | 'heal' = 'observe') {
+function rememberObservation(result: ObservationResult, action: 'observe' | 'heal' = 'observe') {
   const state = readClientState()
-  if (!state.contracts.some((entry) => entry.contract.contractHash === result.contract.contractHash)) state.contracts.unshift({ contract: result.contract, integrity: result.integrity, anomalies: result.anomalies })
-  const status = result.integrity.status
-  addClientEvent(state, action === 'heal' ? 'heal' : status === 'invalid' ? 'integrity' : 'success', action === 'heal' ? (result.healed ? 'Verified repair completed' : 'Repair run completed') : status === 'invalid' ? 'Observation detected a contract integrity failure' : 'Public observation sealed', { targetUrl: result.contract.targetUrl, status, contractHash: result.contract.contractHash })
+  if (result.contract) {
+    if (!state.contracts.some((entry) => entry.contract.contractHash === result.contract.contractHash)) state.contracts.unshift({ contract: result.contract, integrity: result.integrity, anomalies: result.anomalies })
+    const status = result.integrity.status
+    addClientEvent(state, action === 'heal' ? 'heal' : status === 'invalid' ? 'integrity' : 'success', action === 'heal' ? (result.healed ? 'Verified repair completed' : 'Repair run completed') : status === 'invalid' ? 'Observation detected a contract integrity failure' : 'Public observation sealed', { targetUrl: result.contract.targetUrl, status, contractHash: result.contract.contractHash })
+  } else {
+    addClientEvent(state, 'observe', 'Public product offer observed; checkout was not fabricated', {
+      targetUrl: result.observation.targetUrl,
+      status: result.integrity.status,
+      productPrice: result.commercial.productPrice,
+      currency: result.commercial.currency,
+      collectorId: result.observation.collectorId,
+      sealable: false,
+    })
+  }
   writeClientState(state)
 }
 function clientUrl(value?: string): URL | null {
@@ -51,7 +62,17 @@ function clientUrl(value?: string): URL | null {
     return new URL(raw)
   } catch { return null }
 }
-function isDemoTarget(value?: string): boolean { return clientUrl(value)?.hostname.toLowerCase() === 'demo.webreceipt.dev' }
+function isDemoTarget(value?: string): boolean {
+  const parsed = clientUrl(value)
+  if (!parsed) return false
+  const host = parsed.hostname.toLowerCase()
+  return host === 'demo.webreceipt.dev'
+    || (parsed.pathname === '/fixture/product' && [
+      'web-receipt-tawny.vercel.app',
+      'web-receipt-golden-state-warriors.vercel.app',
+      'web-receipt-git-main-golden-state-warriors.vercel.app',
+    ].includes(host))
+}
 function sameTarget(left: string, right: string): boolean {
   const a = clientUrl(left); const b = clientUrl(right)
   if (!a || !b) return left === right
@@ -61,7 +82,8 @@ function sameTarget(left: string, right: string): boolean {
 async function liveClientDiff(targetUrl: string): Promise<DiffResult> {
   let state = readClientState(); let matches = state.contracts.filter((entry) => sameTarget(entry.contract.targetUrl, targetUrl))
   if (matches.length < 2) {
-    const fresh = await post<ObserveResult>('/api/observe', { targetUrl, mutation: 'healthy', autoHeal: false }); rememberObservation(fresh)
+    const fresh = await post<ObservationResult>('/api/observe', { targetUrl, mutation: 'healthy', autoHeal: false }); rememberObservation(fresh)
+    if (!fresh.contract) throw new Error('This URL currently provides a product-offer observation only. Promise Diff requires two sealed Deal Contracts with checkout evidence.')
     state = readClientState(); matches = state.contracts.filter((entry) => sameTarget(entry.contract.targetUrl, fresh.contract.targetUrl))
   }
   if (matches.length < 2) return post<DiffResult>('/api/diff', { simulate: true, targetUrl })
@@ -71,7 +93,7 @@ async function liveClientDiff(targetUrl: string): Promise<DiffResult> {
 }
 
 export const api = {
-  observe: async (body: { targetUrl?: string; mutation?: string; autoHeal?: boolean }) => { const result = await post<ObserveResult>('/api/observe', body); rememberObservation(result); return result },
+  observe: async (body: { targetUrl?: string; mutation?: string; autoHeal?: boolean }) => { const result = await post<ObservationResult>('/api/observe', body); rememberObservation(result); return result },
   heal: async (body: { targetUrl?: string; mutation?: string }) => { const result = await post<ObserveResult>('/api/heal', body); rememberObservation(result, 'heal'); return result },
   diff: async (body?: { simulate?: boolean; targetUrl?: string }) => {
     const state = readClientState(); const latestTarget = body?.targetUrl || state.contracts[0]?.contract.targetUrl
