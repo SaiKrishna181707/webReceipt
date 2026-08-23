@@ -1,5 +1,5 @@
 import { getService } from '@/lib/server/service'
-import { createPublicWebSession, isSimulatorTarget } from '@/lib/server/public-web'
+import { createControlledProductSession, createPublicWebSession, isControlledProductTarget, isSimulatorTarget } from '@/lib/server/public-web'
 import { runSafely, readBody } from '@/lib/server/handler'
 import { withPublicScrapeLimit } from '@/lib/server/public-limit'
 
@@ -20,6 +20,15 @@ export async function POST(req: Request) {
     const targetUrl = optionalString(body.targetUrl, 'targetUrl')
     const mutation = optionalString(body.mutation, 'mutation') || 'healthy'
     if (body.autoHeal != null && typeof body.autoHeal !== 'boolean') throw new Error('autoHeal must be a boolean.')
+
+    // The public /fixture/product URL is our deterministic replay, not a real
+    // retailer. Give it a request-scoped controlled collector so the semantic
+    // drift/heal loop works on the deployed hostname without treating every
+    // third-party URL as simulator data.
+    if (isControlledProductTarget(targetUrl)) {
+      const { service } = await createControlledProductSession()
+      return service.observe({ targetUrl, mutation, autoHeal: body.autoHeal === true })
+    }
 
     if (isSimulatorTarget(targetUrl)) {
       const service = await getService()
