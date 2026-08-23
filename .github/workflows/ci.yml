@@ -27,6 +27,7 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Typecheck
+        if: ${{ always() }}
         run: npx tsc --noEmit
       - name: Verify custom Scraper Studio package, app, and chaos suite
         run: npm run verify
