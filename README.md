@@ -7,6 +7,10 @@ WebReceipt is a web-data integrity system for public commerce pages. A user supp
 **Live app:** https://web-receipt-tawny.vercel.app  
 **Console:** https://web-receipt-tawny.vercel.app/console
 
+## Architecture
+
+![WebReceipt System Architecture](./docs/webreceipt-architecture.svg)
+
 ## The two product flows
 
 WebReceipt deliberately separates real public-web observation from the reproducible semantic-drift demonstration.
