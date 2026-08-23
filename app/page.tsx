@@ -36,14 +36,14 @@ const STAGES = [
 ] as const
 
 const PROBLEMS = [
-  ['Silent economic drift', 'An advertised ₹8,499 quietly becomes ₹10,147 by checkout. No record, no diff, no proof.'],
-  ['Wrong-but-valid extraction', 'A redesign makes a scraper read ₹8,499 as the total. Every field is populated — and every number is wrong.'],
+  ['Product economics drift', 'A Nike Pegasus 41 is ₹12,999, but mandatory ₹500 shipping makes the payable total ₹13,499. The distinction has to survive the scrape.'],
+  ['Wrong-but-valid extraction', 'A redesign keeps returning ₹12,999 from `.total-price`, but that selector now means product price — not the ₹13,499 final total.'],
   ['Screenshots aren’t evidence', 'A PNG can’t prove when it was taken or that it wasn’t edited. Claims need cryptographic provenance.'],
 ] as const
 
 const CAPABILITIES: [typeof FileText, MatrixTone, string, string, string][] = [
   [FileText, 'phosphor', 'Deal Contract', 'One canonical schema compiled from any site — advertised price, checkout breakdown, fees, taxes, and terms.', '/docs'],
-  [ShieldCheck, 'matrix', 'Contract Integrity Engine', 'Eleven deterministic checks catch semantic drift like 8499 + 848 + 800 ≠ 8499 — not just null selectors.', '/docs'],
+  [ShieldCheck, 'matrix', 'Contract Integrity Engine', 'Eleven deterministic checks catch semantic drift like 12999 + 500 + 0 ≠ 12999 — not just null selectors.', '/docs'],
   [ScanSearch, 'warn', 'Deal Anomalies', 'Surfaces observed price increases and mandatory charges as reported facts — observed, never adjudicated.', '/console'],
   [GitCompare, 'data', 'Promise Diff', 'git diff for commercial promises: watch “Free cancellation” turn into “Non-refundable” across time.', '/console'],
   [Wrench, 'matrix', 'Self-Healing', 'When a redesign breaks extraction, an AI repair is proposed — then verified against contract invariants before deploy.', '/console'],
@@ -83,14 +83,15 @@ export default function LandingPage() {
             </div>
 
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-void-200">
-              WebReceipt walks a public purchase journey, folds every price, fee and term into one canonical{' '}
-              <span className="font-semibold text-void-100">Deal Contract</span>, and seals each claim with timestamped,
-              tamper-evident evidence. When a redesign breaks extraction, it proposes a repair — and verifies that repair
-              against the contract’s invariants before trusting it.
+              WebReceipt turns a public purchase journey into one canonical <span className="font-semibold text-void-100">Deal Contract</span>{' '}
+              with timestamped, tamper-evident evidence. The judge demo follows a controlled Nike Pegasus 41 product:
+              ₹12,999 product price + ₹500 shipping = ₹13,499 final total. After a redesign, the same scraper still gets
+              a valid ₹12,999 number from the same selector — but that number now has the wrong meaning. WebReceipt catches
+              the contradiction and makes the repair prove itself before trusting it.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink>
-              <SystemLink href="/receipts" tone="void" size="lg" scan>Explore receipts</SystemLink>
+              <SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch Nike demo <ChevronRight size={16} aria-hidden /></SystemLink>
+              <SystemLink href="/fixture/product?version=v1" tone="void" size="lg" scan>Open product fixture</SystemLink>
             </div>
             <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
               {[['11', 'integrity checks'], ['SHA-256', 'per evidence field'], ['1', 'canonical contract']].map(([v, k]) => (
@@ -106,7 +107,7 @@ export default function LandingPage() {
             <div className="terminal terminal-phosphor">
               <div className="terminal-bar">
                 <Terminal size={12} className="text-matrix-400" aria-hidden />
-                <span className="sys-label flex-1">webreceipt · pipeline</span>
+                <span className="sys-label flex-1">webreceipt · nike semantic drift</span>
                 <SystemStatus label="" value="Ready" className="!text-[9px]" />
               </div>
               <ol className="relative z-[1] space-y-3 px-5 py-5">
@@ -122,7 +123,7 @@ export default function LandingPage() {
               </ol>
               <div className="relative z-[1] flex items-center gap-2 border-t border-matrix-400/12 px-5 py-3">
                 <Radar size={12} className="text-matrix-400" aria-hidden />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Collector: simulated in this app</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-300">Judge demo: controlled Nike product fixture</span>
               </div>
             </div>
           </Reveal>
@@ -133,7 +134,7 @@ export default function LandingPage() {
 
       <div className="mx-auto max-w-7xl space-y-24 px-4 pt-20 pb-0 sm:px-6 lg:px-8">
         <section className="space-y-10">
-          <SectionHead kicker="The problem" tone="alarm" title="The web is mutable. Promises are not kept." desc="Prices drift, fees appear at checkout, terms change overnight — and the scrapers meant to watch them go dark the moment a page is redesigned." />
+          <SectionHead kicker="The problem" tone="alarm" title="The scraper can succeed and still be wrong." desc="Product pages mutate. A selector can keep returning a clean, plausible number after the business meaning behind that number has changed." />
           <div className="grid gap-6 md:grid-cols-3">
             {PROBLEMS.map(([title, body], i) => (
               <Reveal key={title} delay={i * 110}>
@@ -213,9 +214,9 @@ export default function LandingPage() {
         </section>
 
         <section className="space-y-6 pb-4 text-center">
-          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the whole loop</span> <span className="code-text">in two minutes</span></h2>
-          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe a journey, break the extraction, heal it with a verified repair, and diff the promise — all on live engine data.</p>
-          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch console <ChevronRight size={16} aria-hidden /></SystemLink></div>
+          <h2 className="text-[30px] font-bold uppercase leading-tight tracking-[-0.015em] sm:text-[40px]"><span className="phosphor-text">See the Nike drift loop</span> <span className="code-text">in two minutes</span></h2>
+          <p className="mx-auto max-w-lg text-[14.5px] leading-relaxed text-void-200">Observe the ₹13,499 product contract, redesign the page so the stale selector reports ₹12,999 as final total, verify the repair, rerun, and diff the promise.</p>
+          <div className="flex justify-center pt-2"><SystemLink href="/console" tone="matrix" size="lg" variant="solid" scan>Launch Nike demo <ChevronRight size={16} aria-hidden /></SystemLink></div>
         </section>
 
         <SystemFooter />
