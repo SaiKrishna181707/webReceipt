@@ -68,7 +68,7 @@ test('generic Scraper Studio parser prefers product price over an earlier shippi
   assert.equal(record.offer.advertisedPrice, 12999);
   assert.equal(record.checkout, undefined);
   assert.equal(record.commercial.finalTotal, undefined);
-  assert.equal(record.collectorVersion, 'webreceipt-custom-commerce-v3');
+  assert.equal(record.collectorVersion, 'webreceipt-custom-commerce-v4');
   const productPriceEvidence = record.evidence.find((item) => item.field === 'commercial.productPrice');
   assert.match(productPriceEvidence.capturedText, /12,999/);
   assert.doesNotMatch(productPriceEvidence.capturedText, /^₹500$/);
@@ -129,6 +129,34 @@ test('product page does not claim a final total unless final-total semantics are
   assert.ok(withTotal.evidence.some((item) => item.field === 'commercial.finalTotal'));
 });
 
+test('commerce observation keeps product, shipping, tax, other fees, discount and final total in distinct semantic roles', async () => {
+  const record = await runParser({
+    h1: 'Running shoe',
+    body: 'Product price ₹12,999. Shipping ₹500. Service fee ₹249. Tax ₹1,000. Discount ₹300. Order total ₹14,448.',
+  });
+
+  assert.deepEqual(record.commercial, {
+    productPrice: 12999,
+    currency: 'INR',
+    shippingFee: 500,
+    taxes: 1000,
+    otherFees: 249,
+    discount: 300,
+    finalTotal: 14448,
+  });
+  assert.equal(record.checkout, undefined);
+  for (const field of [
+    'commercial.productPrice',
+    'commercial.shippingFee',
+    'commercial.taxes',
+    'commercial.otherFees',
+    'commercial.discount',
+    'commercial.finalTotal',
+  ]) {
+    assert.ok(record.evidence.some((item) => item.field === field), `missing evidence for ${field}`);
+  }
+});
+
 test('service returns a valid partial product observation without sealing a Deal Contract or requesting repair', async () => {
   const raw = await runParser({
     h1: 'Nike Pegasus 41',
@@ -186,6 +214,7 @@ test('live product support is semantic rather than hardcoded to the regression a
 
   assert.doesNotMatch(executableParserSource, /12999|12,999|\b500\b/);
   assert.match(parserSource, /shipping\|delivery\|postage\|freight/);
+  assert.match(parserSource, /service\|handling\|platform\|convenience\|processing\|booking\|other\|mandatory/);
   assert.match(parserSource, /product\|item/);
   assert.match(parserSource, /recordType: 'product_observation'/);
   assert.match(interactionSource, /must not fabricate checkout fields/);
