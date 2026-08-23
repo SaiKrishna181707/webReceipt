@@ -12,11 +12,27 @@ WebReceipt does. It turns a public purchase journey into a timestamped **Deal Co
 ## Live UI
 
 <p align="center">
-  <img src="docs/screenshots/webreceipt-home-live.webp" alt="WebReceipt live home page showing the proof-of-promise pipeline" width="100%" />
+  <img src="docs/screenshots/Screenshot%202026-08-23%20095621.png"
+       alt="WebReceipt screenshot 1"
+       width="100%" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/webreceipt-footer-live.webp" alt="WebReceipt live footer showing route and runtime status panels" width="100%" />
+  <img src="docs/screenshots/Screenshot%202026-08-23%20095715.png"
+       alt="WebReceipt screenshot 2"
+       width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/Screenshot%202026-08-23%20095752.png"
+       alt="WebReceipt screenshot 3"
+       width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/Screenshot%202026-08-23%20095812.png"
+       alt="WebReceipt screenshot 4"
+       width="100%" />
 </p>
 
 The browser walkthrough is deterministic so a judge can reproduce it without spending a Bright Data run. The important part is that it no longer manufactures the bad number. The controlled checkout HTML changes from Fixture V1 to Fixture V2 while the scraper keeps the same `.total-price` selector. On V1 that selector means the final payable amount; on V2 it means `Subtotal`. The wrong-but-valid ₹8,499 therefore comes from changed markup and unchanged scraper logic, not from WebReceipt overwriting a field.
