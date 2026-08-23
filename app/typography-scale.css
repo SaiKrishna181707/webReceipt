@@ -1,22 +1,21 @@
 /* ============================================================================
-   WEBRECEIPT UI SCALE
+   WEBRECEIPT UI SCALE — DEMO DESKTOP PASS
 
-   A deliberately small readability pass across every route. The layout,
-   spacing system, and visual language stay unchanged; only the typography
-   gets a little more presence so cards and panels do not feel undersized on
-   a normal desktop viewport.
+   Keep the existing visual language intact, but give the landing page the
+   same readable desktop scale as the local demo. This is intentionally a
+   CSS-only presentation change: no product logic or interaction changes.
    ========================================================================== */
 
 body {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .sys-label {
-  font-size: 11px;
+  font-size: 12px;
 }
 
-/* Shared component sizing: these selectors catch the fixed Tailwind text
-   tokens used throughout the application without changing component logic. */
+/* Shared component sizing. The production build contains Tailwind's literal
+   text tokens, so these selectors provide one stable production override. */
 [class~="text-[10px]"] {
   font-size: 11px !important;
 }
@@ -26,31 +25,43 @@ body {
 }
 
 [class~="text-[12px]"] {
-  font-size: 13px !important;
-}
-
-[class~="text-[12.5px]"] {
   font-size: 13.5px !important;
 }
 
-[class~="text-[13px]"] {
+[class~="text-[12.5px]"] {
   font-size: 14px !important;
 }
 
-[class~="text-[14px]"] {
+[class~="text-[13px]"] {
+  font-size: 14.5px !important;
+}
+
+[class~="text-[13.5px]"] {
   font-size: 15px !important;
 }
 
-[class~="text-[14.5px]"] {
+[class~="text-[14px]"] {
   font-size: 15.5px !important;
 }
 
-[class~="text-[15px]"] {
+[class~="text-[14.5px]"] {
   font-size: 16px !important;
 }
 
+[class~="text-[15px]"] {
+  font-size: 16.5px !important;
+}
+
 [class~="text-[16px]"] {
-  font-size: 17px !important;
+  font-size: 18px !important;
+}
+
+[class~="text-[16.5px]"] {
+  font-size: 18px !important;
+}
+
+[class~="text-[17px]"] {
+  font-size: 18.5px !important;
 }
 
 [class~="text-[18px]"] {
@@ -69,9 +80,28 @@ body {
   font-size: 28px !important;
 }
 
-/* Buttons have their own size tokens in matrix-ui.tsx. Keep them slightly
-   larger without changing their physical height, so the controls remain
-   compact rather than becoming bulky. */
+/* The landing terminal is the hero card. Give it a little more breathing
+   room so the production demo matches the intended desktop presentation. */
+.terminal-bar {
+  min-height: 44px;
+  padding-inline: 20px;
+}
+
+.terminal > ol {
+  padding-top: 24px !important;
+  padding-bottom: 24px !important;
+}
+
+.terminal > ol > li {
+  gap: 12px;
+}
+
+.terminal > div:last-child {
+  min-height: 48px;
+  padding-block: 14px !important;
+}
+
+/* Buttons stay compact; only their text gets the readability bump. */
 .sys-btn {
   font-size: 13px !important;
 }
@@ -83,5 +113,9 @@ body {
 
   [class~="sm:text-[32px]"] {
     font-size: 34px !important;
+  }
+
+  [class~="sm:text-[40px]"] {
+    font-size: 42px !important;
   }
 }
