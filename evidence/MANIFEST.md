@@ -8,6 +8,48 @@
 - Creation time: `2026-08-21T21:45:18.391Z`
 - Public target: `https://web-receipt-tawny.vercel.app/fixture/hotel`
 
+## Provenance of each artifact
+
+See `evidence/README.md` for what the tiers mean and how to upgrade one.
+
+| Artifact | Tier | Note |
+| --- | --- | --- |
+| `01-create.json` | operator-supplied | collector creation record |
+| `02-run-v1.json` | operator-supplied | `source` field records CLI run output supplied by the participant |
+| `03-run-after-change.json` | operator-supplied | V2 resilience run |
+| `04-run-v3-before-heal.json` | operator-supplied | real `parse_error`, captured from the CLI |
+| `05-heal-proposal.json` | operator-normalized | raw CLI output retained on the operator machine |
+| `06-heal-approved.json` | operator-normalized | transcribed from terminal output |
+| `07-run-after-heal.json` | operator-normalized | raw CLI output retained on the operator machine |
+
+**Open task:** no artifact here is yet a byte-for-byte redacted copy of the CLI's
+own output file. The lifecycle is real, but its committed form passed through the
+operator's hands. Replacing these with redacted raw captures is the single
+highest-value remaining action on this directory, because WebReceipt's own thesis
+is that a record should not be trusted merely because it looks consistent.
+
+## Independently checkable details
+
+A reader does not have to take the above on trust. These hold without any
+Bright Data account:
+
+- The four `response_id` values embed millisecond timestamps that decode to a
+  monotonic sequence inside a single 21-minute window on 2026-08-21
+  (21:49:18.838 → 21:58:58.226 → 22:09:59.152 → 22:10:30.792), consistent with
+  the collector creation time of 21:45:18.391 recorded below.
+- `@brightdata/cli@0.3.2`, named in `06-heal-approved.json`, is a real published
+  version, and the package installs both `brightdata` and `bdata` as aliases for
+  the same entrypoint — which is why both names appear across these files.
+
+Neither check proves the run happened. Both are things a reconstruction would
+have had to get right by accident.
+
+## CLI naming
+
+`brightdata` and `bdata` are the same executable. Their appearance in different
+artifacts is not a discrepancy, and these files are deliberately **not**
+normalized to a single name — captured output is left as captured.
+
 ## V1 healthy run
 
 - Target deployment code commit: `c0d5cec87c8fddfef76eea8adb2f92748a07435a`.
