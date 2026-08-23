@@ -15,7 +15,7 @@ import { EventLog } from '@/components/product/event-log'
 import { EvidenceDrawer } from '@/components/product/evidence-drawer'
 import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
 
-const DEMO_URL = 'https://demo.webreceipt.dev/hotel/ocean-house'
+const DEMO_URL = 'https://web-receipt-tawny.vercel.app/fixture/product?version=v1'
 const WEBSITE_REDESIGN = 'wrong-valid-total'
 
 type Phase = 'idle' | 'observed' | 'broken' | 'healed'
@@ -60,7 +60,7 @@ export default function ConsolePage() {
       setResult(r)
       setDiff(null)
       setPhase('observed')
-      toast.success('Fixture V1 observed — Deal Contract compiled')
+      toast.success('Nike Fixture V1 observed — ₹13,499 Deal Contract compiled')
     })
 
   const breakIt = () =>
@@ -68,7 +68,7 @@ export default function ConsolePage() {
       const r = await api.observe({ targetUrl: url, mutation: WEBSITE_REDESIGN, autoHeal: false })
       setResult(r)
       setPhase('broken')
-      toast.error('Website V2 changed meaning — same scraper now reads the subtotal')
+      toast.error('Website V2 changed meaning — .total-price now returns the ₹12,999 product price')
     })
 
   const heal = () =>
@@ -103,7 +103,7 @@ export default function ConsolePage() {
 
   const finalState = busy === 'heal' ? 'healing' : phase === 'broken' ? 'failed' : 'ok'
   const totalEvidence = result?.contract.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
-  const fixtureVersion = phase === 'broken' || phase === 'healed' ? 'Fixture V2' : 'Fixture V1'
+  const fixtureVersion = phase === 'broken' || phase === 'healed' ? 'Nike product · Fixture V2' : 'Nike product · Fixture V1'
 
   /** What the console reports about itself, driven by real state — not decoration. */
   const statusValue =
@@ -122,16 +122,18 @@ export default function ConsolePage() {
           <SystemStatus label="State" value={statusValue} tone={statusTone} />
         </div>
         <h1 className="mt-3 font-mono text-[22px] font-semibold uppercase tracking-[0.04em] text-void-100 sm:text-[26px]">
-          <span className="sys-prompt">Proof of promise, end to end</span>
+          <span className="sys-prompt">Nike product semantic drift, end to end</span>
         </h1>
         <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-void-200">
-          First the controlled checkout is scraped as Fixture V1. Then the website itself changes to Fixture V2 while
-          the scraper stays on the same selector. That selector still returns a valid number — but it now means
-          <span className="font-semibold text-void-100"> subtotal</span>, not final total. WebReceipt catches the semantic
-          contradiction, verifies the repair preview, approves it, and trusts the result only after a fresh scrape passes again.
+          Fixture V1 is a controlled Nike Pegasus 41 product journey: product price ₹12,999 plus ₹500 shipping equals
+          a ₹13,499 final total. Then the website redesigns to Fixture V2 while the scraper keeps the same
+          <span className="font-mono text-void-100"> .total-price</span> selector. That selector still returns a valid
+          ₹12,999 number — but it now means <span className="font-semibold text-void-100">product price</span>, while the
+          real final total moved to <span className="font-mono text-void-100">[data-testid=&quot;order-total&quot;]</span>. WebReceipt
+          catches the semantic contradiction, verifies the repair preview, approves it, and trusts the result only after a fresh scrape passes again.
         </p>
         <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-void-400">
-          Deterministic controlled-fixture replay · wrong values come from changed markup, never field injection
+          Deterministic controlled-product replay · wrong values come from changed markup, never field injection
         </p>
       </header>
 
@@ -172,8 +174,8 @@ export default function ConsolePage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ActionButton
           n={1}
-          label="Observe website V1"
-          hint="Same scraper · correct final total"
+          label="Observe Nike V1"
+          hint="₹12,999 + ₹500 = ₹13,499"
           icon={Play}
           tone="phosphor"
           onClick={observe}
@@ -183,8 +185,8 @@ export default function ConsolePage() {
         />
         <ActionButton
           n={2}
-          label="Redesign the website"
-          hint="V2 changes meaning; scraper stays V1"
+          label="Redesign the product page"
+          hint=".total-price now means product price"
           icon={Zap}
           tone="alarm"
           onClick={breakIt}
@@ -206,7 +208,7 @@ export default function ConsolePage() {
         <ActionButton
           n={4}
           label="Promise Diff"
-          hint="Diff the promise over time"
+          hint="Diff the product promise over time"
           icon={GitCompare}
           tone="data"
           onClick={runDiff}
@@ -225,7 +227,7 @@ export default function ConsolePage() {
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <TraceCell label="Website" value={fixtureVersion} />
+            <TraceCell label="Product fixture" value={fixtureVersion} />
             <TraceCell label="Collector ID" value={result.contract.collector.id} />
             <TraceCell label="Final-total selector" value={totalEvidence?.domPath ?? '—'} />
             <TraceCell label="Captured text" value={totalEvidence?.capturedText ?? '—'} alarm={phase === 'broken'} />
@@ -352,12 +354,12 @@ function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
       </div>
       <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Awaiting command</h3>
       <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
-        Run <span className="font-mono text-matrix-300">Observe website V1</span> to compile the first Deal Contract with
-        tamper-evident evidence for every claim.
+        Run <span className="font-mono text-matrix-300">Observe Nike V1</span> to compile the ₹13,499 Deal Contract for
+        the controlled Pegasus 41 journey with tamper-evident evidence for every claim.
       </p>
       <SystemButton onClick={onStart} disabled={busy} tone="matrix" size="lg" variant="solid">
         {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />} Observe
-        website V1
+        Nike V1
       </SystemButton>
     </MatrixPanel>
   )
