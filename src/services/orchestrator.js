@@ -20,6 +20,102 @@ function compileFromRaw(raw, { targetUrl, collector } = {}) {
   });
 }
 
+function isHttpUrl(value) {
+  try { return ['http:', 'https:'].includes(new URL(value).protocol); }
+  catch { return false; }
+}
+
+function normalizeProductObservation(raw, { targetUrl, collector } = {}) {
+  if (!raw || raw.recordType !== 'product_observation') return null;
+  if (raw.checkout != null) throw new Error('Product-page observation must not contain checkout fields unless checkout was actually observed.');
+  const subject = String(raw.subject || raw.product?.name || '').trim();
+  if (!subject) throw new Error('Product observation is missing product identity.');
+  const productPrice = Number(raw.commercial?.productPrice);
+  if (!Number.isFinite(productPrice) || productPrice < 0) throw new Error('Product observation is missing a valid semantic product price.');
+  const currency = String(raw.commercial?.currency || raw.currency || '').trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(currency)) throw new Error('Product observation is missing a valid ISO currency.');
+  const observedAt = raw.observedAt ?? new Date().toISOString();
+  if (Number.isNaN(Date.parse(observedAt))) throw new Error('Product observation has an invalid timestamp.');
+  const evidence = Array.isArray(raw.evidence) ? raw.evidence : [];
+  const priceEvidence = evidence.filter((item) => item?.field === 'commercial.productPrice');
+  if (priceEvidence.length === 0) throw new Error('Product observation is missing product-price evidence.');
+  const invalidEvidence = evidence.filter((item) => !item?.capturedText || !isHttpUrl(item?.sourceUrl));
+  if (invalidEvidence.length) throw new Error('Product observation contains invalid evidence provenance.');
+
+  const commercial = {
+    ...raw.commercial,
+    productPrice,
+    currency,
+  };
+  for (const field of ['shippingFee', 'taxes', 'otherFees', 'discount', 'finalTotal']) {
+    if (commercial[field] == null) continue;
+    const amount = Number(commercial[field]);
+    if (!Number.isFinite(amount) || amount < 0) throw new Error(`Product observation contains an invalid ${field}.`);
+    commercial[field] = amount;
+  }
+
+  return {
+    ...raw,
+    recordType: 'product_observation',
+    subject,
+    targetUrl: targetUrl || raw.targetUrl,
+    observedAt,
+    currency,
+    collectorId: raw.collectorId ?? collector?.collectorId ?? 'unknown_collector',
+    commercial,
+    product: {
+      ...(raw.product || {}),
+      name: String(raw.product?.name || subject),
+    },
+    evidence,
+  };
+}
+
+function productObservationIntegrity(observation) {
+  const evidencedFields = new Set(observation.evidence.map((item) => item.field));
+  const checks = [
+    {
+      id: 'product_price_semantics',
+      label: 'Product price has an explicit semantic role',
+      pass: Number.isFinite(observation.commercial.productPrice),
+      details: { productPrice: observation.commercial.productPrice, currency: observation.commercial.currency },
+      severity: 'critical',
+    },
+    {
+      id: 'product_price_evidence',
+      label: 'Product price has provenance',
+      pass: evidencedFields.has('commercial.productPrice'),
+      details: { field: 'commercial.productPrice' },
+      severity: 'critical',
+    },
+    {
+      id: 'no_fabricated_checkout',
+      label: 'Checkout totals are not invented from a product page',
+      pass: observation.checkout == null,
+      details: { checkoutObserved: false },
+      severity: 'critical',
+    },
+    {
+      id: 'source_provenance',
+      label: 'Evidence sources use public HTTP(S) provenance',
+      pass: observation.evidence.every((item) => isHttpUrl(item.sourceUrl)),
+      details: { evidenceCount: observation.evidence.length },
+      severity: 'high',
+    },
+  ];
+  const failures = checks.filter((item) => !item.pass);
+  return {
+    status: failures.some((item) => item.severity === 'critical') ? 'invalid' : 'partial',
+    stage: 'product_observation',
+    sealable: false,
+    reason: 'A product page proves the offer price, but a final Deal Contract requires an observed checkout/final payable total.',
+    checks,
+    failures,
+    passed: checks.length - failures.length,
+    total: checks.length,
+  };
+}
+
 function assertSimulatorTarget(targetUrl) {
   const url = new URL(targetUrl);
   const controlledHost = url.hostname === 'demo.webreceipt.dev';
@@ -192,6 +288,38 @@ export class WebReceiptService {
     let repair = null;
     try {
       raw = await this.collector.collect({ url: normalizedTarget, mutation });
+
+      // Public product pages can provide a trustworthy offer price without a
+      // trustworthy final checkout total. Return that structured observation as
+      // partial rather than manufacturing zeros/totals or asking self-heal to
+      // "repair" a checkout that was never observed.
+      if (this.collector.kind === 'brightdata' && raw?.recordType === 'product_observation') {
+        const observation = normalizeProductObservation(raw, { targetUrl: normalizedTarget, collector: this.collector });
+        const productIntegrity = productObservationIntegrity(observation);
+        if (productIntegrity.status === 'invalid') {
+          throw new Error(`Product observation failed integrity: ${productIntegrity.failures.map((item) => item.id).join(', ')}`);
+        }
+        await this.store.event('observe', 'Product offer observed; receipt not sealed until checkout is evidenced', {
+          targetUrl: normalizedTarget,
+          productPrice: observation.commercial.productPrice,
+          currency: observation.commercial.currency,
+          collectorId: observation.collectorId,
+        });
+        return {
+          recordType: 'product_observation',
+          observation,
+          product: observation.product,
+          commercial: observation.commercial,
+          contract: null,
+          integrity: productIntegrity,
+          anomalies: [],
+          sealable: false,
+          healed: false,
+          repair: null,
+          heal: null,
+        };
+      }
+
       contract = compileFromRaw(raw, { targetUrl: normalizedTarget, collector: this.collector });
       integrity = evaluateIntegrity(contract);
     } catch (error) {

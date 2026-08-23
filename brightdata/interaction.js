@@ -107,6 +107,8 @@ if (controlledFixture) {
 
   const page = parse();
   collect(page, (record) => {
+    if (record.recordType !== 'deal_contract')
+      throw new Error('Controlled fixture must produce a complete Deal Contract observation');
     if (!record.subject || !record.targetUrl)
       throw new Error('Missing public offer identity');
     if (!record.offer || record.offer.advertisedPrice == null)
@@ -126,7 +128,8 @@ if (controlledFixture) {
 // Generic public product page. Do not click arbitrary third-party controls: that
 // could change variants, location, cart state, or enter a checkout flow. Capture
 // the stable rendered page and let parser.js rank every plausible money value by
-// semantic role instead of selecting the first currency value.
+// semantic role instead of selecting the first currency value. This path reports
+// an offer-only product observation unless a separate checkout is actually seen.
 tag_screenshot('offer_screenshot', {
   filename: 'webreceipt-product-page',
   full_page: true,
@@ -134,12 +137,16 @@ tag_screenshot('offer_screenshot', {
 
 const productPage = parse();
 collect(productPage, (record) => {
+  if (record.recordType !== 'product_observation')
+    throw new Error('Generic public product page must remain an offer-only product observation');
   if (!record.subject || !record.targetUrl)
     throw new Error('Missing public product identity');
-  if (!record.offer || record.offer.advertisedPrice == null)
+  if (!record.commercial || record.commercial.productPrice == null)
     throw new Error('Missing semantically credible product price');
-  if (!record.currency)
-    throw new Error('Missing product price currency');
-  if (!Array.isArray(record.evidence) || record.evidence.length < 3)
+  if (!record.commercial.currency || record.commercial.currency !== record.currency)
+    throw new Error('Missing or inconsistent product price currency');
+  if (record.checkout)
+    throw new Error('Product-page observation must not fabricate checkout fields');
+  if (!Array.isArray(record.evidence) || record.evidence.length < 2)
     throw new Error('Missing product-price provenance records');
 });
