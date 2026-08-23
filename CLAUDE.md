@@ -26,8 +26,17 @@ The Next.js UI is available at `http://localhost:3000`.
 ```bash
 npm run verify
 npm test
+npm run typecheck
+npm run lint
 npm run verify:receipt -- examples/webreceipt.json
 ```
+
+`npm run verify` is deliberately pure-Node — no `next build`, no browser, no
+network — so it runs before dependencies are relevant. `typecheck` and `lint`
+need `npm ci` first. CI runs all four.
+
+There is no `typescript.ignoreBuildErrors` escape hatch in `next.config.mjs`: a
+type error fails `npm run build`. Do not add one back.
 
 The semantic-failure sample is expected to fail standalone verification:
 
@@ -101,5 +110,6 @@ evidence/MANIFEST.md
 - If the live product is going to demonstrate `/api/brightdata/*`, configure the Bright Data token/collector in the actual Vercel production project and verify `/api/brightdata/health` reports configured.
 - Record the final demo video and submission links.
 - Keep all sponsor claims tied to the committed evidence manifest.
+- **Open evidence task.** No file under `evidence/` is yet a byte-for-byte redacted copy of the CLI's own output. The lifecycle is real, but artifacts `05`–`07` passed through the operator's hands as transcriptions. `evidence/MANIFEST.md` carries the per-artifact provenance tier and `evidence/README.md` documents the upgrade procedure. Only the operator can close this — the raw captures are on their machine. Do not synthesize a plausible-looking raw capture to close it; that is the exact failure mode this project exists to detect.
 
 See `evidence/README.md` for the capture format.
