@@ -2,9 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Play, Zap, Wrench, GitCompare, RotateCcw, Loader2, Link2, Check, Terminal, Globe2 } from 'lucide-react'
+import {
+  Play,
+  Zap,
+  Wrench,
+  GitCompare,
+  RotateCcw,
+  Loader2,
+  Link2,
+  Check,
+  Terminal,
+  Globe2,
+  ScanSearch,
+  FileText,
+  ShieldCheck,
+  Archive,
+  FlaskConical,
+} from 'lucide-react'
 import { api, money } from '@/lib/api'
-import type { ObservationResult, DiffResult, Evidence, WebReceiptEvent, JourneyStep } from '@/lib/types'
+import type { ObservationResult, ObserveResult, DiffResult, Evidence, WebReceiptEvent, JourneyStep } from '@/lib/types'
 import { JourneyReplay } from '@/components/product/journey-replay'
 import { DealContractCard } from '@/components/product/deal-contract-card'
 import { IntegrityPanel } from '@/components/product/integrity-panel'
@@ -13,18 +29,37 @@ import { HealConsole } from '@/components/product/heal-console'
 import { PromiseDiff } from '@/components/product/promise-diff'
 import { EventLog } from '@/components/product/event-log'
 import { EvidenceDrawer } from '@/components/product/evidence-drawer'
-import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
+import {
+  SystemButton,
+  MatrixPanel,
+  Kicker,
+  SystemStatus,
+  SystemRail,
+  matrixTones,
+  type MatrixTone,
+} from '@/components/matrix/matrix-ui'
 
 const WEBSITE_REDESIGN = 'wrong-valid-total'
-const CONTROLLED_COLLECTOR_ID = 'c_webreceipt_demo'
 
-type Phase = 'idle' | 'observed' | 'broken' | 'healed'
+type LabPhase = 'idle' | 'observed' | 'broken' | 'healed'
+type PipelineState = 'idle' | 'busy' | 'done' | 'partial'
+
+function controlledLabTarget(): string {
+  if (typeof window === 'undefined') throw new Error('The controlled lab target is available in the browser.')
+  return new URL('/fixture/product', window.location.origin).toString()
+}
+
+function requireSealedResult(result: ObservationResult): ObserveResult {
+  if (!result.contract) throw new Error('The controlled fixture did not return a sealed Deal Contract.')
+  return result
+}
 
 export default function ConsolePage() {
   const [url, setUrl] = useState('')
-  const [phase, setPhase] = useState<Phase>('idle')
-  const [result, setResult] = useState<ObservationResult | null>(null)
-  const [diff, setDiff] = useState<DiffResult | null>(null)
+  const [liveResult, setLiveResult] = useState<ObservationResult | null>(null)
+  const [labPhase, setLabPhase] = useState<LabPhase>('idle')
+  const [labResult, setLabResult] = useState<ObserveResult | null>(null)
+  const [labDiff, setLabDiff] = useState<DiffResult | null>(null)
   const [events, setEvents] = useState<WebReceiptEvent[]>([])
   const [evidence, setEvidence] = useState<Evidence | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -34,7 +69,7 @@ export default function ConsolePage() {
       const s = await api.state()
       setEvents(s.events)
     } catch {
-      /* ignore */
+      /* local event history is supplemental */
     }
   }, [])
 
@@ -54,229 +89,395 @@ export default function ConsolePage() {
     }
   }
 
-  const observe = () => {
+  const observeLive = () => {
     if (!url.trim()) {
       toast.error('Enter a public URL first')
       return
     }
-    return run('observe', async () => {
+    return run('live-observe', async () => {
       const r = await api.observe({ targetUrl: url, mutation: 'healthy', autoHeal: false })
-      setResult(r)
-      setDiff(null)
-      setPhase('observed')
-      if (r.contract) toast.success('Commerce journey observed — Deal Contract compiled')
-      else toast.success('Public product offer observed — checkout was not fabricated')
+      setLiveResult(r)
+      if (r.contract) toast.success('Public journey observed — Deal Contract compiled and verified')
+      else toast.success('Public product offer observed — unavailable checkout fields were not fabricated')
     })
   }
 
-  const breakIt = () =>
-    run('break', async () => {
-      const r = await api.observe({ targetUrl: url, mutation: WEBSITE_REDESIGN, autoHeal: false })
-      setResult(r)
-      setPhase('broken')
-      toast.error('Controlled replay changed semantic meaning while the selector still returned a valid value')
+  const observeLab = () =>
+    run('lab-observe', async () => {
+      const r = requireSealedResult(
+        await api.observe({ targetUrl: controlledLabTarget(), mutation: 'healthy', autoHeal: false }),
+      )
+      setLabResult(r)
+      setLabDiff(null)
+      setLabPhase('observed')
+      toast.success('Controlled fixture V1 observed — contract is valid')
     })
 
-  const heal = () =>
-    run('heal', async () => {
-      const r = await api.heal({ targetUrl: url, mutation: WEBSITE_REDESIGN })
-      setResult(r)
-      setPhase('healed')
-      toast.success('Repair verified, approved, and confirmed by a fresh scrape')
+  const breakLab = () =>
+    run('lab-break', async () => {
+      const r = requireSealedResult(
+        await api.observe({ targetUrl: controlledLabTarget(), mutation: WEBSITE_REDESIGN, autoHeal: false }),
+      )
+      setLabResult(r)
+      setLabPhase('broken')
+      toast.error('Controlled fixture changed meaning — the same selector now returns the wrong semantic value')
     })
 
-  const runDiff = () =>
-    run('diff', async () => {
-      const d = await api.diff({ simulate: true, targetUrl: url })
-      setDiff(d)
-      toast.success(`${d.changes.length} promise changes detected`)
+  const healLab = () =>
+    run('lab-heal', async () => {
+      const r = await api.heal({ targetUrl: controlledLabTarget(), mutation: WEBSITE_REDESIGN })
+      setLabResult(r)
+      setLabPhase('healed')
+      toast.success('Repair preview verified, approved, and confirmed by a fresh scrape')
+    })
+
+  const diffLab = () =>
+    run('lab-diff', async () => {
+      const d = await api.diff({ simulate: false, targetUrl: controlledLabTarget() })
+      setLabDiff(d)
+      toast.success(`${d.changes.length} stored contract changes detected`)
     })
 
   const reset = () =>
     run('reset', async () => {
       await api.reset()
-      setResult(null)
-      setDiff(null)
-      setPhase('idle')
+      setLiveResult(null)
+      setLabResult(null)
+      setLabDiff(null)
+      setLabPhase('idle')
       setUrl('')
-      toast.success('Engine state cleared')
+      toast.success('Console state cleared')
     })
 
-  const contract = result?.contract ?? null
-  const productResult = result?.contract === null ? result : null
+  const liveContract = liveResult?.contract ?? null
+  const liveProduct = liveResult?.contract === null ? liveResult : null
+  const livePriceEvidence = liveProduct?.observation.evidence.find((item) => item.field === 'commercial.productPrice') ?? null
+  const liveTotalEvidence = liveContract?.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
+  const liveEvidence = liveTotalEvidence ?? livePriceEvidence
+  const liveObserved = Boolean(liveResult)
+  const livePartial = Boolean(liveProduct)
 
-  const openEvidenceForStep = (step: JourneyStep) => {
-    if (!contract || !step.evidenceId) return
-    const e = contract.evidence.find((x) => x.id === step.evidenceId)
-    if (e) setEvidence(e)
+  const liveStatus = busy === 'live-observe'
+    ? 'Scraping public URL'
+    : livePartial
+      ? 'Offer observed'
+      : liveContract
+        ? 'Contract verified'
+        : 'Awaiting URL'
+  const liveTone: MatrixTone = busy === 'live-observe' ? 'warn' : livePartial ? 'data' : 'matrix'
+
+  const livePipeline = [
+    {
+      n: 1,
+      title: 'Scrape',
+      body: busy === 'live-observe' ? 'Fetching the public page now' : liveObserved ? 'Public response captured' : 'Awaiting a public URL',
+      icon: Globe2,
+      state: (busy === 'live-observe' ? 'busy' : liveObserved ? 'done' : 'idle') as PipelineState,
+    },
+    {
+      n: 2,
+      title: 'Extract',
+      body: liveObserved ? 'Commercial facts extracted with provenance' : 'Prices, fees and terms when available',
+      icon: ScanSearch,
+      state: (liveObserved ? 'done' : 'idle') as PipelineState,
+    },
+    {
+      n: 3,
+      title: 'Structure',
+      body: livePartial ? 'Offer observation structured; checkout remains unavailable' : liveContract ? 'Canonical Deal Contract compiled' : 'No missing checkout values are invented',
+      icon: FileText,
+      state: (livePartial ? 'partial' : liveContract ? 'done' : 'idle') as PipelineState,
+    },
+    {
+      n: 4,
+      title: 'Verify',
+      body: liveResult ? `${liveResult.integrity.passed}/${liveResult.integrity.total} integrity checks passed` : 'Semantic and provenance checks',
+      icon: ShieldCheck,
+      state: (livePartial ? 'partial' : liveResult ? 'done' : 'idle') as PipelineState,
+    },
+    {
+      n: 5,
+      title: 'Record',
+      body: livePartial ? 'Observation event retained; no fake receipt created' : liveContract ? 'Sealed contract retained in browser history' : 'Store only what was actually observed',
+      icon: Archive,
+      state: (livePartial ? 'partial' : liveContract ? 'done' : 'idle') as PipelineState,
+    },
+  ]
+
+  const openLiveEvidenceForStep = (step: JourneyStep) => {
+    if (!liveContract || !step.evidenceId) return
+    const item = liveContract.evidence.find((entry) => entry.id === step.evidenceId)
+    if (item) setEvidence(item)
   }
 
-  const finalState = busy === 'heal' ? 'healing' : phase === 'broken' ? 'failed' : 'ok'
-  const totalEvidence = contract?.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
-  const productPriceEvidence = productResult?.observation.evidence.find((item) => item.field === 'commercial.productPrice') ?? null
-  const traceEvidence = totalEvidence ?? productPriceEvidence
-  const isControlledDemo = contract?.collector.id === CONTROLLED_COLLECTOR_ID
-  const semanticControlsEnabled = isControlledDemo === true
-  const isPartial = Boolean(productResult)
+  const openLabEvidenceForStep = (step: JourneyStep) => {
+    if (!labResult || !step.evidenceId) return
+    const item = labResult.contract.evidence.find((entry) => entry.id === step.evidenceId)
+    if (item) setEvidence(item)
+  }
 
-  const statusValue = busy
-    ? 'Executing'
-    : phase === 'broken'
-      ? 'Integrity failure'
-      : isPartial
-        ? 'Offer observed'
-        : phase === 'idle'
-          ? 'Awaiting URL'
-          : 'Contract sealed'
-  const statusTone: MatrixTone = phase === 'broken' && !busy ? 'alarm' : busy ? 'warn' : isPartial ? 'data' : 'matrix'
-
-  const observedSource = contract?.targetUrl ?? productResult?.observation.targetUrl ?? url
-  const collectorId = contract?.collector.id ?? productResult?.observation.collectorId ?? '—'
-  const observedField = totalEvidence ? 'checkout.finalTotal' : productPriceEvidence ? 'commercial.productPrice' : '—'
+  const labFinalState = busy === 'lab-heal' ? 'healing' : labPhase === 'broken' ? 'failed' : 'ok'
+  const labTotalEvidence = labResult?.contract.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
+  const labStatus = busy?.startsWith('lab-')
+    ? 'Executing lab step'
+    : labPhase === 'broken'
+      ? 'Semantic drift detected'
+      : labPhase === 'healed'
+        ? 'Recovered and verified'
+        : labPhase === 'observed'
+          ? 'Fixture V1 valid'
+          : 'Ready'
+  const labTone: MatrixTone = labPhase === 'broken' && !busy ? 'alarm' : busy?.startsWith('lab-') ? 'warn' : 'matrix'
 
   return (
-    <div className="mx-auto max-w-7xl space-y-7 px-4 py-10 sm:px-6 lg:px-8">
-      <header>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <Kicker tone="matrix">Console</Kicker>
-          <SystemRail count={5} className="opacity-70" />
-          <SystemStatus label="State" value={statusValue} tone={statusTone} />
+    <div className="mx-auto max-w-7xl space-y-10 px-4 py-9 sm:px-6 lg:px-8">
+      <header className="flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Kicker tone="matrix">Console</Kicker>
+            <SystemRail count={6} className="opacity-70" />
+            <SystemStatus label="Live" value={liveStatus} tone={liveTone} />
+          </div>
+          <h1 className="mt-3 font-mono text-[24px] font-semibold uppercase tracking-[0.04em] text-void-100 sm:text-[30px]">
+            <span className="sys-prompt">Web data integrity console</span>
+          </h1>
+          <p className="mt-3 max-w-4xl text-[14.5px] leading-relaxed text-void-200">
+            Paste a public commerce URL to observe real web data. WebReceipt extracts only what the page proves,
+            structures the result, verifies its meaning, and records it without inventing unavailable checkout fields.
+            The controlled semantic-drift demonstration is a separate lab below; it never mutates a third-party website.
+          </p>
         </div>
-        <h1 className="mt-3 font-mono text-[22px] font-semibold uppercase tracking-[0.04em] text-void-100 sm:text-[26px]">
-          <span className="sys-prompt">Observe any public commerce URL</span>
-        </h1>
-        <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-void-200">
-          Paste a public product or commerce URL. WebReceipt extracts the commercial meaning it can actually prove,
-          attaches provenance, and refuses to invent checkout totals that were never observed. A complete checkout can
-          become a sealed Deal Contract; an offer-only product page stays clearly marked as a partial observation.
-        </p>
-        <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-void-400">
-          Real URLs are read-only observations · controlled drift and repair controls activate only on the WebReceipt replay target
-        </p>
+        <SystemButton onClick={reset} disabled={!!busy} tone="void" size="md">
+          {busy === 'reset' ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <RotateCcw size={14} aria-hidden />} Reset all
+        </SystemButton>
       </header>
 
-      <div className="terminal">
-        <div className="terminal-bar">
-          <Terminal size={12} className="text-matrix-400" aria-hidden />
-          <span className="sys-label flex-1">public target</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 p-4">
-          <label className="flex min-w-[240px] flex-1 items-center gap-2 rounded-[2px] border border-data-400/25 bg-black/60 px-3 py-2.5 focus-within:border-data-400/70">
-            <Link2 size={15} className="shrink-0 text-data-400" aria-hidden />
-            <span className="sr-only">Target URL</span>
-            <input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              spellCheck={false}
-              className="flex-1 bg-transparent font-mono text-[13px] text-void-100 outline-none placeholder:text-void-400"
-              placeholder="https://store.example.com/product/..."
-            />
-          </label>
-          <SystemButton onClick={reset} disabled={!!busy} tone="void" size="md">
-            {busy === 'reset' ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <RotateCcw size={14} aria-hidden />} Reset
-          </SystemButton>
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <ActionButton
-          n={1}
-          label="Observe URL"
-          hint="Extract only what the page proves"
-          icon={Globe2}
-          tone="phosphor"
-          onClick={observe}
-          busy={busy === 'observe'}
-          done={phase !== 'idle'}
-          disabled={!!busy || !url.trim()}
-        />
-        <ActionButton
-          n={2}
-          label="Replay semantic drift"
-          hint="Controlled WebReceipt target only"
-          icon={Zap}
-          tone="alarm"
-          onClick={breakIt}
-          busy={busy === 'break'}
-          done={phase === 'broken' || phase === 'healed'}
-          disabled={!!busy || phase === 'idle' || !semanticControlsEnabled}
-        />
-        <ActionButton
-          n={3}
-          label="Verify repair"
-          hint="Preview → checks → approve → rerun"
-          icon={Wrench}
-          tone="matrix"
-          onClick={heal}
-          busy={busy === 'heal'}
-          done={phase === 'healed'}
-          disabled={!!busy || phase !== 'broken' || !semanticControlsEnabled}
-        />
-        <ActionButton
-          n={4}
-          label="Promise Diff"
-          hint="Compare sealed contract history"
-          icon={GitCompare}
-          tone="data"
-          onClick={runDiff}
-          busy={busy === 'diff'}
-          done={!!diff}
-          disabled={!!busy || phase === 'idle' || !semanticControlsEnabled}
-        />
-      </div>
-
-      {result && (
-        <MatrixPanel tone={phase === 'broken' ? 'alarm' : isPartial ? 'data' : 'data'} className="p-4">
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <Kicker tone={phase === 'broken' ? 'alarm' : 'data'}>Source trace</Kicker>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-400">
-              Read directly from the observation provenance
-            </span>
+      <section className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <Kicker tone="data">Live observation</Kicker>
+            <h2 className="mt-2 font-mono text-[18px] font-semibold uppercase tracking-[0.05em] text-void-100">Public URL → verified observation</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <TraceCell label="Observed source" value={observedSource} />
-            <TraceCell label="Collector" value={collectorId} />
-            <TraceCell label="Observed field" value={observedField} />
-            <TraceCell label="Captured text" value={traceEvidence?.capturedText ?? '—'} alarm={phase === 'broken'} />
-          </div>
-        </MatrixPanel>
-      )}
-
-      {!result ? (
-        <EmptyState onStart={observe} busy={!!busy} canStart={Boolean(url.trim())} />
-      ) : contract ? (
-        <div className="grid items-start gap-6 xl:grid-cols-3">
-          <div className="space-y-6 xl:col-span-2">
-            <JourneyReplay
-              journey={contract.journey}
-              currency={contract.checkout.finalTotal.currency}
-              finalState={finalState}
-              onStepClick={openEvidenceForStep}
-            />
-            <DealContractCard contract={contract} onEvidence={setEvidence} />
-            {result.anomalies.length > 0 && <AnomaliesPanel anomalies={result.anomalies} />}
-            {result.repair && <HealConsole repair={result.repair} healed={result.healed} />}
-            {diff && <PromiseDiff diff={diff} />}
-          </div>
-
-          <aside className="space-y-6 xl:col-span-1 xl:sticky xl:top-20">
-            <IntegrityPanel integrity={result.integrity} />
-            <EventLog events={events} />
-          </aside>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-400">Real public web · read only</span>
         </div>
-      ) : productResult ? (
-        <div className="grid items-start gap-6 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <ProductObservationCard result={productResult} />
+
+        <div className="terminal">
+          <div className="terminal-bar">
+            <Terminal size={12} className="text-data-400" aria-hidden />
+            <span className="sys-label flex-1">public target</span>
           </div>
-          <aside className="space-y-6 xl:col-span-1 xl:sticky xl:top-20">
-            <IntegrityPanel integrity={productResult.integrity} />
-            <EventLog events={events} />
-          </aside>
+          <div className="flex flex-wrap items-center gap-3 p-4">
+            <label className="flex min-w-[280px] flex-1 items-center gap-2 rounded-[2px] border border-data-400/25 bg-black/60 px-3 py-2.5 focus-within:border-data-400/70">
+              <Link2 size={15} className="shrink-0 text-data-400" aria-hidden />
+              <span className="sr-only">Public target URL</span>
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                spellCheck={false}
+                className="flex-1 bg-transparent font-mono text-[13px] text-void-100 outline-none placeholder:text-void-400"
+                placeholder="Enter a public URL..."
+              />
+            </label>
+            <SystemButton onClick={observeLive} disabled={!!busy || !url.trim()} tone="data" size="md" variant="solid">
+              {busy === 'live-observe' ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Globe2 size={15} aria-hidden />} Observe URL
+            </SystemButton>
+          </div>
         </div>
-      ) : null}
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {livePipeline.map((stage) => <PipelineStage key={stage.n} {...stage} />)}
+        </div>
+
+        {liveResult && (
+          <MatrixPanel tone="data" className="p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <Kicker tone="data">Source trace</Kicker>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-400">Directly from observation provenance</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <TraceCell label="Observed source" value={liveContract?.targetUrl ?? liveProduct?.observation.targetUrl ?? url} />
+              <TraceCell
+                label="Acquisition path"
+                value={liveContract?.collector.version ?? liveProduct?.observation.collectorVersion ?? liveProduct?.observation.collectorId ?? 'public web'}
+              />
+              <TraceCell label="Observed field" value={liveTotalEvidence ? 'checkout.finalTotal' : livePriceEvidence ? 'commercial.productPrice' : '—'} />
+              <TraceCell label="Captured text" value={liveEvidence?.capturedText ?? '—'} />
+            </div>
+          </MatrixPanel>
+        )}
+
+        {liveContract ? (
+          <div className="grid items-start gap-6 xl:grid-cols-3">
+            <div className="space-y-6 xl:col-span-2">
+              <JourneyReplay
+                journey={liveContract.journey}
+                currency={liveContract.checkout.finalTotal.currency}
+                finalState="ok"
+                onStepClick={openLiveEvidenceForStep}
+              />
+              <DealContractCard contract={liveContract} onEvidence={setEvidence} />
+              {liveResult.anomalies.length > 0 && <AnomaliesPanel anomalies={liveResult.anomalies} />}
+            </div>
+            <aside className="space-y-6 xl:sticky xl:top-20">
+              <IntegrityPanel integrity={liveResult.integrity} />
+              <EventLog events={events} />
+            </aside>
+          </div>
+        ) : liveProduct ? (
+          <div className="grid items-start gap-6 xl:grid-cols-3">
+            <div className="xl:col-span-2"><ProductObservationCard result={liveProduct} /></div>
+            <aside className="space-y-6 xl:sticky xl:top-20">
+              <IntegrityPanel integrity={liveProduct.integrity} />
+              <EventLog events={events} />
+            </aside>
+          </div>
+        ) : (
+          <MatrixPanel tone="data" className="p-8 text-center">
+            <Globe2 size={22} className="mx-auto text-data-400" aria-hidden />
+            <h3 className="mt-3 font-mono text-[14px] uppercase tracking-[0.12em] text-void-100">Waiting for a public URL</h3>
+            <p className="mx-auto mt-2 max-w-xl text-[13px] leading-relaxed text-void-300">
+              A product page may yield only an offer price. A checkout page may yield a complete Deal Contract. Missing fields remain explicitly unavailable.
+            </p>
+          </MatrixPanel>
+        )}
+      </section>
+
+      <section className="space-y-5 border-t border-matrix-400/12 pt-9">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Kicker tone="alarm">Semantic drift lab</Kicker>
+              <SystemStatus label="Lab" value={labStatus} tone={labTone} />
+            </div>
+            <h2 className="mt-2 font-mono text-[18px] font-semibold uppercase tracking-[0.05em] text-void-100">Controlled website · same scraper · changed meaning</h2>
+            <p className="mt-2 max-w-4xl text-[13.5px] leading-relaxed text-void-200">
+              This is WebReceipt&apos;s owned commercial fixture on <span className="font-mono text-void-100">/fixture/product</span>.
+              Step 2 deliberately changes that fixture&apos;s DOM semantics. It does not claim that a real retailer changed its website.
+            </p>
+          </div>
+          <FlaskConical size={22} className="text-alarm-400" aria-hidden />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ActionButton
+            n={1}
+            label="Observe fixture V1"
+            hint="Baseline contract · valid semantics"
+            icon={Play}
+            tone="phosphor"
+            onClick={observeLab}
+            busy={busy === 'lab-observe'}
+            done={labPhase !== 'idle'}
+            disabled={!!busy}
+          />
+          <ActionButton
+            n={2}
+            label="Redesign fixture"
+            hint="Same scraper · selector meaning changes"
+            icon={Zap}
+            tone="alarm"
+            onClick={breakLab}
+            busy={busy === 'lab-break'}
+            done={labPhase === 'broken' || labPhase === 'healed'}
+            disabled={!!busy || labPhase === 'idle'}
+          />
+          <ActionButton
+            n={3}
+            label="Verify repair"
+            hint="Preview → integrity gate → approve → fresh rerun"
+            icon={Wrench}
+            tone="matrix"
+            onClick={healLab}
+            busy={busy === 'lab-heal'}
+            done={labPhase === 'healed'}
+            disabled={!!busy || labPhase !== 'broken'}
+          />
+          <ActionButton
+            n={4}
+            label="Promise Diff"
+            hint="Compare the stored broken → recovered contracts"
+            icon={GitCompare}
+            tone="data"
+            onClick={diffLab}
+            busy={busy === 'lab-diff'}
+            done={!!labDiff}
+            disabled={!!busy || labPhase !== 'healed'}
+          />
+        </div>
+
+        {labResult && (
+          <>
+            <MatrixPanel tone={labPhase === 'broken' ? 'alarm' : 'data'} className="p-4">
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <Kicker tone={labPhase === 'broken' ? 'alarm' : 'data'}>Controlled source trace</Kicker>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-400">Same collector identity across the deterministic replay</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <TraceCell label="Fixture" value="Owned WebReceipt commerce fixture" />
+                <TraceCell label="Collector ID" value={labResult.contract.collector.id} />
+                <TraceCell label="Final-total selector" value={labTotalEvidence?.domPath ?? '—'} />
+                <TraceCell label="Captured text" value={labTotalEvidence?.capturedText ?? '—'} alarm={labPhase === 'broken'} />
+              </div>
+            </MatrixPanel>
+
+            <div className="grid items-start gap-6 xl:grid-cols-3">
+              <div className="space-y-6 xl:col-span-2">
+                <JourneyReplay
+                  journey={labResult.contract.journey}
+                  currency={labResult.contract.checkout.finalTotal.currency}
+                  finalState={labFinalState}
+                  onStepClick={openLabEvidenceForStep}
+                />
+                <DealContractCard contract={labResult.contract} onEvidence={setEvidence} />
+                {labResult.anomalies.length > 0 && <AnomaliesPanel anomalies={labResult.anomalies} />}
+                {labResult.repair && <HealConsole repair={labResult.repair} healed={labResult.healed} />}
+                {labDiff && <PromiseDiff diff={labDiff} />}
+              </div>
+              <aside className="space-y-6 xl:sticky xl:top-20">
+                <IntegrityPanel integrity={labResult.integrity} />
+                <EventLog events={events} />
+              </aside>
+            </div>
+          </>
+        )}
+      </section>
 
       <EvidenceDrawer evidence={evidence} onClose={() => setEvidence(null)} />
+    </div>
+  )
+}
+
+function PipelineStage({
+  n,
+  title,
+  body,
+  icon: Icon,
+  state,
+}: {
+  n: number
+  title: string
+  body: string
+  icon: typeof Globe2
+  state: PipelineState
+}) {
+  const tone = state === 'partial' ? matrixTones.warn.line : state === 'busy' ? matrixTones.data.line : state === 'done' ? matrixTones.matrix.line : 'rgba(232,255,238,.18)'
+  return (
+    <div
+      className="panel panel-rail min-h-[118px] p-4"
+      style={{
+        ['--deco-accent' as string]: tone,
+        borderColor: state === 'idle' ? undefined : tone,
+        boxShadow: state === 'idle' ? undefined : `inset 0 0 24px -17px ${tone}`,
+      }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-void-400">Stage {n}</span>
+        <span className="grid h-7 w-7 place-items-center rounded-[2px] border" style={{ borderColor: tone, color: tone }}>
+          {state === 'busy' ? <Loader2 size={13} className="animate-spin" aria-hidden /> : state === 'done' || state === 'partial' ? <Check size={13} aria-hidden /> : <Icon size={13} aria-hidden />}
+        </span>
+      </div>
+      <div className="mt-3 font-mono text-[12px] uppercase tracking-[0.08em] text-void-100">{title}</div>
+      <div className="mt-1 text-[11.5px] leading-relaxed text-void-300">{body}</div>
     </div>
   )
 }
@@ -289,19 +490,20 @@ function ProductObservationCard({ result }: { result: Extract<ObservationResult,
   return (
     <MatrixPanel tone="data" className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Kicker tone="data">Live product observation</Kicker>
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-warn-300">Offer only · not sealed</span>
+        <Kicker tone="data">Public product observation</Kicker>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-warn-300">Offer only · not sealed as checkout</span>
       </div>
       <h2 className="mt-4 text-[24px] font-semibold leading-tight text-void-100">{observation.subject}</h2>
-      <p className="mt-3 max-w-2xl text-[13.5px] leading-relaxed text-void-200">
-        WebReceipt found a semantically credible public product price and kept its source evidence. This page did not
-        prove a final checkout amount, so WebReceipt intentionally did not copy the offer price into a fake final total.
+      <p className="mt-3 max-w-3xl text-[13.5px] leading-relaxed text-void-200">
+        WebReceipt found a semantically credible public product price and preserved its provenance. The page did not prove
+        a final payable checkout amount, so unavailable checkout fields remain unavailable rather than being copied from the offer price.
       </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <TraceCell label="Product price" value={money(observation.commercial.productPrice, observation.commercial.currency)} />
         <TraceCell label="Currency" value={observation.commercial.currency} />
-        <TraceCell label="Collector version" value={observation.collectorVersion ?? observation.collectorId} />
+        <TraceCell label="Acquisition path" value={observation.collectorVersion ?? observation.collectorId} />
+        <TraceCell label="Checkout" value="Not observed" />
         {product.brand && <TraceCell label="Brand" value={product.brand} />}
         {product.model && <TraceCell label="Model" value={product.model} />}
         {product.sku && <TraceCell label="SKU" value={product.sku} />}
@@ -318,11 +520,9 @@ function ProductObservationCard({ result }: { result: Extract<ObservationResult,
 
 function TraceCell({ label, value, alarm = false }: { label: string; value: string; alarm?: boolean }) {
   return (
-    <div className="rounded-[2px] border border-matrix-400/12 bg-black/45 px-3 py-2.5">
+    <div className="min-w-0 rounded-[2px] border border-matrix-400/12 bg-black/45 px-3 py-2.5">
       <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-void-400">{label}</div>
-      <div className={`mt-1 break-words font-mono text-[11.5px] ${alarm ? 'text-alarm-300' : 'text-void-100'}`}>
-        {value}
-      </div>
+      <div className={`mt-1 break-words font-mono text-[11.5px] ${alarm ? 'text-alarm-300' : 'text-void-100'}`}>{value}</div>
     </div>
   )
 }
@@ -360,12 +560,10 @@ function ActionButton({
         borderColor: done ? accent : undefined,
         boxShadow: done ? `0 0 26px -16px ${accent}, inset 0 1px 0 rgba(51,255,102,.12)` : undefined,
       }}
-      className="panel panel-rail panel-lift group p-4 text-left disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+      className="panel panel-rail panel-lift group min-h-[126px] p-4 text-left disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
     >
       <div className="mb-3 flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: accent }}>
-          Step {n}
-        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: accent }}>Step {n}</span>
         <span
           className="grid h-8 w-8 place-items-center rounded-[2px] border transition-all duration-500"
           style={{
@@ -379,25 +577,7 @@ function ActionButton({
         </span>
       </div>
       <div className="font-mono text-[12.5px] uppercase tracking-[0.08em] text-void-100">{label}</div>
-      <div className="mt-1 text-[12px] text-void-300">{hint}</div>
+      <div className="mt-1 text-[12px] leading-relaxed text-void-300">{hint}</div>
     </button>
-  )
-}
-
-function EmptyState({ onStart, busy, canStart }: { onStart: () => void; busy: boolean; canStart: boolean }) {
-  return (
-    <MatrixPanel tone="matrix" className="p-12 text-center">
-      <div className="sun-disc mx-auto mb-5 grid h-14 w-14 place-items-center text-matrix-300">
-        <Globe2 size={20} aria-hidden />
-      </div>
-      <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Ready for a public URL</h3>
-      <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
-        Paste a product or commerce URL above. WebReceipt will return a sealed contract only when the page actually
-        provides checkout evidence; otherwise you will see a truthful offer-only observation.
-      </p>
-      <SystemButton onClick={onStart} disabled={busy || !canStart} tone="matrix" size="lg" variant="solid">
-        {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Globe2 size={16} aria-hidden />} Observe URL
-      </SystemButton>
-    </MatrixPanel>
   )
 }
