@@ -4,7 +4,7 @@ import DotField from '@/components/effects/DotField'
 
 export function MatrixBackground() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden opacity-[0.62]">
       <DotField
         dotRadius={1.5}
         dotSpacing={14}
