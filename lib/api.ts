@@ -1,6 +1,7 @@
 import type { ObservationResult, ObserveResult, DiffResult, StressRun, StoreState, WebReceiptEvent } from './types'
 
-const CLIENT_STATE_KEY = 'webreceipt:state:v2'
+const CLIENT_STATE_KEY = 'webreceipt:state:v3'
+const LEGACY_CLIENT_STATE_KEYS = ['webreceipt:state:v2'] as const
 const MAX_CLIENT_CONTRACTS = 16
 const MAX_CLIENT_EVENTS = 120
 
@@ -11,16 +12,58 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
   return data as T
 }
 function emptyState(): StoreState { return { contracts: [], events: [], stressRuns: [] } }
+function isStoredContractEntry(value: unknown): value is StoreState['contracts'][number] {
+  if (!value || typeof value !== 'object') return false
+  const entry = value as Partial<StoreState['contracts'][number]>
+  const contract = entry.contract
+  return Boolean(
+    contract
+    && typeof contract === 'object'
+    && typeof contract.targetUrl === 'string'
+    && typeof contract.contractHash === 'string'
+    && contract.checkout
+    && contract.checkout.finalTotal,
+  )
+}
+function isEvent(value: unknown): value is WebReceiptEvent {
+  if (!value || typeof value !== 'object') return false
+  const event = value as Partial<WebReceiptEvent>
+  return typeof event.id === 'string' && typeof event.type === 'string' && typeof event.message === 'string' && typeof event.at === 'string'
+}
+function readRawClientState(): { raw: string | null; legacy: boolean } {
+  if (typeof window === 'undefined') return { raw: null, legacy: false }
+  const current = window.localStorage.getItem(CLIENT_STATE_KEY)
+  if (current) return { raw: current, legacy: false }
+  for (const key of LEGACY_CLIENT_STATE_KEYS) {
+    const legacy = window.localStorage.getItem(key)
+    if (legacy) return { raw: legacy, legacy: true }
+  }
+  return { raw: null, legacy: false }
+}
 function readClientState(): StoreState {
   if (typeof window === 'undefined') return emptyState()
   try {
-    const raw = window.localStorage.getItem(CLIENT_STATE_KEY); if (!raw) return emptyState()
+    const { raw, legacy } = readRawClientState(); if (!raw) return emptyState()
     const parsed = JSON.parse(raw) as Partial<StoreState>
-    return { contracts: Array.isArray(parsed.contracts) ? parsed.contracts.slice(0, MAX_CLIENT_CONTRACTS) : [], events: Array.isArray(parsed.events) ? parsed.events.slice(0, MAX_CLIENT_EVENTS) : [], stressRuns: Array.isArray(parsed.stressRuns) ? parsed.stressRuns.slice(0, 20) : [] }
+    const normalized: StoreState = {
+      contracts: Array.isArray(parsed.contracts) ? parsed.contracts.filter(isStoredContractEntry).slice(0, MAX_CLIENT_CONTRACTS) : [],
+      events: Array.isArray(parsed.events) ? parsed.events.filter(isEvent).slice(0, MAX_CLIENT_EVENTS) : [],
+      stressRuns: Array.isArray(parsed.stressRuns) ? parsed.stressRuns.filter((item) => item && typeof item === 'object').slice(0, 20) as StoreState['stressRuns'] : [],
+    }
+    // Migrate only valid state into v3. Older builds could accidentally leave
+    // partial observations in the sealed-contract array; those are discarded.
+    if (legacy) {
+      try { window.localStorage.setItem(CLIENT_STATE_KEY, JSON.stringify(normalized)) } catch {}
+    }
+    return normalized
   } catch { return emptyState() }
 }
 function writeClientState(state: StoreState): StoreState {
-  const normalized: StoreState = { contracts: state.contracts.slice(0, MAX_CLIENT_CONTRACTS), events: state.events.slice(0, MAX_CLIENT_EVENTS), stressRuns: state.stressRuns.slice(0, 20) }
+  const normalized: StoreState = {
+    contracts: state.contracts.filter(isStoredContractEntry).slice(0, MAX_CLIENT_CONTRACTS),
+    events: state.events.filter(isEvent).slice(0, MAX_CLIENT_EVENTS),
+    stressRuns: state.stressRuns.slice(0, 20),
+  }
   if (typeof window === 'undefined') return normalized
   try { window.localStorage.setItem(CLIENT_STATE_KEY, JSON.stringify(normalized)) }
   catch {
@@ -38,10 +81,10 @@ function addClientEvent(state: StoreState, type: string, message: string, meta: 
 function rememberObservation(result: ObservationResult, action: 'observe' | 'heal' = 'observe') {
   const state = readClientState()
   if (result.contract) {
-    if (!state.contracts.some((entry) => entry.contract.contractHash === result.contract.contractHash)) state.contracts.unshift({ contract: result.contract, integrity: result.integrity, anomalies: result.anomalies })
+    if (!state.contracts.some((entry) => entry.contract?.contractHash === result.contract.contractHash)) state.contracts.unshift({ contract: result.contract, integrity: result.integrity, anomalies: result.anomalies })
     const status = result.integrity.status
     addClientEvent(state, action === 'heal' ? 'heal' : status === 'invalid' ? 'integrity' : 'success', action === 'heal' ? (result.healed ? 'Verified repair completed' : 'Repair run completed') : status === 'invalid' ? 'Observation detected a contract integrity failure' : 'Public observation sealed', { targetUrl: result.contract.targetUrl, status, contractHash: result.contract.contractHash })
-  } else {
+  } else if (result.recordType === 'product_observation' && result.observation) {
     addClientEvent(state, 'observe', 'Public product offer observed; checkout was not fabricated', {
       targetUrl: result.observation.targetUrl,
       status: result.integrity.status,
@@ -80,11 +123,11 @@ function sameTarget(left: string, right: string): boolean {
   return a.toString() === b.toString()
 }
 async function liveClientDiff(targetUrl: string): Promise<DiffResult> {
-  let state = readClientState(); let matches = state.contracts.filter((entry) => sameTarget(entry.contract.targetUrl, targetUrl))
+  let state = readClientState(); let matches = state.contracts.filter((entry) => Boolean(entry.contract?.targetUrl) && sameTarget(entry.contract.targetUrl, targetUrl))
   if (matches.length < 2) {
     const fresh = await post<ObservationResult>('/api/observe', { targetUrl, mutation: 'healthy', autoHeal: false }); rememberObservation(fresh)
     if (!fresh.contract) throw new Error('This URL currently provides a product-offer observation only. Promise Diff requires two sealed Deal Contracts with checkout evidence.')
-    state = readClientState(); matches = state.contracts.filter((entry) => sameTarget(entry.contract.targetUrl, fresh.contract.targetUrl))
+    state = readClientState(); matches = state.contracts.filter((entry) => Boolean(entry.contract?.targetUrl) && sameTarget(entry.contract.targetUrl, fresh.contract.targetUrl))
   }
   if (matches.length < 2) return post<DiffResult>('/api/diff', { simulate: true, targetUrl })
   const after = matches[0].contract; const before = matches[1].contract
@@ -96,12 +139,21 @@ export const api = {
   observe: async (body: { targetUrl?: string; mutation?: string; autoHeal?: boolean }) => { const result = await post<ObservationResult>('/api/observe', body); rememberObservation(result); return result },
   heal: async (body: { targetUrl?: string; mutation?: string }) => { const result = await post<ObserveResult>('/api/heal', body); rememberObservation(result, 'heal'); return result },
   diff: async (body?: { simulate?: boolean; targetUrl?: string }) => {
-    const state = readClientState(); const latestTarget = body?.targetUrl || state.contracts[0]?.contract.targetUrl
+    const state = readClientState(); const latestTarget = body?.targetUrl || state.contracts[0]?.contract?.targetUrl
     if (latestTarget && !isDemoTarget(latestTarget)) return liveClientDiff(latestTarget)
     const result = await post<DiffResult>('/api/diff', body); const next = readClientState(); addClientEvent(next, 'diff', `${result.changes.length} promise changes detected`, { source: result.source }); writeClientState(next); return result
   },
   stress: async (body?: { mutations?: string[] }) => { const run = await post<StressRun>('/api/stress', body); const state = readClientState(); state.stressRuns.unshift(run); addClientEvent(state, 'stress', `Chaos suite: ${run.recovered}/${run.total} resilient`, { runId: run.id }); writeClientState(state); return run },
-  reset: async () => { const cleared = writeClientState(emptyState()); await post<StoreState>('/api/reset').catch(() => cleared); return cleared },
+  reset: async () => {
+    const cleared = writeClientState(emptyState())
+    if (typeof window !== 'undefined') {
+      for (const key of LEGACY_CLIENT_STATE_KEYS) {
+        try { window.localStorage.removeItem(key) } catch {}
+      }
+    }
+    await post<StoreState>('/api/reset').catch(() => cleared)
+    return cleared
+  },
   state: async () => readClientState(),
 }
 
