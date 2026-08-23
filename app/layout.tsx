@@ -42,3 +42,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
+
+// Production sync marker: keep Vercel aligned with the latest main-branch UI scale.
