@@ -24,6 +24,10 @@ jobs:
         run: npm ci
       - name: Audit production dependencies (fail on critical)
         run: npm audit --omit=dev --audit-level=critical
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc --noEmit
       - name: Verify custom Scraper Studio package, app, and chaos suite
         run: npm run verify
       - name: Stress-test the actual Next dev localhost workflow
