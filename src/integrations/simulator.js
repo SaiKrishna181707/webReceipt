@@ -1,12 +1,26 @@
 import { healthyObservation, mutationObservation } from '../fixtures/observations.js';
 import { scrapeControlledFixture } from './controlled-fixture.js';
+import { scrapeProductControlledFixture } from './product-controlled-fixture.js';
 
 const REDESIGN_MUTATION = 'wrong-valid-total';
+
+function fixtureKindFor(url) {
+  try {
+    return new URL(String(url || '')).pathname.includes('/fixture/product') ? 'product' : 'hotel';
+  } catch {
+    return 'hotel';
+  }
+}
+
+function scraperFor(kind) {
+  return kind === 'product' ? scrapeProductControlledFixture : scrapeControlledFixture;
+}
 
 export class SimulatorCollector {
   constructor() {
     this.kind = 'simulator';
     this.healed = new Set();
+    this.currentFixture = 'hotel';
   }
 
   applyWebsiteChange(mutation) {
@@ -14,19 +28,22 @@ export class SimulatorCollector {
   }
 
   // Backward-compatible alias for older tests/callers. This no longer mutates
-  // extracted data; the wrong value comes from scraping fixture V2 with the
-  // unchanged V1 selector.
+  // extracted data; the wrong value comes from scraping Fixture V2 with the
+  // unchanged V1 semantic selector.
   inject(mutation) {
     this.applyWebsiteChange(mutation);
   }
 
   async collect({ url, mutation = 'healthy' } = {}) {
     await delay(20);
+    if (url) this.currentFixture = fixtureKindFor(url);
+    const scrape = scraperFor(this.currentFixture);
+
     if (mutation === 'healthy') {
-      return scrapeControlledFixture({ websiteVersion: 'v1', scraperVersion: 'v1', targetUrl: url });
+      return scrape({ websiteVersion: 'v1', scraperVersion: 'v1', targetUrl: url });
     }
     if (mutation === REDESIGN_MUTATION) {
-      return scrapeControlledFixture({
+      return scrape({
         websiteVersion: 'v2',
         scraperVersion: this.healed.has(mutation) ? 'v2' : 'v1',
         targetUrl: url,
@@ -38,8 +55,9 @@ export class SimulatorCollector {
 
   async heal({ mutation, prompt }) {
     await delay(25);
+    const scrape = scraperFor(this.currentFixture);
     const preview = mutation === REDESIGN_MUTATION
-      ? scrapeControlledFixture({ websiteVersion: 'v2', scraperVersion: 'v2' })
+      ? scrape({ websiteVersion: 'v2', scraperVersion: 'v2' })
       : healthyObservation({ collectorVersion: `preview-${mutation}` });
     return {
       status: 'awaiting_approval',
@@ -74,6 +92,7 @@ export class SimulatorCollector {
 
   reset() {
     this.healed.clear();
+    this.currentFixture = 'hotel';
   }
 }
 
