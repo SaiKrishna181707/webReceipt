@@ -289,11 +289,11 @@ export class WebReceiptService {
     try {
       raw = await this.collector.collect({ url: normalizedTarget, mutation });
 
-      // Public product pages can provide a trustworthy offer price without a
-      // trustworthy final checkout total. Return that structured observation as
-      // partial rather than manufacturing zeros/totals or asking self-heal to
-      // "repair" a checkout that was never observed.
-      if (this.collector.kind === 'brightdata' && raw?.recordType === 'product_observation') {
+      // Any live collector may provide a trustworthy product offer without a
+      // trustworthy final checkout total. Keep that observation partial rather
+      // than manufacturing zeros/totals or asking self-heal to repair a checkout
+      // that was never observed.
+      if (raw?.recordType === 'product_observation') {
         const observation = normalizeProductObservation(raw, { targetUrl: normalizedTarget, collector: this.collector });
         const productIntegrity = productObservationIntegrity(observation);
         if (productIntegrity.status === 'invalid') {

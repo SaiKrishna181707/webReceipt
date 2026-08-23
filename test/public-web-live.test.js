@@ -1,9 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compileDealContract } from '../src/domain/contract.js';
-import { evaluateIntegrity } from '../src/domain/integrity.js';
 import { selectVisibleCommercePrice } from '../src/integrations/commerce-price.js';
 import { PublicWebCollector } from '../src/integrations/public-web-live.js';
+import { WebReceiptService } from '../src/services/orchestrator.js';
 
 function collectorFor(html) {
   return new PublicWebCollector({
@@ -12,7 +11,7 @@ function collectorFor(html) {
   });
 }
 
-test('Nike-style selling price beats an earlier coupon amount and a later actual price', async () => {
+test('Nike-style selling price beats an earlier coupon amount and a later actual price without fabricating checkout', async () => {
   const html = `
     <html><head><title>Nike Air Jordan 1 Mid SE</title></head><body>
       <h1>Nike Air Jordan 1 Mid SE Men's Shoes</h1>
@@ -29,11 +28,13 @@ test('Nike-style selling price beats an earlier coupon amount and a later actual
   assert.match(ranked.candidate?.capturedText || '', /Selling price.*12,295/i);
 
   const observation = await collectorFor(html).collect({ url: 'https://www.nike.in/product/example' });
-  assert.equal(observation.checkout.finalTotal, 12295);
+  assert.equal(observation.recordType, 'product_observation');
+  assert.equal(observation.commercial.productPrice, 12295);
   assert.equal(observation.offer.advertisedPrice, 12295);
   assert.equal(observation.currency, 'INR');
-  assert.match(observation.evidence.find((item) => item.field === 'checkout.finalTotal')?.capturedText || '', /Selling price.*12,295/i);
-  assert.equal(evaluateIntegrity(compileDealContract(observation)).status, 'valid');
+  assert.equal(observation.checkout, undefined);
+  assert.equal(observation.commercial.finalTotal, undefined);
+  assert.match(observation.evidence.find((item) => item.field === 'commercial.productPrice')?.capturedText || '', /Selling price.*12,295/i);
 });
 
 test('Nike product-detail layout with a bare rupee price beats promo, shipping and recommendations', async () => {
@@ -53,8 +54,10 @@ test('Nike product-detail layout with a bare rupee price beats promo, shipping a
   assert.equal(ranked.ambiguous, false);
   assert.equal(ranked.candidate?.amount, 12995);
   const observation = await collectorFor(html).collect({ url: 'https://www.nike.in/nike-pegasus-42/p/26000203' });
-  assert.equal(observation.checkout.finalTotal, 12995);
+  assert.equal(observation.recordType, 'product_observation');
+  assert.equal(observation.commercial.productPrice, 12995);
   assert.equal(observation.currency, 'INR');
+  assert.equal(observation.checkout, undefined);
 });
 
 test('explicit visible selling price overrides stale structured data', async () => {
@@ -68,18 +71,48 @@ test('explicit visible selling price overrides stale structured data', async () 
     </body></html>`;
 
   const observation = await collectorFor(html).collect({ url: 'https://www.nike.in/product/pegasus-42' });
-  assert.equal(observation.checkout.finalTotal, 12995);
+  assert.equal(observation.commercial.productPrice, 12995);
   assert.equal(observation.currency, 'INR');
+  assert.equal(observation.checkout, undefined);
   assert.match(observation.collectorVersion, /visible-price-reconciled/);
 });
 
 test('discounted selling price wins over MRP/actual price', async () => {
   const html = '<html><head><title>Shoe</title></head><body><div>Selling price ₹8,241</div><div>Actual price ₹9,695</div><div>15% off</div></body></html>';
   const observation = await collectorFor(html).collect({ url: 'https://shop.example/shoe' });
-  assert.equal(observation.checkout.finalTotal, 8241);
+  assert.equal(observation.commercial.productPrice, 8241);
+  assert.equal(observation.checkout, undefined);
 });
 
-test('promo-only currency text is not sealed as a product price', async () => {
+test('service keeps a live public product observation partial and unsealed', async () => {
+  const html = `
+    <html><head><title>Nike Pegasus 42</title></head><body>
+      <p>Get ₹500 off with code RUN500.</p>
+      <h1>Nike Pegasus 42</h1>
+      <div>Selling price ₹12,995</div>
+    </body></html>`;
+  const collector = collectorFor(html);
+  let contractWrites = 0;
+  const store = {
+    state: { contracts: [] },
+    event: async () => {},
+    addContract: async () => { contractWrites += 1; },
+  };
+  const service = new WebReceiptService({ collector, store });
+  const result = await service.observe({
+    targetUrl: 'https://www.nike.in/product/pegasus-42',
+    autoHeal: false,
+  });
+
+  assert.equal(result.recordType, 'product_observation');
+  assert.equal(result.commercial.productPrice, 12995);
+  assert.equal(result.contract, null);
+  assert.equal(result.integrity.status, 'partial');
+  assert.equal(result.sealable, false);
+  assert.equal(contractWrites, 0);
+});
+
+test('promo-only currency text is not treated as a product price', async () => {
   const html = '<html><head><title>Product</title></head><body><p>Get ₹500 off with code SAVE500</p><h1>Product</h1></body></html>';
   const collector = collectorFor(html);
   await assert.rejects(
