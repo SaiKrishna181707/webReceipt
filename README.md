@@ -5,7 +5,7 @@
 WebReceipt is a web-data integrity system for public commerce pages. A user supplies a public URL, WebReceipt extracts the commercial facts the page actually exposes, structures those facts, verifies their semantics and provenance, and records the result. Missing checkout fields are never fabricated.
 
 **Live app:** https://web-receipt-tawny.vercel.app  
-**Console:** https://web-receipt-tawny.vercel.app/console
+**Youtube:** https://youtu.be/KOI4OejZa8o?si=kKNielQDAfucM1ml
 
 ## Architecture
 
@@ -16,6 +16,7 @@ WebReceipt is a web-data integrity system for public commerce pages. A user supp
 WebReceipt deliberately separates real public-web observation from the reproducible semantic-drift demonstration.
 
 ### 1. Live Observation — real public URLs
+<img width="2048" height="1066" alt="image" src="https://github.com/user-attachments/assets/90ff945a-b8b7-43e1-baba-309138382daf" />
 
 The Console starts with an empty URL field. A user can paste a suitable public product or commerce URL, including a Nike, Amazon, or other retailer page.
 
@@ -82,6 +83,7 @@ The Contract Integrity Engine rejects the contradiction:
 ```text
 12,999 + 500 + 0 + 0 != 12,999
 ```
+<img width="2048" height="1018" alt="image" src="https://github.com/user-attachments/assets/150f8949-5590-487b-81e6-451baedcadc1" />
 
 That is WebReceipt's core semantic-drift proof: **the selector still works, but its business meaning changed**.
 
@@ -228,8 +230,6 @@ npm run lint
 npm run build
 npm run smoke:next
 ```
-<img width="2048" height="1066" alt="image" src="https://github.com/user-attachments/assets/d396ed2b-dd37-47e9-a0b1-1c82bbf50100" />
-
 
 The semantic-drift regression tests preserve the essential invariant:
 
