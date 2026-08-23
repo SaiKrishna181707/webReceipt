@@ -2,7 +2,7 @@
 
 import { Check, X, ShieldCheck, ShieldAlert, ShieldX, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import type { Integrity, IntegrityCheck } from '@/lib/types'
+import type { Integrity, IntegrityCheck, ProductObservationIntegrity } from '@/lib/types'
 import { matrixTones } from '@/components/matrix/matrix-ui'
 
 /* The integrity engine is the status board of the whole system: one line per
@@ -17,13 +17,17 @@ const FAIL = matrixTones.alarm.line
 const STATUS = {
   valid: { icon: ShieldCheck, tube: PASS, label: 'Contract valid' },
   warning: { icon: ShieldAlert, tube: WARN, label: 'Contract warnings' },
-  invalid: { icon: ShieldX, tube: FAIL, label: 'Contract integrity failure' },
+  invalid: { icon: ShieldX, tube: FAIL, label: 'Integrity failure' },
+  partial: { icon: ShieldAlert, tube: WARN, label: 'Offer observed · checkout pending' },
 } as const
 
-export function IntegrityPanel({ integrity }: { integrity: Integrity }) {
+type IntegritySurface = Integrity | ProductObservationIntegrity
+
+export function IntegrityPanel({ integrity }: { integrity: IntegritySurface }) {
   const meta = STATUS[integrity.status]
   const Icon = meta.icon
   const pct = Math.round((integrity.passed / Math.max(1, integrity.total)) * 100)
+  const partialReason = 'reason' in integrity ? integrity.reason : null
 
   return (
     <section
@@ -47,7 +51,7 @@ export function IntegrityPanel({ integrity }: { integrity: Integrity }) {
             <Icon size={18} aria-hidden />
           </div>
           <div>
-            <div className="sys-label">Contract Integrity Engine</div>
+            <div className="sys-label">{integrity.status === 'partial' ? 'Observation Integrity' : 'Contract Integrity Engine'}</div>
             <h3 className="mt-0.5 font-mono text-[13px] font-semibold uppercase tracking-[0.08em]" style={{ color: meta.tube }}>
               {meta.label}
             </h3>
@@ -61,6 +65,12 @@ export function IntegrityPanel({ integrity }: { integrity: Integrity }) {
           <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-void-300">checks passed</div>
         </div>
       </div>
+
+      {partialReason && (
+        <p className="border-b border-matrix-400/8 px-6 py-3 text-[12.5px] leading-relaxed text-void-300">
+          {partialReason}
+        </p>
+      )}
 
       <div className="px-6 pt-4">
         <div className="hud-meter" style={{ ['--meter' as string]: meta.tube }}>
@@ -91,7 +101,6 @@ function CheckRow({ check }: { check: IntegrityCheck }) {
           hasDetails ? 'hover:bg-matrix-400/[0.04]' : 'cursor-default'
         }`}
       >
-        {/* A lamp, lit or blown. */}
         <span
           className="grid h-5 w-5 shrink-0 place-items-center rounded-full"
           style={{
