@@ -1,7 +1,8 @@
-import { PublicWebCollector } from '@/src/integrations/public-web-production.js'
+import { randomUUID } from 'node:crypto'
+import { PublicWebCollector } from '@/src/integrations/public-web-live.js'
 import { securePublicFetch } from '@/src/integrations/pinned-public-fetch.js'
 import { WebReceiptService } from '@/src/services/orchestrator.js'
-import { getStore } from '@/lib/server/service'
+import type { Anomaly, DealContract, Integrity, StoreState, StressRun } from '@/lib/types'
 
 export type PublicWebSession = {
   collector: InstanceType<typeof PublicWebCollector>
@@ -9,19 +10,37 @@ export type PublicWebSession = {
 }
 
 /**
- * Create an isolated public-web collector/service pair for one API request.
+ * Anonymous public observations are request-scoped end to end.
  *
- * PublicWebCollector intentionally carries transient repair state (`lastTargetUrl`
- * and the healed-mutation set). Sharing one collector across anonymous requests
- * lets concurrent visitors overwrite that state during Observe/Break/Heal. The
- * durable/event store can remain shared, but collector state must not be.
- *
- * The production fetch implementation pins each public socket to the DNS address
- * that passed the private/reserved-network check. This closes the DNS-rebinding
- * gap between validating a hostname and opening the outbound connection.
+ * A public collector carries transient target/parser state, and public browser
+ * history already lives in localStorage. Persisting anonymous observations in
+ * the process-global simulator ledger adds cross-request write contention with
+ * no product benefit. This tiny in-memory store gives one request exactly the
+ * event/contract surface the orchestrator expects and disappears afterwards.
  */
+class RequestStore {
+  state: StoreState = { contracts: [], events: [], stressRuns: [] }
+
+  async event(type: string, message: string, meta: Record<string, unknown> = {}) {
+    this.state.events.unshift({ id: randomUUID(), type, message, meta, at: new Date().toISOString() })
+    this.state.events = this.state.events.slice(0, 120)
+  }
+
+  async addContract(contract: DealContract, integrity: Integrity, anomalies: Anomaly[]) {
+    this.state.contracts.unshift({ contract, integrity, anomalies })
+    this.state.contracts = this.state.contracts.slice(0, 16)
+    return this.state.contracts[0]
+  }
+
+  async addStressRun(run: StressRun) {
+    this.state.stressRuns.unshift(run)
+    this.state.stressRuns = this.state.stressRuns.slice(0, 8)
+  }
+}
+
+/** Create an isolated public-web collector/service pair for one API request. */
 export async function createPublicWebSession(): Promise<PublicWebSession> {
-  const store = await getStore()
+  const store = new RequestStore()
   const collector = new PublicWebCollector({ fetchImpl: securePublicFetch })
   const service = new WebReceiptService({ collector, store })
   return { collector, service }

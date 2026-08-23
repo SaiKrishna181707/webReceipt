@@ -7,10 +7,15 @@ function classify(error: unknown): { status: number; code: string; message: stri
   const status = Number(candidate?.status)
   const code = String(candidate?.code || '')
   if ([400, 413].includes(status) && ['invalid_json', 'body_too_large'].includes(code)) return { status, code, message }
+  if (status === 400 && code === 'unsupported_mode') return { status, code, message }
+  if (status === 422 && ['ambiguous_page', 'unsupported_page'].includes(code)) return { status, code, message }
   if (status === 429 && code === 'rate_limited') return { status, code, message }
   if (/Request body must be valid(?: UTF-8)? JSON|Request body must be a JSON object/i.test(message)) return { status: 400, code: 'invalid_json', message }
   if (/Request body exceeds \d+ bytes/i.test(message)) return { status: 413, code: 'body_too_large', message }
+  if (/targetUrl must be a string|mutation must be a string|autoHeal must be a boolean/i.test(message)) return { status: 400, code: 'invalid_request', message }
+  if (/Live public URLs (?:are observed read-only|only accept)|Real self-healing requires the protected Bright Data live workflow|self-healing must run through the Bright Data live workflow/i.test(message)) return { status: 400, code: 'unsupported_mode', message }
   if (/valid URL|Only http|Credential-bearing|publicly reachable|private\/reserved|login\/private|public anonymous|Target hostname|Target must|requires targetUrl/i.test(message)) return { status: 400, code: 'invalid_target', message }
+  if (/Multiple competing product prices|single product-detail URL/i.test(message)) return { status: 422, code: 'ambiguous_page', message }
   if (/No commerce price with an identifiable currency/i.test(message)) return { status: 422, code: 'unsupported_page', message }
   if (/Public page response exceeds \d+ bytes/i.test(message)) return { status: 413, code: 'upstream_too_large', message }
   if (/Public page returned unsupported content type/i.test(message)) return { status: 415, code: 'unsupported_content', message }

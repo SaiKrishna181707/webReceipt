@@ -7,21 +7,34 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
+function optionalString(value: unknown, field: string): string | undefined {
+  if (value == null || value === '') return undefined
+  if (typeof value !== 'string') throw new Error(`${field} must be a string.`)
+  const normalized = value.trim()
+  return normalized || undefined
+}
+
 export async function POST(req: Request) {
   return runSafely(async () => {
     const body = await readBody(req)
-    const targetUrl = (body.targetUrl as string) || undefined
-    const mutation = (body.mutation as string) || 'healthy'
+    const targetUrl = optionalString(body.targetUrl, 'targetUrl')
+    const mutation = optionalString(body.mutation, 'mutation') || 'healthy'
+    if (body.autoHeal != null && typeof body.autoHeal !== 'boolean') throw new Error('autoHeal must be a boolean.')
+
     if (isSimulatorTarget(targetUrl)) {
       const service = await getService()
       return service.observe({ targetUrl, mutation, autoHeal: body.autoHeal === true })
     }
+
+    // Third-party URLs are read-only observations. Never manufacture a mutation
+    // or invoke a simulated repair path against a real retailer page.
+    if (mutation !== 'healthy') {
+      throw new Error('Live public URLs only accept mutation="healthy". Real semantic drift and self-healing must run through the Bright Data live workflow.')
+    }
+
     return withPublicScrapeLimit(req, async () => {
-      // Public scraping is request-scoped so concurrent visitors cannot share
-      // transient collector target/heal state. A fresh collector is already in
-      // the pre-heal state, so non-healthy runs do not need a global reset.
       const { service } = await createPublicWebSession()
-      return service.observe({ targetUrl, mutation, autoHeal: body.autoHeal === true })
+      return service.observe({ targetUrl, mutation: 'healthy', autoHeal: false })
     })
   })
 }

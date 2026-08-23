@@ -13,8 +13,9 @@
     "smoke:next": "node scripts/smoke-next.mjs",
     "stress:dev": "node scripts/stress-next.mjs --dev",
     "stress:next": "node scripts/stress-next.mjs",
+    "stress:prices": "node scripts/stress-price-parser.mjs",
     "verify:receipt": "node scripts/verify-receipt.mjs",
-    "verify": "node scripts/validate-scraper-studio.mjs && node --test --test-concurrency=1 test/*.test.js && node src/stress-cli.js"
+    "verify": "node scripts/validate-scraper-studio.mjs && node --test --test-concurrency=1 test/*.test.js && node scripts/stress-price-parser.mjs && node src/stress-cli.js"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.16",
