@@ -154,8 +154,8 @@ if (fixtureSubject || fixtureAdvertised) {
 // GENERIC PUBLIC COMMERCE MODE
 // A product page is an OFFER observation, not automatically a checkout. We
 // extract the product price and any other amount only when its semantic role is
-// explicit. Missing shipping/tax/final-total fields stay absent instead of being
-// synthesized as zero or copied from the product price.
+// explicit. Missing shipping/tax/other-fee/final-total fields stay absent instead
+// of being synthesized as zero or copied from the product price.
 // ---------------------------------------------------------------------------
 const CURRENCY_SYMBOLS = new Map([
   ['₹', 'INR'], ['RS', 'INR'], ['RS.', 'INR'], ['INR', 'INR'],
@@ -365,6 +365,7 @@ const roleCandidate = (pattern) => candidates
   .sort((a, b) => b.score - a.score || b.amount - a.amount)[0] || null;
 const shipping = roleCandidate(/shipping|delivery|postage|freight/);
 const taxes = roleCandidate(/\b(?:tax|taxes|gst|vat)\b/);
+const otherFees = roleCandidate(/\b(?:service|handling|platform|convenience|processing|booking|other|mandatory)\s+fees?\b/);
 const finalTotal = roleCandidate(/\b(?:final|grand|order|checkout)\s+total\b|\btotal\s+due\b|\bamount\s+due\b/);
 const discount = roleCandidate(/\b(?:discount|coupon|cashback|savings?)\b/);
 
@@ -378,7 +379,7 @@ const brand = firstAttr('meta[property="product:brand"]', 'content')
 const model = firstText('[itemprop="model"]') || firstAttr('[itemprop="model"]', 'content');
 const sku = firstText('[itemprop="sku"]') || firstAttr('[itemprop="sku"]', 'content');
 const offerScreenshot = screenshotRef('offer_screenshot', 'offer_screenshot');
-const collectorVersion = 'webreceipt-custom-commerce-v3';
+const collectorVersion = 'webreceipt-custom-commerce-v4';
 
 const product = { name: subject };
 if (brand) product.brand = brand;
@@ -391,6 +392,7 @@ const commercial = {
 };
 if (shipping) commercial.shippingFee = shipping.amount;
 if (taxes) commercial.taxes = taxes.amount;
+if (otherFees) commercial.otherFees = otherFees.amount;
 if (discount) commercial.discount = discount.amount;
 if (finalTotal) commercial.finalTotal = finalTotal.amount;
 
@@ -415,6 +417,7 @@ const addRoleEvidence = (id, field, item) => {
 };
 addRoleEvidence('ev_shipping', 'commercial.shippingFee', shipping);
 addRoleEvidence('ev_tax', 'commercial.taxes', taxes);
+addRoleEvidence('ev_other_fees', 'commercial.otherFees', otherFees);
 addRoleEvidence('ev_discount', 'commercial.discount', discount);
 addRoleEvidence('ev_final_total', 'commercial.finalTotal', finalTotal);
 
