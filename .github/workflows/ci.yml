@@ -24,6 +24,8 @@ jobs:
         run: npm ci
       - name: Audit production dependencies (fail on critical)
         run: npm audit --omit=dev --audit-level=critical
+      - name: Install pinned lint tooling
+        run: npm install --no-save --no-package-lock eslint@8.57.1 eslint-config-next@14.2.35
       - name: Lint
         run: npm run lint
       - name: Typecheck
