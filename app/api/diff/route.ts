@@ -1,5 +1,5 @@
 import { getService } from '@/lib/server/service'
-import { createPublicWebSession, isSimulatorTarget } from '@/lib/server/public-web'
+import { createControlledProductSession, createPublicWebSession, isControlledProductTarget, isSimulatorTarget } from '@/lib/server/public-web'
 import { runSafely, readBody } from '@/lib/server/handler'
 import { withPublicScrapeLimit } from '@/lib/server/public-limit'
 import { diffContracts } from '@/src/domain/diff.js'
@@ -20,12 +20,12 @@ function requireSealed(contract: DealContract) {
 
 async function freshPublicDiff(req: Request, targetUrl: string) {
   return withPublicScrapeLimit(req, async () => {
-    // Keep both observations in one request-scoped public session. This preserves
-    // collector isolation between visitors while giving the comparison a stable
-    // collector configuration for the full before/after pair.
     const { service } = await createPublicWebSession()
     const first = await service.observe({ targetUrl, mutation: 'healthy', autoHeal: false })
     const second = await service.observe({ targetUrl, mutation: 'healthy', autoHeal: false })
+    if (!first.contract || !second.contract) {
+      throw new Error('Promise Diff requires two sealed Deal Contracts. This public URL currently provides an offer-only product observation without checkout evidence.')
+    }
     return {
       before: first.contract,
       after: second.contract,
@@ -36,9 +36,22 @@ async function freshPublicDiff(req: Request, targetUrl: string) {
   })
 }
 
+async function controlledRepairDiff(targetUrl: string) {
+  const { service } = await createControlledProductSession()
+  const broken = await service.observe({ targetUrl, mutation: 'wrong-valid-total', autoHeal: false })
+  const repaired = await service.observe({ targetUrl, mutation: 'wrong-valid-total', autoHeal: true })
+  if (!broken.contract || !repaired.contract) throw new Error('Controlled replay did not produce comparable Deal Contracts.')
+  return {
+    before: broken.contract,
+    after: repaired.contract,
+    changes: diffContracts(broken.contract, repaired.contract),
+    integrity: repaired.integrity,
+    source: 'controlled-repair-comparison',
+  }
+}
+
 // Anonymous callers never read process-global stored history. They either submit
 // their own sealed browser contracts or request a fresh same-request comparison.
-// The controlled demo remains deterministic.
 export async function POST(req: Request) {
   return runSafely(async () => {
     const body = await readBody(req)
@@ -55,6 +68,7 @@ export async function POST(req: Request) {
     }
 
     const requestedTarget = typeof body.targetUrl === 'string' && body.targetUrl.trim() ? body.targetUrl.trim() : undefined
+    if (requestedTarget && isControlledProductTarget(requestedTarget)) return controlledRepairDiff(requestedTarget)
     if (requestedTarget && !isSimulatorTarget(requestedTarget)) return freshPublicDiff(req, requestedTarget)
 
     const simulator = await getService()
