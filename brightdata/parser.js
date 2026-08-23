@@ -326,8 +326,10 @@ priceSelectors.forEach((selector) => {
 
 // Last-resort visible-text scan. Each amount gets sentence/clause-local context;
 // this avoids a nearby shipping label contaminating a separate product price.
+// Money tokens are forced to end on a digit so sentence punctuation is never
+// consumed as part of the amount.
 const bodyText = firstText('body');
-const visibleMoney = /(?:₹|Rs\.?|INR|USD|US\$|\$|EUR|€|GBP|£|JPY|¥|AED|SGD)\s*[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?|[0-9][0-9\s,.'’]*(?:[.,][0-9]{1,2})?\s*(?:INR|USD|EUR|GBP|JPY|AED|SGD)/gi;
+const visibleMoney = /(?:₹|Rs\.?|INR|USD|US\$|\$|EUR|€|GBP|£|JPY|¥|AED|SGD)\s*[0-9](?:[0-9\s,.'’]*[0-9])?|[0-9](?:[0-9\s,.'’]*[0-9])?\s*(?:INR|USD|EUR|GBP|JPY|AED|SGD)/gi;
 const localMoneyContext = (text, index, length) => {
   const startMarkers = ['.', '!', '?', '\n', '|', '•', '·'];
   const endMarkers = startMarkers;
