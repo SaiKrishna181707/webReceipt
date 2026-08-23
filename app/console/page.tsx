@@ -15,13 +15,12 @@ import { EventLog } from '@/components/product/event-log'
 import { EvidenceDrawer } from '@/components/product/evidence-drawer'
 import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
 
-const DEMO_URL = 'https://web-receipt-tawny.vercel.app/fixture/product'
 const WEBSITE_REDESIGN = 'wrong-valid-total'
 
 type Phase = 'idle' | 'observed' | 'broken' | 'healed'
 
 export default function ConsolePage() {
-  const [url, setUrl] = useState(DEMO_URL)
+  const [url, setUrl] = useState('')
   const [phase, setPhase] = useState<Phase>('idle')
   const [result, setResult] = useState<ObserveResult | null>(null)
   const [diff, setDiff] = useState<DiffResult | null>(null)
@@ -92,6 +91,7 @@ export default function ConsolePage() {
       setResult(null)
       setDiff(null)
       setPhase('idle')
+      setUrl('')
       toast.success('Engine state cleared')
     })
 
@@ -122,13 +122,13 @@ export default function ConsolePage() {
           <span className="sys-prompt">Semantic drift, end to end</span>
         </h1>
         <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-void-200">
-          WebReceipt observes a controlled commerce journey and compiles its prices, fees and terms into one Deal Contract.
-          Then the page changes while the scraper keeps the same selector. The selector still returns a valid value — but
-          it now represents a different business meaning. WebReceipt catches the contradiction, verifies the repair preview,
+          WebReceipt observes a public commerce journey and compiles its prices, fees and terms into one Deal Contract.
+          Then the page can change while the scraper keeps the same selector. The selector may still return a valid value — but
+          it can represent a different business meaning. WebReceipt catches the contradiction, verifies the repair preview,
           approves it, and trusts the result only after a fresh scrape passes again.
         </p>
         <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-void-400">
-          Deterministic controlled replay · wrong values come from changed markup, never field injection
+          Public URL input · deterministic controlled replay for the repair demo · wrong values come from changed markup, never field injection
         </p>
       </header>
 
@@ -146,7 +146,7 @@ export default function ConsolePage() {
               onChange={(e) => setUrl(e.target.value)}
               spellCheck={false}
               className="flex-1 bg-transparent font-mono text-[13px] text-void-100 outline-none placeholder:text-void-400"
-              placeholder="https://…"
+              placeholder="Enter a public URL to observe…"
             />
           </label>
           <SystemButton onClick={reset} disabled={!!busy} tone="void" size="md">
@@ -170,7 +170,7 @@ export default function ConsolePage() {
           onClick={observe}
           busy={busy === 'observe'}
           done={phase !== 'idle'}
-          disabled={!!busy}
+          disabled={!!busy || !url.trim()}
         />
         <ActionButton
           n={2}
@@ -216,7 +216,7 @@ export default function ConsolePage() {
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <TraceCell label="Controlled fixture" value={fixtureState} />
+            <TraceCell label="Observed source" value={result.contract.targetUrl} />
             <TraceCell label="Collector ID" value={result.contract.collector.id} />
             <TraceCell label="Contract value selector" value={totalEvidence?.domPath ?? '—'} />
             <TraceCell label="Captured text" value={totalEvidence?.capturedText ?? '—'} alarm={phase === 'broken'} />
@@ -335,8 +335,8 @@ function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
       </div>
       <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Awaiting command</h3>
       <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
-        Run <span className="font-mono text-matrix-300">Observe journey</span> to compile the baseline Deal Contract
-        for the controlled commerce journey with tamper-evident evidence for every claim.
+        Enter a public URL and run <span className="font-mono text-matrix-300">Observe journey</span> to compile a Deal Contract
+        with tamper-evident evidence for every claim.
       </p>
       <SystemButton onClick={onStart} disabled={busy} tone="matrix" size="lg" variant="solid">
         {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />} Observe journey
