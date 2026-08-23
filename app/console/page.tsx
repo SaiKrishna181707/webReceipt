@@ -15,7 +15,7 @@ import { EventLog } from '@/components/product/event-log'
 import { EvidenceDrawer } from '@/components/product/evidence-drawer'
 import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
 
-const DEMO_URL = 'https://web-receipt-tawny.vercel.app/fixture/product?version=v1'
+const DEMO_URL = 'https://web-receipt-golden-state-warriors.vercel.app/fixture/product'
 const WEBSITE_REDESIGN = 'wrong-valid-total'
 
 type Phase = 'idle' | 'observed' | 'broken' | 'healed'
@@ -60,7 +60,7 @@ export default function ConsolePage() {
       setResult(r)
       setDiff(null)
       setPhase('observed')
-      toast.success('Nike Fixture V1 observed — ₹13,499 Deal Contract compiled')
+      toast.success('Nike product observed — ₹13,499 Deal Contract compiled')
     })
 
   const breakIt = () =>
@@ -68,7 +68,7 @@ export default function ConsolePage() {
       const r = await api.observe({ targetUrl: url, mutation: WEBSITE_REDESIGN, autoHeal: false })
       setResult(r)
       setPhase('broken')
-      toast.error('Website V2 changed meaning — .total-price now returns the ₹12,999 product price')
+      toast.error('Website redesign changed meaning — .total-price now returns the ₹12,999 product price')
     })
 
   const heal = () =>
@@ -103,7 +103,7 @@ export default function ConsolePage() {
 
   const finalState = busy === 'heal' ? 'healing' : phase === 'broken' ? 'failed' : 'ok'
   const totalEvidence = result?.contract.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
-  const fixtureVersion = phase === 'broken' || phase === 'healed' ? 'Nike product · Fixture V2' : 'Nike product · Fixture V1'
+  const fixtureState = phase === 'broken' || phase === 'healed' ? 'Redesigned product semantics' : 'Original product semantics'
 
   /** What the console reports about itself, driven by real state — not decoration. */
   const statusValue =
@@ -112,9 +112,6 @@ export default function ConsolePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-7 px-4 py-10 sm:px-6 lg:px-8">
-      {/* ==================================================================
-          HEADER
-          ================================================================== */}
       <header>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Kicker tone="matrix">Console</Kicker>
@@ -125,8 +122,8 @@ export default function ConsolePage() {
           <span className="sys-prompt">Nike product semantic drift, end to end</span>
         </h1>
         <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-void-200">
-          Fixture V1 is a controlled Nike Pegasus 41 product journey: product price ₹12,999 plus ₹500 shipping equals
-          a ₹13,499 final total. Then the website redesigns to Fixture V2 while the scraper keeps the same
+          WebReceipt observes a controlled Nike Pegasus 41 product journey: product price ₹12,999 plus ₹500 shipping equals
+          a ₹13,499 final total. Then the website is redesigned while the scraper keeps the same
           <span className="font-mono text-void-100"> .total-price</span> selector. That selector still returns a valid
           ₹12,999 number — but it now means <span className="font-semibold text-void-100">product price</span>, while the
           real final total moved to <span className="font-mono text-void-100">[data-testid=&quot;order-total&quot;]</span>. WebReceipt
@@ -137,9 +134,6 @@ export default function ConsolePage() {
         </p>
       </header>
 
-      {/* ==================================================================
-          COMMAND LINE
-          ================================================================== */}
       <div className="terminal">
         <div className="terminal-bar">
           <Terminal size={12} className="text-matrix-400" aria-hidden />
@@ -168,13 +162,10 @@ export default function ConsolePage() {
         </div>
       </div>
 
-      {/* ==================================================================
-          COMMAND KEYS
-          ================================================================== */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ActionButton
           n={1}
-          label="Observe Nike V1"
+          label="Observe Nike product"
           hint="₹12,999 + ₹500 = ₹13,499"
           icon={Play}
           tone="phosphor"
@@ -227,7 +218,7 @@ export default function ConsolePage() {
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <TraceCell label="Product fixture" value={fixtureVersion} />
+            <TraceCell label="Product fixture" value={fixtureState} />
             <TraceCell label="Collector ID" value={result.contract.collector.id} />
             <TraceCell label="Final-total selector" value={totalEvidence?.domPath ?? '—'} />
             <TraceCell label="Captured text" value={totalEvidence?.capturedText ?? '—'} alarm={phase === 'broken'} />
@@ -235,9 +226,6 @@ export default function ConsolePage() {
         </MatrixPanel>
       )}
 
-      {/* ==================================================================
-          RESULTS
-          ================================================================== */}
       {!result ? (
         <EmptyState onStart={observe} busy={!!busy} />
       ) : (
@@ -278,11 +266,6 @@ function TraceCell({ label, value, alarm = false }: { label: string; value: stri
   )
 }
 
-/**
- * A command key. Unlit until it has run; the indicator fills and turns to a
- * check once it has. State comes from the real phase, so the interface can't
- * claim a step succeeded when it didn't.
- */
 function ActionButton({
   n,
   label,
@@ -354,12 +337,12 @@ function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
       </div>
       <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Awaiting command</h3>
       <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
-        Run <span className="font-mono text-matrix-300">Observe Nike V1</span> to compile the ₹13,499 Deal Contract for
+        Run <span className="font-mono text-matrix-300">Observe Nike product</span> to compile the ₹13,499 Deal Contract for
         the controlled Pegasus 41 journey with tamper-evident evidence for every claim.
       </p>
       <SystemButton onClick={onStart} disabled={busy} tone="matrix" size="lg" variant="solid">
         {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />} Observe
-        Nike V1
+        Nike product
       </SystemButton>
     </MatrixPanel>
   )
