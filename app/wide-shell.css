@@ -1,0 +1,9 @@
+/* Desktop workstation shell.
+   WebReceipt is an evidence console, not a narrow article. Keep the existing
+   mobile/tablet spacing, but let max-w-7xl application surfaces use the wide
+   viewport on large judge/developer screens. */
+@media (min-width: 1280px) {
+  .max-w-7xl {
+    max-width: 100rem !important;
+  }
+}
