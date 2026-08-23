@@ -1,6 +1,6 @@
 # Two-minute WebReceipt demo runbook
 
-Use two clearly separated proof tracks. Do not present simulator output as a real Bright Data cloud run.
+Use two clearly separated proof tracks. Do not present the deterministic browser walkthrough as a live Bright Data cloud run.
 
 ## Pre-flight
 
@@ -11,58 +11,70 @@ npm run verify:receipt -- examples/webreceipt.json
 
 For sponsor-backed recording, deploy the sponsor harness (`npm run start:brightdata` / Dockerfile), use a production custom Scraper Studio Browser Worker, the real Collector ID/API token, and `WEBRECEIPT_OPERATOR_TOKEN`.
 
-## Track A — product UI walkthrough (deterministic simulator)
+## Track A — product UI walkthrough (deterministic controlled fixture)
 
 ### 0:00–0:15 — pain
 
 “Receipts remember what you paid. They don't remember what the internet promised.”
 
-### 0:15–0:35 — Deal Contract
+### 0:15–0:35 — healthy website
 
-Open `/console` and run **Observe journey**. Show:
+Open `/console` and run **Observe website V1**. Show:
 
-- advertised: ₹8,499
+- advertised/base: ₹8,499
+- fees: ₹848
+- tax: ₹800
 - final: ₹10,147
-- cancellation terms
-- evidence attached
-- all integrity checks pass
+- final-total selector: `.total-price`
+- 11/11 integrity checks pass
 
-The current Next.js console uses `SimulatorCollector`; say that plainly.
+The console uses a deterministic collector, but the values are scraped from generated Fixture V1 HTML. It does not write the final total directly into an observation.
 
 ### 0:35–0:50 — provenance
 
-Click a contract field or journey stage. Show public URL, captured text, timestamp, DOM evidence, evidence hash and contract hash.
+Click the final-total evidence. Show captured text, source URL, DOM selector, timestamp, evidence hash and contract hash.
 
-### 0:50–1:05 — silent corruption
+### 0:50–1:05 — website redesign creates the failure
 
-Run **Simulate redesign**. The simulator injects the wrong-but-valid total:
+Run **Redesign the website**.
+
+The fixture changes to V2. The scraper configuration does **not** change. The same `.total-price` selector still matches a valid number, but its meaning has moved:
 
 ```text
-finalTotal = ₹8,499
+Fixture V1
+.total-price  -> Total due today ₹10,147
+
+Fixture V2
+.total-price  -> Subtotal ₹8,499
+order-total   -> Total due today ₹10,147
 ```
 
-WebReceipt shows the semantic contradiction:
+Nothing in WebReceipt overwrites `finalTotal`. The wrong ₹8,499 comes from scraping the changed HTML with the unchanged scraper.
+
+WebReceipt then shows the semantic contradiction:
 
 ```text
-expected ₹10,147
-extracted ₹8,499
+base 8,499 + fees 848 + tax 800 = expected 10,147
+scraper extracted final total = 8,499
 ```
 
 ### 1:05–1:35 — verify the healer
 
-Run **Heal with Bright Data** and explain that this UI path is a deterministic simulation of the same verified-heal protocol:
+Run **Repair the scraper**. Explain the trust gate:
 
 ```text
 repair proposed
+→ selector moves from .total-price to [data-testid="order-total"]
 → preview_result treated as untrusted
 → Deal Contract compiled
-→ integrity checks pass
+→ 11/11 integrity checks pass
 → approve
-→ fresh run
-→ integrity checks pass again
+→ fresh scrape of Fixture V2
+→ 11/11 checks pass again
+→ trusted
 ```
 
-The real sponsor proof for this sequence is Track B.
+The collector ID stays the same across the break and repair. The UI trace makes the website version, collector ID, selector and captured text visible at each step.
 
 ### 1:35–2:00 — Promise Diff
 
@@ -70,19 +82,19 @@ Run **Promise Diff** and show the synthetic day+3 comparison. Keep the synthetic
 
 ## Track B — real Bright Data sponsor proof
 
-Record a short terminal segment using `brightdata/CLI_RUNBOOK.md`:
+The protected Bright Data adapter and CLI harness use the same design rule: website change first, collector output second, Contract Integrity verification third. Record a short terminal segment using `brightdata/CLI_RUNBOOK.md`:
 
 1. show the real `c_*` Collector ID;
-2. run V1 on the public sponsor fixture;
-3. break the same public fixture URL;
-4. rerun the same collector and capture the wrong-but-valid result;
-5. request self-heal and capture the preview/diff;
-6. verify the preview before approval;
+2. run the public sponsor fixture;
+3. change the same public fixture URL;
+4. rerun the same collector and capture the resulting extraction failure/drift;
+5. request Bright Data self-heal and capture the preview/diff;
+6. compile and verify the preview before approval;
 7. approve/autosave;
-8. rerun the same `c_*` ID and show the healthy post-heal result.
+8. rerun the same `c_*` ID and show the healthy post-heal contract.
 
-Save token-masked raw evidence under `evidence/`.
+The committed `evidence/` directory contains the token-free real collector lifecycle already captured for the sponsor path. Do not claim that the browser console itself is calling the paid Bright Data API.
 
 ## Close
 
-“WebReceipt gives you a receipt for what the internet promised you. The web can change after you buy. Your receipt shouldn't.”
+“When a website changes and a scraper keeps returning a plausible number with the wrong meaning, WebReceipt catches the contradiction, verifies the repair, and only then trusts the data.”

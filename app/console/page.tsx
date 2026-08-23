@@ -16,7 +16,7 @@ import { EvidenceDrawer } from '@/components/product/evidence-drawer'
 import { SystemButton, MatrixPanel, Kicker, SystemStatus, SystemRail, matrixTones, type MatrixTone } from '@/components/matrix/matrix-ui'
 
 const DEMO_URL = 'https://demo.webreceipt.dev/hotel/ocean-house'
-const MUTATION = 'wrong-valid-total'
+const WEBSITE_REDESIGN = 'wrong-valid-total'
 
 type Phase = 'idle' | 'observed' | 'broken' | 'healed'
 
@@ -60,23 +60,23 @@ export default function ConsolePage() {
       setResult(r)
       setDiff(null)
       setPhase('observed')
-      toast.success('Journey observed — Deal Contract compiled')
+      toast.success('Fixture V1 observed — Deal Contract compiled')
     })
 
   const breakIt = () =>
     run('break', async () => {
-      const r = await api.observe({ targetUrl: url, mutation: MUTATION, autoHeal: false })
+      const r = await api.observe({ targetUrl: url, mutation: WEBSITE_REDESIGN, autoHeal: false })
       setResult(r)
       setPhase('broken')
-      toast.error('Contract integrity failure detected')
+      toast.error('Website V2 changed meaning — same scraper now reads the subtotal')
     })
 
   const heal = () =>
     run('heal', async () => {
-      const r = await api.heal({ targetUrl: url, mutation: MUTATION })
+      const r = await api.heal({ targetUrl: url, mutation: WEBSITE_REDESIGN })
       setResult(r)
       setPhase('healed')
-      toast.success('Healed with a verified repair')
+      toast.success('Repair verified, approved, and confirmed by a fresh scrape')
     })
 
   const runDiff = () =>
@@ -102,6 +102,8 @@ export default function ConsolePage() {
   }
 
   const finalState = busy === 'heal' ? 'healing' : phase === 'broken' ? 'failed' : 'ok'
+  const totalEvidence = result?.contract.evidence.find((item) => item.field === 'checkout.finalTotal') ?? null
+  const fixtureVersion = phase === 'broken' || phase === 'healed' ? 'Fixture V2' : 'Fixture V1'
 
   /** What the console reports about itself, driven by real state — not decoration. */
   const statusValue =
@@ -122,12 +124,14 @@ export default function ConsolePage() {
         <h1 className="mt-3 font-mono text-[22px] font-semibold uppercase tracking-[0.04em] text-void-100 sm:text-[26px]">
           <span className="sys-prompt">Proof of promise, end to end</span>
         </h1>
-        <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-void-200">
-          Observe a public purchase journey, compile a tamper-evident Deal Contract, break the extraction with a
-          simulated redesign, heal it with a verified repair, then diff the promise over time.
+        <p className="mt-3 max-w-3xl text-[14.5px] leading-relaxed text-void-200">
+          First the controlled checkout is scraped as Fixture V1. Then the website itself changes to Fixture V2 while
+          the scraper stays on the same selector. That selector still returns a valid number — but it now means
+          <span className="font-semibold text-void-100"> subtotal</span>, not final total. WebReceipt catches the semantic
+          contradiction, verifies the repair preview, approves it, and trusts the result only after a fresh scrape passes again.
         </p>
         <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-void-400">
-          Running against the simulated collector
+          Deterministic controlled-fixture replay · wrong values come from changed markup, never field injection
         </p>
       </header>
 
@@ -168,8 +172,8 @@ export default function ConsolePage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ActionButton
           n={1}
-          label="Observe journey"
-          hint="Compile Deal Contract + evidence"
+          label="Observe website V1"
+          hint="Same scraper · correct final total"
           icon={Play}
           tone="phosphor"
           onClick={observe}
@@ -179,8 +183,8 @@ export default function ConsolePage() {
         />
         <ActionButton
           n={2}
-          label="Simulate redesign"
-          hint="Inject wrong-but-valid total"
+          label="Redesign the website"
+          hint="V2 changes meaning; scraper stays V1"
           icon={Zap}
           tone="alarm"
           onClick={breakIt}
@@ -190,8 +194,8 @@ export default function ConsolePage() {
         />
         <ActionButton
           n={3}
-          label="Heal the extraction"
-          hint="Verify the preview, then deploy"
+          label="Repair the scraper"
+          hint="Preview → 11/11 → approve → rerun"
           icon={Wrench}
           tone="matrix"
           onClick={heal}
@@ -211,6 +215,23 @@ export default function ConsolePage() {
           disabled={!!busy || phase === 'idle'}
         />
       </div>
+
+      {result && (
+        <MatrixPanel tone={phase === 'broken' ? 'alarm' : 'data'} className="p-4">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <Kicker tone={phase === 'broken' ? 'alarm' : 'data'}>Source trace</Kicker>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-void-400">
+              Read directly from the compiled evidence
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <TraceCell label="Website" value={fixtureVersion} />
+            <TraceCell label="Collector ID" value={result.contract.collector.id} />
+            <TraceCell label="Final-total selector" value={totalEvidence?.domPath ?? '—'} />
+            <TraceCell label="Captured text" value={totalEvidence?.capturedText ?? '—'} alarm={phase === 'broken'} />
+          </div>
+        </MatrixPanel>
+      )}
 
       {/* ==================================================================
           RESULTS
@@ -240,6 +261,17 @@ export default function ConsolePage() {
       )}
 
       <EvidenceDrawer evidence={evidence} onClose={() => setEvidence(null)} />
+    </div>
+  )
+}
+
+function TraceCell({ label, value, alarm = false }: { label: string; value: string; alarm?: boolean }) {
+  return (
+    <div className="rounded-[2px] border border-matrix-400/12 bg-black/45 px-3 py-2.5">
+      <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-void-400">{label}</div>
+      <div className={`mt-1 break-words font-mono text-[11.5px] ${alarm ? 'text-alarm-300' : 'text-void-100'}`}>
+        {value}
+      </div>
     </div>
   )
 }
@@ -320,12 +352,12 @@ function EmptyState({ onStart, busy }: { onStart: () => void; busy: boolean }) {
       </div>
       <h3 className="font-mono text-[15px] uppercase tracking-[0.12em] text-void-100">Awaiting command</h3>
       <p className="mx-auto mb-6 mt-2 max-w-md text-[13.5px] leading-relaxed text-void-200">
-        Run <span className="font-mono text-matrix-300">Observe journey</span> to compile the first Deal Contract with
+        Run <span className="font-mono text-matrix-300">Observe website V1</span> to compile the first Deal Contract with
         tamper-evident evidence for every claim.
       </p>
       <SystemButton onClick={onStart} disabled={busy} tone="matrix" size="lg" variant="solid">
         {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />} Observe
-        journey
+        website V1
       </SystemButton>
     </MatrixPanel>
   )

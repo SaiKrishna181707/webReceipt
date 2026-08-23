@@ -19,17 +19,19 @@ WebReceipt does. It turns a public purchase journey into a timestamped **Deal Co
   <img src="docs/screenshots/webreceipt-footer-live.webp" alt="WebReceipt live footer showing route and runtime status panels" width="100%" />
 </p>
 
-The UI walkthrough is intentionally deterministic so a judge can reproduce the story without waiting on a paid external scrape. The repository also contains the real Bright Data collector lifecycle and protected server-side adapter used for sponsor proof.
+The browser walkthrough is deterministic so a judge can reproduce it without spending a Bright Data run. The important part is that it no longer manufactures the bad number. The controlled checkout HTML changes from Fixture V1 to Fixture V2 while the scraper keeps the same `.total-price` selector. On V1 that selector means the final payable amount; on V2 it means `Subtotal`. The wrong-but-valid ₹8,499 therefore comes from changed markup and unchanged scraper logic, not from WebReceipt overwriting a field.
+
+The repository also contains the real Bright Data collector lifecycle and protected server-side adapter used for sponsor proof.
 
 ## The two-minute version
 
 Start in the **Console**.
 
-1. **Observe journey** — WebReceipt compiles the advertised price, checkout breakdown, terms, journey metadata and evidence into one Deal Contract.
-2. **Open evidence** — a critical field carries captured text, source URL, DOM path, timestamp and a SHA-256 hash.
-3. **Simulate redesign** — the extractor still returns a number, but it now reads the wrong economic meaning. This is the failure ordinary “field is not null” monitoring misses.
-4. **Run the integrity checks** — the contract fails on semantics, not syntax.
-5. **Heal** — a proposed repair is treated as untrusted. WebReceipt verifies the preview against the same invariants before accepting it.
+1. **Observe website V1** — the controlled checkout is scraped, and WebReceipt compiles the advertised price, checkout breakdown, terms, journey metadata and evidence into one Deal Contract. The final-total selector is `.total-price`, and the contract passes 11/11 checks.
+2. **Open evidence** — inspect the captured text, source URL, DOM path, timestamp and SHA-256 hash behind the final total.
+3. **Redesign the website** — the fixture switches to V2, but the scraper stays on the same selector. `.total-price` now points at `Subtotal ₹8,499` while the real payable total remains ₹10,147 elsewhere in the DOM.
+4. **Watch the integrity failure** — the scraper technically succeeded, but `8499 + 848 + 800 != 8499`, so WebReceipt refuses to trust the record.
+5. **Repair the scraper** — the proposed selector repair is treated as untrusted. Its preview must compile into the Deal Contract and pass 11/11 checks before approval; then a fresh run must pass again.
 6. **Promise Diff** — compare sealed contracts and see exactly what a checkout promise changed into.
 
 Then open **Mutation Lab** for broader resilience cases and **Receipts** for the sealed contract history.
@@ -52,9 +54,9 @@ discounts             0
 expected total    10,147
 ```
 
-If the extracted final total is `8,499`, the pipeline does not quietly save it. The Contract Integrity Engine flags the semantic drift.
+If the unchanged scraper extracts `8,499` from the redesigned page, the pipeline does not quietly save it. The Contract Integrity Engine flags the semantic drift.
 
-That same rule is reused as the gate for self-healing. A repair is not trusted because an AI or a scraper vendor says it looks fixed; the repaired preview has to satisfy the contract.
+That same rule is reused as the gate for self-healing. A repair is not trusted because an AI or a scraper vendor says it looks fixed; the repaired preview has to satisfy the contract, and the deployed repair has to survive a fresh collector run.
 
 ## What gets sealed
 
@@ -109,7 +111,7 @@ public target
 → Bright Data Scraper Studio Browser Worker
 → production c_* collector
 → structured dataset
-→ controlled interaction / semantic drift
+→ controlled website / interaction drift
 → real extraction failure
 → Bright Data self-heal proposal
 → preview_result
@@ -120,6 +122,8 @@ public target
 ```
 
 The important detail is the **same Collector ID** survives the repair cycle. WebReceipt does not swap in a hand-edited happy-path result.
+
+The current browser console and the sponsor track are deliberately honest about their boundary: the console deterministically reproduces the **semantic failure mechanism** from real fixture markup; the Bright Data track proves the real cloud collector/self-heal lifecycle with preserved evidence. Neither track injects a fake final total into an already-correct Deal Contract.
 
 ### Evidence you can inspect
 
@@ -140,13 +144,14 @@ The full sponsor reproduction steps live in [`brightdata/CLI_RUNBOOK.md`](bright
 
 ```mermaid
 flowchart LR
-    A[Public purchase journey] --> B[Observe]
+    A[Public purchase journey] --> B[Same scraper]
     B --> C[Canonical Deal Contract]
     C --> D[11 integrity checks]
     D -->|valid| E[Hash + seal evidence]
     E --> F[Receipt history / Promise Diff]
 
-    D -->|semantic failure| G[Diagnose drift]
+    A2[Website redesign] --> B
+    D -->|semantic failure| G[Diagnose meaning drift]
     G --> H[Bright Data self-heal proposal]
     H --> I[Untrusted preview]
     I --> D
@@ -154,7 +159,7 @@ flowchart LR
 
 There are two deliberately separate runtime modes:
 
-- **Product UI:** deterministic simulator for a stable judged walkthrough.
+- **Product UI:** deterministic controlled-fixture browser model. Fixture V1/V2 are real generated HTML states; the same scraper selector is run against both, so the bad value comes from the website redesign rather than an injected observation.
 - **Sponsor / production adapter:** Bright Data-backed collection and healing through protected server-side routes and the CLI harness.
 
 That separation keeps tokens and paid/mutating operations out of the browser while still preserving a real production integration.
@@ -219,11 +224,12 @@ Never commit real tokens.
 
 | Where | What is there |
 | --- | --- |
-| [`app/console`](app/console) | Observe → break → verify → heal → diff product flow |
+| [`app/console`](app/console) | Observe V1 → website redesign → semantic failure → verified repair → diff |
 | [`app/mutation-lab`](app/mutation-lab) | Broader scraper mutation / resilience scenarios |
 | [`app/receipts`](app/receipts) | Sealed receipt history |
 | [`src/domain`](src/domain) | Deal Contract, hashing, integrity rules, diffing |
-| [`src/integrations`](src/integrations) | Simulator, public-web and Bright Data integration code |
+| [`src/integrations/controlled-fixture.js`](src/integrations/controlled-fixture.js) | Deterministic HTML scrape showing the same selector change meaning across V1/V2 |
+| [`src/integrations`](src/integrations) | Controlled fixture, public-web and Bright Data integration code |
 | [`brightdata`](brightdata) | Scraper Studio package, parser, schemas and CLI runbook |
 | [`evidence`](evidence) | Committed sponsor lifecycle evidence |
 | [`test`](test) | Domain, integration, hardening, fuzz and regression tests |
@@ -232,6 +238,6 @@ Never commit real tokens.
 
 ## One claim I want a judge to remember
 
-**WebReceipt does not merely notice when a scraper crashes. It notices when a scraper keeps working but starts lying about the economics — and it makes a repair prove itself before the system trusts it.**
+**When a website redesign makes a scraper keep returning a valid number with the wrong meaning, WebReceipt catches the semantic contradiction and makes the repair prove itself before anything is trusted.**
 
 MIT licensed.

@@ -1,4 +1,7 @@
 import { healthyObservation, mutationObservation } from '../fixtures/observations.js';
+import { scrapeControlledFixture } from './controlled-fixture.js';
+
+const REDESIGN_MUTATION = 'wrong-valid-total';
 
 export class SimulatorCollector {
   constructor() {
@@ -6,26 +9,51 @@ export class SimulatorCollector {
     this.healed = new Set();
   }
 
-  inject(mutation) {
+  applyWebsiteChange(mutation) {
     if (mutation && mutation !== 'healthy') this.healed.delete(mutation);
   }
 
-  async collect({ mutation = 'healthy' } = {}) {
+  // Backward-compatible alias for older tests/callers. This no longer mutates
+  // extracted data; the wrong value comes from scraping fixture V2 with the
+  // unchanged V1 selector.
+  inject(mutation) {
+    this.applyWebsiteChange(mutation);
+  }
+
+  async collect({ url, mutation = 'healthy' } = {}) {
     await delay(20);
-    if (mutation === 'healthy') return healthyObservation();
+    if (mutation === 'healthy') {
+      return scrapeControlledFixture({ websiteVersion: 'v1', scraperVersion: 'v1', targetUrl: url });
+    }
+    if (mutation === REDESIGN_MUTATION) {
+      return scrapeControlledFixture({
+        websiteVersion: 'v2',
+        scraperVersion: this.healed.has(mutation) ? 'v2' : 'v1',
+        targetUrl: url,
+      });
+    }
     if (this.healed.has(mutation)) return healthyObservation({ collectorVersion: `healed-${mutation}` });
     return mutationObservation(mutation);
   }
 
   async heal({ mutation, prompt }) {
     await delay(25);
+    const preview = mutation === REDESIGN_MUTATION
+      ? scrapeControlledFixture({ websiteVersion: 'v2', scraperVersion: 'v2' })
+      : healthyObservation({ collectorVersion: `preview-${mutation}` });
     return {
       status: 'awaiting_approval',
       approval: 'required',
       mutation,
       prompt,
-      previewResult: [healthyObservation({ collectorVersion: `preview-${mutation}` })],
-      diff: { template_b: { steps: [{ name: 'semantic-repair' }] } }
+      previewResult: [preview],
+      diff: {
+        template_b: {
+          steps: mutation === REDESIGN_MUTATION
+            ? [{ name: 'repair-final-total-selector', from: '.total-price', to: '[data-testid="order-total"]' }]
+            : [{ name: 'semantic-repair' }],
+        },
+      },
     };
   }
 
@@ -33,7 +61,12 @@ export class SimulatorCollector {
     await delay(20);
     if (!mutation) throw new Error('Simulator heal response requires the mutation identity.');
     if (approve) this.healed.add(mutation);
-    return { status: 'done', approval: approve ? 'approved' : 'rejected', mutation, collectorVersion: approve ? `healed-${mutation}` : `broken-${mutation}` };
+    return {
+      status: 'done',
+      approval: approve ? 'approved' : 'rejected',
+      mutation,
+      collectorVersion: approve ? `healed-${mutation}` : `broken-${mutation}`,
+    };
   }
 
   async approveHeal({ mutation } = {}) { return this.respondToHeal({ approve: true, mutation }); }
