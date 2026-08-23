@@ -1,121 +1,121 @@
 /* ============================================================================
-   WEBRECEIPT UI SCALE — DEMO DESKTOP PASS
+   WEBRECEIPT UI SCALE — FINAL DEMO DESKTOP PASS
 
-   Keep the existing visual language intact, but give the landing page the
-   same readable desktop scale as the local demo. This is intentionally a
-   CSS-only presentation change: no product logic or interaction changes.
+   Keep the existing visual language intact, but give the landing page a
+   slightly stronger desktop scale for the final live demo. Presentation only:
+   no product logic or interaction changes.
    ========================================================================== */
 
 body {
-  font-size: 17px;
+  font-size: 18px;
 }
 
 .sys-label {
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 /* Shared component sizing. The production build contains Tailwind's literal
    text tokens, so these selectors provide one stable production override. */
 [class~="text-[10px]"] {
-  font-size: 11px !important;
+  font-size: 11.5px !important;
 }
 
 [class~="text-[11px]"] {
-  font-size: 12px !important;
+  font-size: 12.5px !important;
 }
 
 [class~="text-[12px]"] {
-  font-size: 13.5px !important;
-}
-
-[class~="text-[12.5px]"] {
   font-size: 14px !important;
 }
 
-[class~="text-[13px]"] {
+[class~="text-[12.5px]"] {
   font-size: 14.5px !important;
 }
 
-[class~="text-[13.5px]"] {
+[class~="text-[13px]"] {
   font-size: 15px !important;
 }
 
-[class~="text-[14px]"] {
+[class~="text-[13.5px]"] {
   font-size: 15.5px !important;
 }
 
-[class~="text-[14.5px]"] {
+[class~="text-[14px]"] {
   font-size: 16px !important;
 }
 
-[class~="text-[15px]"] {
+[class~="text-[14.5px]"] {
   font-size: 16.5px !important;
 }
 
+[class~="text-[15px]"] {
+  font-size: 17.5px !important;
+}
+
 [class~="text-[16px]"] {
-  font-size: 18px !important;
-}
-
-[class~="text-[16.5px]"] {
-  font-size: 18px !important;
-}
-
-[class~="text-[17px]"] {
-  font-size: 18.5px !important;
-}
-
-[class~="text-[18px]"] {
   font-size: 19px !important;
 }
 
+[class~="text-[16.5px]"] {
+  font-size: 19px !important;
+}
+
+[class~="text-[17px]"] {
+  font-size: 19.5px !important;
+}
+
+[class~="text-[18px]"] {
+  font-size: 20px !important;
+}
+
 [class~="text-[20px]"] {
-  font-size: 21px !important;
+  font-size: 22px !important;
 }
 
 [class~="text-[24px]"] {
-  font-size: 26px !important;
+  font-size: 27px !important;
 }
 
 [class~="text-[26px]"] {
-  font-size: 28px !important;
+  font-size: 29px !important;
 }
 
-/* The landing terminal is the hero card. Give it a little more breathing
-   room so the production demo matches the intended desktop presentation. */
+/* The landing terminal is the hero card. Give it a little more presence
+   without turning it into an oversized panel. */
 .terminal-bar {
-  min-height: 44px;
-  padding-inline: 20px;
+  min-height: 48px;
+  padding-inline: 22px;
 }
 
 .terminal > ol {
-  padding-top: 24px !important;
-  padding-bottom: 24px !important;
+  padding-top: 28px !important;
+  padding-bottom: 28px !important;
 }
 
 .terminal > ol > li {
-  gap: 12px;
+  gap: 14px;
 }
 
 .terminal > div:last-child {
-  min-height: 48px;
-  padding-block: 14px !important;
+  min-height: 52px;
+  padding-block: 16px !important;
 }
 
 /* Buttons stay compact; only their text gets the readability bump. */
 .sys-btn {
-  font-size: 13px !important;
+  font-size: 13.5px !important;
 }
 
 @media (min-width: 640px) {
   [class~="sm:text-[30px]"] {
-    font-size: 32px !important;
-  }
-
-  [class~="sm:text-[32px]"] {
     font-size: 34px !important;
   }
 
+  [class~="sm:text-[32px]"] {
+    font-size: 36px !important;
+  }
+
   [class~="sm:text-[40px]"] {
-    font-size: 42px !important;
+    font-size: 44px !important;
   }
 }
