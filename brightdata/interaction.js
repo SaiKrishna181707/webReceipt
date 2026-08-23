@@ -1,7 +1,10 @@
 // WebReceipt custom Scraper Studio Browser Worker interaction.
-// Input schema: required `url` pointing to a PUBLIC, anonymous offer/checkout page.
-// This performs a real two-stage browser journey and captures evidence before and
-// after the checkout transition. It never logs in, enters personal data, or pays.
+// Input schema: required `url` pointing to a PUBLIC, anonymous offer/product page.
+//
+// Controlled WebReceipt fixture pages keep the original two-stage checkout
+// journey used to demonstrate semantic drift. Any other public page stays on the
+// product page and is parsed by the generic semantic commerce branch in
+// parser.js. No login, personal data entry, or purchase is ever performed.
 
 if (!input || !input.url) {
   bad_input('WebReceipt requires a public URL input.');
@@ -67,47 +70,76 @@ if (!['http:', 'https:'].includes(landed.protocol) || landed.username || landed.
   return;
 }
 
-wait_visible('[data-testid="offer-panel"]', {timeout: 15000});
-wait('[data-testid="advertised-price"]', {timeout: 15000});
+wait('body', {timeout: 15000});
+wait_network_idle({timeout: 1200});
+wait_page_idle({idle_timeout: 300});
 
-// Capture the promise at the offer stage before navigating the funnel.
-tag_screenshot('offer_screenshot', {
-  filename: 'webreceipt-offer',
-  full_page: true,
-});
+const controlledFixture = el_exists('[data-testid="offer-panel"]')
+  && el_exists('[data-testid="advertised-price"]')
+  && el_exists('[data-testid="continue-to-checkout"]');
 
-if (!el_exists('[data-testid="continue-to-checkout"]')) {
-  dead_page('Public checkout continuation was not found.');
+if (controlledFixture) {
+  wait_visible('[data-testid="offer-panel"]', {timeout: 15000});
+  wait('[data-testid="advertised-price"]', {timeout: 15000});
+
+  // Capture the promise at the offer stage before navigating the fixture funnel.
+  tag_screenshot('offer_screenshot', {
+    filename: 'webreceipt-offer',
+    full_page: true,
+  });
+
+  if (!el_exists('[data-testid="continue-to-checkout"]')) {
+    dead_page('Public checkout continuation was not found.');
+    return;
+  }
+
+  click('[data-testid="continue-to-checkout"]');
+  wait_visible('[data-testid="checkout-panel"]', {timeout: 15000});
+  wait('[data-testid="base-price"]', {timeout: 15000});
+  wait_network_idle({timeout: 800});
+  wait_page_idle({idle_timeout: 300});
+
+  // Capture the final pre-payment state. No purchase is performed.
+  tag_screenshot('checkout_screenshot', {
+    filename: 'webreceipt-checkout',
+    full_page: true,
+  });
+
+  const page = parse();
+  collect(page, (record) => {
+    if (!record.subject || !record.targetUrl)
+      throw new Error('Missing public offer identity');
+    if (!record.offer || record.offer.advertisedPrice == null)
+      throw new Error('Missing advertised price');
+    if (!record.checkout || record.checkout.basePrice == null)
+      throw new Error('Missing checkout base price');
+    if (record.checkout.finalTotal == null)
+      throw new Error('Missing checkout final total');
+    if (!record.terms || !record.terms.cancellation)
+      throw new Error('Missing public cancellation terms');
+    if (!Array.isArray(record.evidence) || record.evidence.length < 4)
+      throw new Error('Missing critical provenance records');
+  });
   return;
 }
 
-click('[data-testid="continue-to-checkout"]');
-wait_visible('[data-testid="checkout-panel"]', {timeout: 15000});
-wait('[data-testid="base-price"]', {timeout: 15000});
-wait_network_idle({timeout: 800});
-wait_page_idle({idle_timeout: 300});
-
-// Capture the final pre-payment state. No purchase is performed.
-tag_screenshot('checkout_screenshot', {
-  filename: 'webreceipt-checkout',
+// Generic public product page. Do not click arbitrary third-party controls: that
+// could change variants, location, cart state, or enter a checkout flow. Capture
+// the stable rendered page and let parser.js rank every plausible money value by
+// semantic role instead of selecting the first currency value.
+tag_screenshot('offer_screenshot', {
+  filename: 'webreceipt-product-page',
   full_page: true,
 });
 
-const page = parse();
-collect(page, (record) => {
-  // Shape checks live here. Semantic correctness is deliberately enforced by
-  // WebReceipt's Deal Contract Integrity engine after collection and again on a
-  // self-heal preview BEFORE a proposed repair is approved.
+const productPage = parse();
+collect(productPage, (record) => {
   if (!record.subject || !record.targetUrl)
-    throw new Error('Missing public offer identity');
+    throw new Error('Missing public product identity');
   if (!record.offer || record.offer.advertisedPrice == null)
-    throw new Error('Missing advertised price');
-  if (!record.checkout || record.checkout.basePrice == null)
-    throw new Error('Missing checkout base price');
-  if (record.checkout.finalTotal == null)
-    throw new Error('Missing checkout final total');
-  if (!record.terms || !record.terms.cancellation)
-    throw new Error('Missing public cancellation terms');
-  if (!Array.isArray(record.evidence) || record.evidence.length < 4)
-    throw new Error('Missing critical provenance records');
+    throw new Error('Missing semantically credible product price');
+  if (!record.currency)
+    throw new Error('Missing product price currency');
+  if (!Array.isArray(record.evidence) || record.evidence.length < 3)
+    throw new Error('Missing product-price provenance records');
 });
