@@ -27,6 +27,18 @@ export interface Evidence {
   hash: string
 }
 
+export interface ProductObservationEvidence {
+  id: string
+  field: string
+  sourceUrl: string
+  capturedText: string
+  screenshotRef?: string | null
+  domPath?: string | null
+  journeyStep?: number | null
+  collectorVersion: string
+  observedAt: string
+}
+
 export interface JourneyStep {
   index: number
   label: string
@@ -82,6 +94,17 @@ export interface Integrity {
   total: number
 }
 
+export interface ProductObservationIntegrity {
+  status: 'partial' | 'invalid'
+  stage: 'product_observation'
+  sealable: false
+  reason: string
+  checks: IntegrityCheck[]
+  failures: IntegrityCheck[]
+  passed: number
+  total: number
+}
+
 export type AnomalySeverity = 'high' | 'medium' | 'info'
 
 export interface Anomaly {
@@ -113,6 +136,53 @@ export interface ObserveResult {
   healed: boolean
   repair: RepairResult | null
 }
+
+export interface ProductObservation {
+  recordType: 'product_observation'
+  subject: string
+  targetUrl: string
+  observedAt: string
+  locale?: string
+  currency: string
+  collectorId: string
+  collectorVersion?: string
+  worker?: string
+  product: {
+    name: string
+    brand?: string
+    model?: string
+    sku?: string
+  }
+  commercial: {
+    productPrice: number
+    currency: string
+    shippingFee?: number
+    taxes?: number
+    otherFees?: number
+    discount?: number
+    finalTotal?: number
+  }
+  offer?: {
+    advertisedPrice?: number
+    claims?: string[]
+  }
+  evidence: ProductObservationEvidence[]
+}
+
+export interface ProductObservationResult {
+  recordType: 'product_observation'
+  observation: ProductObservation
+  product: ProductObservation['product']
+  commercial: ProductObservation['commercial']
+  contract: null
+  integrity: ProductObservationIntegrity
+  anomalies: []
+  sealable: false
+  healed: false
+  repair: null
+}
+
+export type ObservationResult = ObserveResult | ProductObservationResult
 
 export type DiffChange =
   | { path: string; kind: 'money'; before: number; after: number; currency: string; delta: number }
