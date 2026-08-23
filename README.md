@@ -2,187 +2,183 @@
 
 **Proof of promise, sealed in code.**
 
-A payment receipt proves what you were charged. It usually does not preserve the price that pulled you in, the mandatory fees that appeared later, the refund terms you saw, or the evidence behind any of those claims.
+A payment receipt proves what you were charged. It usually does not preserve the price that pulled you in, the mandatory charges that appeared later, the terms you saw, or the evidence behind any of those claims.
 
-WebReceipt does. It turns a public purchase journey into a timestamped **Deal Contract**, checks that the extracted economics still make sense, seals the evidence with SHA-256, and refuses to trust a scraper repair until the repaired output passes the same contract checks.
+WebReceipt turns a public purchase journey into a timestamped **Deal Contract**, checks that the extracted economics still make sense, seals the evidence with SHA-256, and refuses to trust a scraper repair until the repaired output passes the same contract checks.
 
 **Live app:** [web-receipt-tawny.vercel.app](https://web-receipt-tawny.vercel.app)  
-**Fast judge path:** [Console](https://web-receipt-tawny.vercel.app/console) · [Mutation Lab](https://web-receipt-tawny.vercel.app/mutation-lab) · [Receipts](https://web-receipt-tawny.vercel.app/receipts) · [Docs](https://web-receipt-tawny.vercel.app/docs)
+**Fast judge path:** [Console](https://web-receipt-tawny.vercel.app/console) · [Nike product fixture](https://web-receipt-tawny.vercel.app/fixture/product?version=v1) · [Mutation Lab](https://web-receipt-tawny.vercel.app/mutation-lab) · [Receipts](https://web-receipt-tawny.vercel.app/receipts)
 
-## Live UI
+## The judge story: Nike/product semantic drift
 
-<p align="center">
-  <img src="docs/screenshots/Screenshot%202026-08-23%20095621.png"
-       alt="WebReceipt screenshot 1"
-       width="100%" />
-</p>
+The main demo is a WebReceipt-controlled **Nike Pegasus 41** product journey. It exists to demonstrate the dangerous scraper failure that is harder than a missing selector: **the scraper succeeds, returns a clean number, and assigns it the wrong business meaning after a page redesign**.
 
-<p align="center">
-  <img src="docs/screenshots/Screenshot%202026-08-23%20095715.png"
-       alt="WebReceipt screenshot 2"
-       width="100%" />
-</p>
+Fixture V1 is internally consistent:
 
-<p align="center">
-  <img src="docs/screenshots/Screenshot%202026-08-23%20095752.png"
-       alt="WebReceipt screenshot 3"
-       width="100%" />
-</p>
+```text
+Nike Pegasus 41 product price    ₹12,999
+shipping                            ₹500
+other mandatory fees                 ₹0
+taxes                                ₹0
+----------------------------------------
+final total                       ₹13,499
+```
 
-<p align="center">
-  <img src="docs/screenshots/Screenshot%202026-08-23%20095812.png"
-       alt="WebReceipt screenshot 4"
-       width="100%" />
-</p>
+The V1 scraper reads the final payable amount from `.total-price`, so `checkout.finalTotal = 13,499` and the Deal Contract passes its integrity checks.
 
-The browser walkthrough is deterministic so a judge can reproduce it without spending a Bright Data run. The important part is that it no longer manufactures the bad number. The controlled checkout HTML changes from Fixture V1 to Fixture V2 while the scraper keeps the same `.total-price` selector. On V1 that selector means the final payable amount; on V2 it means `Subtotal`. The wrong-but-valid ₹8,499 therefore comes from changed markup and unchanged scraper logic, not from WebReceipt overwriting a field.
+Then the website changes to Fixture V2 while the scraper stays unchanged:
 
-The repository also contains the real Bright Data collector lifecycle and protected server-side adapter used for sponsor proof.
+- `.total-price` still exists and still contains a valid currency value.
+- But the redesigned page now uses `.total-price` for **Product price ₹12,999**.
+- The true **Final total ₹13,499** moves to `[data-testid="order-total"]`.
+- The unchanged scraper therefore returns `₹12,999` as `checkout.finalTotal` without throwing an extraction error.
 
-## The two-minute version
+WebReceipt rejects that result because the economics contradict it:
+
+```text
+12,999 + 500 + 0 + 0 != 12,999
+```
+
+That is the core semantic-drift story: the selector did not disappear. **Its meaning changed.**
+
+## Two-minute judge path
 
 Start in the **Console**.
 
-1. **Observe website V1** — the controlled checkout is scraped, and WebReceipt compiles the advertised price, checkout breakdown, terms, journey metadata and evidence into one Deal Contract. The final-total selector is `.total-price`, and the contract passes 11/11 checks.
-2. **Open evidence** — inspect the captured text, source URL, DOM path, timestamp and SHA-256 hash behind the final total.
-3. **Redesign the website** — the fixture switches to V2, but the scraper stays on the same selector. `.total-price` now points at `Subtotal ₹8,499` while the real payable total remains ₹10,147 elsewhere in the DOM.
-4. **Watch the integrity failure** — the scraper technically succeeded, but `8499 + 848 + 800 != 8499`, so WebReceipt refuses to trust the record.
-5. **Repair the scraper** — the proposed selector repair is treated as untrusted. Its preview must compile into the Deal Contract and pass 11/11 checks before approval; then a fresh run must pass again.
-6. **Promise Diff** — compare sealed contracts and see exactly what a checkout promise changed into.
+1. **Observe Nike V1** — scrape the controlled Pegasus 41 product journey. Product price is ₹12,999, shipping is ₹500, and final total is ₹13,499.
+2. **Open evidence** — inspect captured text, source URL, DOM path, timestamp and SHA-256 provenance behind the values.
+3. **Redesign the product page** — switch to Fixture V2 while keeping the same V1 scraper selector.
+4. **Watch the wrong-but-valid failure** — `.total-price` still returns ₹12,999, but that value now means product price rather than final total. The Contract Integrity Engine rejects the contradiction.
+5. **Repair the scraper** — the proposed repair points final-total extraction at the new semantic container. The preview must compile into the same Deal Contract and pass the integrity gate before approval.
+6. **Rerun after approval** — trust is restored only after a fresh scrape passes again.
+7. **Promise Diff** — compare sealed contracts to see exactly what changed over time.
 
-Then open **Mutation Lab** for broader resilience cases and **Receipts** for the sealed contract history.
+The wrong number comes from the changed HTML plus the unchanged scraper. WebReceipt does not inject or overwrite a fake final total after extraction.
 
-## Why this problem is harder than a broken selector
+## Why this matters
 
-The dangerous scraper failure is often not “no value found.” It is **wrong-but-valid extraction**.
+Most scraper monitoring can detect obvious breakage such as an empty selector. The more dangerous case is a selector that still matches something plausible.
 
-A redesigned page can make a selector read a subtotal where it used to read a total. The scraper succeeds. The field is populated. The number looks plausible. The record is still wrong.
-
-WebReceipt makes the contract prove itself:
+A product redesign can turn:
 
 ```text
-base price        8,499
-mandatory fees      848
-taxes               800
-optional add-ons      0
-discounts             0
------------------------
-expected total    10,147
+.total-price  → Final total ₹13,499
 ```
 
-If the unchanged scraper extracts `8,499` from the redesigned page, the pipeline does not quietly save it. The Contract Integrity Engine flags the semantic drift.
+into:
 
-That same rule is reused as the gate for self-healing. A repair is not trusted because an AI or a scraper vendor says it looks fixed; the repaired preview has to satisfy the contract, and the deployed repair has to survive a fresh collector run.
+```text
+.total-price  → Product price ₹12,999
+```
+
+A conventional scraper reports success both times. WebReceipt makes the extracted contract prove itself before the value is sealed or a repair is trusted.
 
 ## What gets sealed
 
-Different commerce sites can have completely different DOMs. WebReceipt normalizes them into one economic schema:
+Different commerce sites can have completely different DOMs. WebReceipt normalizes them into one economic schema with provenance attached to the critical claims.
 
 ```json
 {
-  "deal_id": "deal_7f29",
-  "observed_at": "2026-08-17T14:10:22Z",
+  "subject": "Nike Pegasus 41 · Men's Road-Running Shoes",
   "offer": {
-    "advertised_price": 8499,
-    "currency": "INR",
-    "claim": "Free cancellation"
+    "advertisedPrice": 12999,
+    "currency": "INR"
   },
   "checkout": {
-    "base_price": 8499,
-    "mandatory_fees": 848,
-    "taxes": 800,
-    "optional_addons": 0,
-    "final_total": 10147
-  },
-  "terms": {
-    "cancellation": "Free until 21 Aug",
-    "refundability": "Refundable",
-    "payment_timing": "Pay now"
+    "basePrice": 12999,
+    "mandatoryFees": 500,
+    "taxes": 0,
+    "optionalAddons": 0,
+    "discounts": 0,
+    "finalTotal": 13499
   },
   "evidence": [
     {
-      "field": "final_total",
-      "text": "Total ₹10,147",
-      "timestamp": "2026-08-17T14:10:22Z",
-      "hash": "a83f...91d"
+      "field": "checkout.finalTotal",
+      "capturedText": "₹13,499",
+      "domPath": ".total-price",
+      "observedAt": "2026-08-23T00:00:00.000Z",
+      "hash": "…"
     }
   ]
 }
 ```
 
-The useful part is not the JSON by itself. Each claim stays attached to provenance, and the contract can be re-verified after storage or comparison.
+Each claim stays attached to its source evidence, and the whole Deal Contract is sealed so later mutation is detectable.
 
-## Bright Data: the real sponsor path
+## Bright Data sponsor proof — preserved hotel history
 
-Bright Data is not a logo pasted onto the project. The sponsor-backed flow has a real production Scraper Studio collector and a recorded failure → heal → recovery lifecycle.
+The judge-facing product story is now Nike/product semantic drift. The existing Bright Data hotel evidence is intentionally preserved unchanged as **sponsor-proof history** rather than rewritten to pretend those older cloud runs were Nike runs.
 
-**Collector:** `c_mt3ha1iv1jgm8eg813`  
+The preserved real Bright Data collector identity is:
+
+**Collector ID:** `c_mt3ha1iv1jgm8eg813`  
 **Name:** `webreceipt-proof-of-promise`  
-**Controlled target:** `https://web-receipt-tawny.vercel.app/fixture/hotel`
+**Historical controlled target:** `https://web-receipt-tawny.vercel.app/fixture/hotel`
 
-The recorded sequence is:
+That ID is recorded in the original collector-creation artifact and throughout the historical lifecycle evidence. The checked-in `brightdata/parser.js` now supports both the legacy hotel fixture and the Nike-style product fixture; the historical evidence remains immutable sponsor proof for the earlier hotel failure → heal → same-ID recovery cycle.
+
+The recorded sponsor sequence is:
 
 ```text
-public target
-→ Bright Data Scraper Studio Browser Worker
-→ production c_* collector
-→ structured dataset
-→ controlled website / interaction drift
-→ real extraction failure
+hotel V1 healthy run
+→ same real Bright Data Collector ID
+→ controlled site changes
+→ genuine extraction failure
 → Bright Data self-heal proposal
 → preview_result
 → WebReceipt arithmetic + field-preservation gate
-→ human approval / auto-save
-→ same collector ID rerun
+→ approval / auto-save
+→ same Collector ID rerun
 → recovered Deal Contract
 ```
 
-The important detail is the **same Collector ID** survives the repair cycle. WebReceipt does not swap in a hand-edited happy-path result.
-
-The current browser console and the sponsor track are deliberately honest about their boundary: the console deterministically reproduces the **semantic failure mechanism** from real fixture markup; the Bright Data track proves the real cloud collector/self-heal lifecycle with preserved evidence. Neither track injects a fake final total into an already-correct Deal Contract.
-
-### Evidence you can inspect
+### Preserved sponsor evidence
 
 | Step | Repository evidence |
 | --- | --- |
-| Collector creation | [`evidence/01-create.json`](evidence/01-create.json) |
+| Collector creation / real ID | [`evidence/01-create.json`](evidence/01-create.json) |
 | Healthy production run | [`evidence/02-run-v1.json`](evidence/02-run-v1.json) |
-| Run after first change | [`evidence/03-run-after-change.json`](evidence/03-run-after-change.json) |
+| Resilient run after change | [`evidence/03-run-after-change.json`](evidence/03-run-after-change.json) |
 | Genuine failing run | [`evidence/04-run-v3-before-heal.json`](evidence/04-run-v3-before-heal.json) |
 | Heal proposal / preview | [`evidence/05-heal-proposal.json`](evidence/05-heal-proposal.json) |
 | Approved repair | [`evidence/06-heal-approved.json`](evidence/06-heal-approved.json) |
 | Same-ID post-heal run | [`evidence/07-run-after-heal.json`](evidence/07-run-after-heal.json) |
 | Lifecycle metadata | [`evidence/MANIFEST.md`](evidence/MANIFEST.md) |
 
-The full sponsor reproduction steps live in [`brightdata/CLI_RUNBOOK.md`](brightdata/CLI_RUNBOOK.md).
+The sponsor reproduction steps live in [`brightdata/CLI_RUNBOOK.md`](brightdata/CLI_RUNBOOK.md).
+
+### Cloud completion rule
+
+A checked-in parser change is not enough to claim a Bright Data production update. The Scraper Studio collector must be saved/published with the final parser and **the exact same real Collector ID `c_mt3ha1iv1jgm8eg813` must be rerun successfully**. A replacement `c_*` ID does not satisfy that gate.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    A[Public purchase journey] --> B[Same scraper]
+    A[Nike product Fixture V1] --> B[Same scraper]
     B --> C[Canonical Deal Contract]
     C --> D[11 integrity checks]
     D -->|valid| E[Hash + seal evidence]
     E --> F[Receipt history / Promise Diff]
 
-    A2[Website redesign] --> B
+    A2[Fixture V2 redesign] --> B
     D -->|semantic failure| G[Diagnose meaning drift]
-    G --> H[Bright Data self-heal proposal]
+    G --> H[Repair proposal]
     H --> I[Untrusted preview]
     I --> D
 ```
 
-There are two deliberately separate runtime modes:
+There are two deliberately separate proof tracks:
 
-- **Product UI:** deterministic controlled-fixture browser model. Fixture V1/V2 are real generated HTML states; the same scraper selector is run against both, so the bad value comes from the website redesign rather than an injected observation.
-- **Sponsor / production adapter:** Bright Data-backed collection and healing through protected server-side routes and the CLI harness.
+- **Judge/product UI:** deterministic Nike Pegasus 41 controlled fixture. The actual HTML changes between V1 and V2 while the scraper keeps the same selector, so the bad value comes from semantic drift in the page.
+- **Sponsor history / production integration:** preserved Bright Data Scraper Studio lifecycle evidence using the real collector ID, protected server-side adapter, and CLI harness.
 
-That separation keeps tokens and paid/mutating operations out of the browser while still preserving a real production integration.
+This keeps paid/mutating sponsor operations out of the browser UI without faking the sponsor history.
 
 ## Protected Bright Data routes
 
-A deployed instance can expose:
+A deployment configured with sponsor credentials can expose:
 
 ```text
 GET  /api/brightdata/health
@@ -192,9 +188,9 @@ POST /api/brightdata/heal
 
 Live operations are protected by `WEBRECEIPT_OPERATOR_TOKEN` unless an explicit unprotected-live opt-out is configured. Secrets are never expected in the repository.
 
-Do not assume a deployment has sponsor credentials just because the UI is live. Check `/api/brightdata/health` first.
+Do not assume a deployment has working sponsor credentials merely because the UI is live. The cloud collector state and same-ID rerun are separate verification gates.
 
-## Run it locally
+## Run locally
 
 Node.js 20 or 22 is the tested range.
 
@@ -203,9 +199,9 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` and use `/console` for the product semantic-drift loop or `/fixture/product?version=v1` to inspect the controlled product HTML directly.
 
-For the full verification gate:
+Full local verification:
 
 ```bash
 npm run verify
@@ -215,22 +211,14 @@ npm run smoke:next
 npm run stress:next
 ```
 
-The GitHub workflow runs that gate on both Node 20 and Node 22, including the domain tests, scraper-studio validation, chaos/stress coverage, a production Next build, API smoke tests and localhost stress tests.
+The GitHub workflow runs the verification gate on Node 20 and Node 22, including scraper-studio validation, domain tests, chaos/stress coverage, production Next build, API smoke tests and localhost stress tests.
 
-To verify a sealed example receipt directly:
-
-```bash
-npm run verify:receipt -- examples/webreceipt.json
-```
-
-## Environment for the sponsor-backed path
-
-Copy `.env.example` to `.env` and provide the required values locally or through your deployment platform.
+## Sponsor-backed environment
 
 ```env
 BRIGHT_DATA_API_TOKEN=your_token
-BRIGHT_DATA_COLLECTOR_ID=c_prod_123
-BRIGHT_DATA_TARGET_URL=https://public.example.com/your-target
+BRIGHT_DATA_COLLECTOR_ID=c_mt3ha1iv1jgm8eg813
+BRIGHT_DATA_TARGET_URL=https://your-public-target.example
 WEBRECEIPT_OPERATOR_TOKEN=use-a-strong-secret
 ```
 
@@ -240,19 +228,20 @@ Never commit real tokens.
 
 | Where | What is there |
 | --- | --- |
-| [`app/console`](app/console) | Observe V1 → website redesign → semantic failure → verified repair → diff |
+| [`app/console`](app/console) | Nike V1 → product redesign → wrong-but-valid failure → verified repair → diff |
+| [`app/fixture/product`](app/fixture/product) | Public controlled Nike-style product fixture |
+| [`src/product-fixture-page.js`](src/product-fixture-page.js) | Product V1/V2 markup that changes `.total-price` semantics |
+| [`src/integrations/product-controlled-fixture.js`](src/integrations/product-controlled-fixture.js) | Same-scraper product semantic-drift extraction |
+| [`brightdata/parser.js`](brightdata/parser.js) | Scraper Studio parser supporting controlled hotel/product fixtures plus generic public commerce pages |
 | [`app/mutation-lab`](app/mutation-lab) | Broader scraper mutation / resilience scenarios |
-| [`app/receipts`](app/receipts) | Sealed receipt history |
-| [`src/domain`](src/domain) | Deal Contract, hashing, integrity rules, diffing |
-| [`src/integrations/controlled-fixture.js`](src/integrations/controlled-fixture.js) | Deterministic HTML scrape showing the same selector change meaning across V1/V2 |
-| [`src/integrations`](src/integrations) | Controlled fixture, public-web and Bright Data integration code |
-| [`brightdata`](brightdata) | Scraper Studio package, parser, schemas and CLI runbook |
-| [`evidence`](evidence) | Committed sponsor lifecycle evidence |
-| [`test`](test) | Domain, integration, hardening, fuzz and regression tests |
+| [`app/receipts`](app/receipts) | Sealed Deal Contract history |
+| [`src/domain`](src/domain) | Deal Contract, hashing, integrity rules and diffing |
+| [`evidence`](evidence) | Preserved historical Bright Data sponsor lifecycle evidence |
+| [`test/product-semantic-drift.test.js`](test/product-semantic-drift.test.js) | Literal Nike/product wrong-meaning regression test |
 | [`docs/HACKATHON_SUBMISSION.md`](docs/HACKATHON_SUBMISSION.md) | Rubric mapping and truthfulness boundary |
 | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) | Short answers to likely judge questions |
 
-## One claim I want a judge to remember
+## One claim to remember
 
 **When a website redesign makes a scraper keep returning a valid number with the wrong meaning, WebReceipt catches the semantic contradiction and makes the repair prove itself before anything is trusted.**
 
