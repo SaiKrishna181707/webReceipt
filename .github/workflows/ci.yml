@@ -33,6 +33,31 @@ jobs:
         run: npm run verify
       - name: Stress-test the actual Next dev localhost workflow
         run: npm run stress:dev
+      - name: Browser-click the critical localhost UI workflow
+        if: matrix.node == 20
+        env:
+          WEBRECEIPT_STATE_FILE: /tmp/webreceipt-browser-e2e.json
+          WEBRECEIPT_ALLOW_PUBLIC_LIVE_OBSERVE: 'false'
+          WEBRECEIPT_ALLOW_UNPROTECTED_LIVE: 'false'
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npm run dev -- -H 127.0.0.1 -p 3000 > /tmp/webreceipt-browser-e2e.log 2>&1 &
+          SERVER_PID=$!
+          cleanup() {
+            kill "$SERVER_PID" 2>/dev/null || true
+            wait "$SERVER_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          ready=0
+          for i in $(seq 1 160); do
+            if curl -fsS http://127.0.0.1:3000/console >/dev/null; then ready=1; break; fi
+            sleep 0.25
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/webreceipt-browser-e2e.log
+            exit 1
+          fi
+          npx playwright test e2e/console.spec.cjs --reporter=line --workers=1
       - name: Compile the production Next.js app and Bright Data API routes
         run: npm run build
       - name: Smoke-test the built Next.js API surface
